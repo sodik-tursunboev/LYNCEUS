@@ -1,6 +1,7 @@
 """No test may reach the network. Loopback stays open: asyncio on Windows needs a loopback socket
 pair, and the PostgreSQL tests talk to a local container (through libpq, not this module)."""
 
+import os
 import socket
 from collections.abc import Iterator
 from typing import Any
@@ -12,6 +13,9 @@ _LOCAL = {None, "", "localhost", "127.0.0.1", "::1"}
 
 @pytest.fixture(autouse=True, scope="session")
 def no_network() -> Iterator[None]:
+    if os.environ.get("MIRAGE_LIVE_FETCH") == "1":  # the manual real-socket test, run on purpose
+        yield
+        return
     real_connect, real_lookup = socket.socket.connect, socket.getaddrinfo
 
     def connect(self: socket.socket, address: Any) -> None:

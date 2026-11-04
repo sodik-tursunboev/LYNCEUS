@@ -15,7 +15,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 | 008 | Parser sandbox | Draft: needs human sign-off, decide before M2 |
 | 009 | Local IPC | Draft: needs human sign-off, decide before M4 |
 | 010 | Email transport | Draft: needs human sign-off, decide before M5 |
-| 011 | Resolver egress policy | Reserved for the M1 resolver step (draft, needs sign-off) |
+| 011 | Resolver egress policy | Draft: needs human sign-off. Code exists but is off and unwired |
 | 012 | URL parsing: WHATWG via ada-url | Accepted |
 | 013 | Rules-only verdicts and the scoring model | Accepted |
 
@@ -135,7 +135,17 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **Verify before building (CLAUDE.md rule 5):** current scopes, quotas, watch expiry and delta semantics in the official Gmail and Graph documentation. The points above come from general knowledge, not from the current docs.
 
 ## ADR-011: Resolver egress policy
-**Status:** Reserved. To be drafted at the M1 resolver step (last step of M1) and signed off before the resolver can be enabled.
+**Status:** Draft: needs human sign-off. The code exists (`core/urls/safe_fetch.py`) but is **off, unwired and unreachable from the API**; enabling it needs this ADR signed.
+
+- **What it does:** follows the redirect chain of one URL, hop by hop, to find where it ends. Headers only; the body is never read.
+- **Guard, every hop:** parse as a browser would (ADR-012); http and https only; no credentials in the URL; ports 80 and 443 only; no single-label or internal names (`.local`, `.internal`, `.lan`, ...) and no DNS query for them; resolve once; refuse the whole name if any answer is not public; connect to that validated IP, never to the name again; present the name only as `Host` and TLS name, with certificate verification. A relative or scheme-relative redirect is resolved first, then checked like any other.
+- **Public address test:** `is_global` alone passes `64:ff9b::7f00:1` and `::127.0.0.1` and reads CGNAT as not private, so the test unwraps IPv4 inside IPv6 (mapped, NAT64, 6to4, Teredo), rejects IPv4-compatible, site-local, NAT64-local, multicast and reserved ranges, and denies the Azure platform address. 40 blocked and 7 allowed addresses are tabled in the tests.
+- **Limits:** 5 hops, 8 seconds for the whole chain (DNS, connect and slow headers share one deadline), no cookies, no credentials, no `Referer`, no proxy from the environment (`trust_env=False`), a fresh client per hop. The `User-Agent` is the honest string `MIRAGE-LinkCheck/1.0`, identical for every user.
+- **User-Agent finding (live test, 2026-11-04):** plain HTTP to a CDN edge hung for the invented string `Mozilla/5.0 (compatible)` and returned 200 for honest tool strings. A browser-like string failed once in a live run and then passed 6 of 6, cause unproven (my own probing may have been throttled). Honest and boring was chosen over pretending to be a browser.
+- **What it costs, and why it is off:** every resolution reveals the user's IP and the visit to the destination; it can burn a single-use link, which is interaction; DNS queries leak the hostname. Redirect following is also not a safety check: phishing kits show scanners something else, and a chain that ends on a normal page proves nothing.
+- **Proposal for sign-off:** enable only by the operator's setting (`MIRAGE_RESOLVE_REDIRECTS`), never per request, never from the API; log hosts only; run it inside the parser sandbox or egress boundary chosen in ADR-008 once that exists; and treat its result as one more signal, never as a BENIGN.
+- **Verified:** 151 offline tests (fake DNS and fake transport, no sockets); 13 deliberately weakened versions of the guard each fail a test; an opt-in live test with real sockets passed 4 of 4, twice (`MIRAGE_LIVE_FETCH=1`; pinned IP with certificate verification, a real redirect, a wrong-certificate refusal).
+- **Not verified:** IPv6-only networks; behaviour behind a corporate proxy or a TLS-inspecting firewall; DNS-over-HTTPS; IDN hostnames over the live path.
 
 ## ADR-012: URL parsing: WHATWG via ada-url
 **Status:** Accepted (M1, step 1).
