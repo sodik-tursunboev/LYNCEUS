@@ -17,6 +17,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 | 010 | Email transport | Draft: needs human sign-off, decide before M5 |
 | 011 | Resolver egress policy | Reserved for the M1 resolver step (draft, needs sign-off) |
 | 012 | URL parsing: WHATWG via ada-url | Accepted |
+| 013 | Rules-only verdicts and the scoring model | Accepted |
 
 ---
 
@@ -154,3 +155,18 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   - The PSL snapshot ages. Replace the file and its provenance row together.
   - Empty labels inside a host (`a..b`) are accepted by the standard and kept; a rule may flag them.
   - Homoglyph and brand analysis is not done here; this layer only normalises and reports facts.
+
+## ADR-013: Rules-only verdicts and the scoring model
+**Status:** Accepted (M1 decisions D1 and D2, owner changes 3 and 6).
+
+- **No signals is UNKNOWN, not BENIGN.** With no reputation, domain age or page content, silence from the rules proves nothing. Weak signals below the suspicious threshold are also UNKNOWN.
+- **BENIGN needs an allowlist match:** the registered domain is an official one in `rules/url/brands.toml`, the scheme is http or https, the host is not on a PSL private suffix and not in `shared_hosts` (official hosts where anyone can publish). With no signals that is BENIGN/HIGH; with weak signals BENIGN/MEDIUM. The allowlist never short-circuits: every rule still runs, and a strong finding on an official domain is still SUSPICIOUS or worse.
+- **Score:** noisy-OR of signal weights inside a category, capped per category, then noisy-OR across categories; 0 to 100. Correlated signals cannot add up to certainty.
+- **MALICIOUS from rules alone** needs the malicious score and at least two independent categories with a signal of `high_weight` or more. Otherwise the cap is SUSPICIOUS.
+- **Confidence:** independent strong categories: 0 or 1 is LOW, 2 is MEDIUM, 3 or more is HIGH.
+- **Recommended response (SPEC §8):** MALICIOUS is BLOCK, SUSPICIOUS is WARN, otherwise NONE. Applied response is always NONE in M1.
+- **Failures:** unparseable or oversize input is UNKNOWN with the reason in the explanation; an internal exception is ERROR. Neither carries a score.
+- **Versions:** every verdict has `engine_version` and `ruleset_version` (semver plus a hash of `scoring.toml`, `brands.toml`, `lists.toml` and `confusables.txt`).
+- **Config:** weights, caps and thresholds live in `rules/url/scoring.toml`, TOML read with the standard library. Tune on the dev split only.
+- **ATT&CK tags** were checked on attack.mitre.org against v20. URL rules use T1566.002 (Spearphishing Link), credential rules T1598.003 (Phishing for Information: Spearphishing Link), dangerous-scheme rules T1204.001 (User Execution: Malicious Link). T1583.001 (acquiring domains) happens before a URL arrives, so no rule claims to detect it.
+- **Known limits:** brand data is unverified general knowledge. Edit-distance matching will flag some ordinary words; `not_typos` and `fuzzy = false` handle the ones we know about.

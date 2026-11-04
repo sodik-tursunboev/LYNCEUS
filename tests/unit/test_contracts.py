@@ -52,6 +52,7 @@ def verdict_kwargs(**over: Any) -> dict[str, Any]:
         "applied_response": ResponseAction.NONE,
         "explanation": "test",
         "engine_version": "test-0",
+        "ruleset_version": "test-0",
     }
     return base | over
 

@@ -1,0 +1,38 @@
+# One positive and one negative fixture per rule, at minimum (enforced by a test).
+# Positives use reserved hosts only. Negatives may name official domains; nothing is fetched.
+
+["url.ip_literal"]
+positive = ["http://203.0.113.5/x", "http://[2001:db8::7]/x"]
+negative = ["https://www.example.com/", "https://203-0-113-5.example.test/"]
+
+["url.ip_obfuscated"]
+positive = ["http://3405803781/x", "http://0xcb007105/x", "http://[::ffff:203.0.113.5]/"]
+negative = ["http://203.0.113.5/x", "https://www.example.com/"]
+
+["url.userinfo_deception"]
+positive = ["https://paypal.com@secure-check.test/", "http://accounts.google.com@evil.test/x", "https://bank.example@evil.test/"]
+negative = ["https://alice@example.test/", "https://social.example.test/@paypal", "https://example.test/?u=paypal.com@x"]
+
+["url.homograph_brand"]
+positive = ["https://аllegro.test/", "https://рaypal.test/login", "https://xn--pple-43d.test/"]
+negative = ["https://allegro.pl/", "https://münchen-info.test/", "https://example.test/"]
+
+["url.mixed_script"]
+positive = ["https://аllegro.test/", "https://secуre.test/"]
+negative = ["https://gdańsk-muzeum.test/", "https://例え.test/", "https://example.test/"]
+
+["url.typosquat"]
+positive = ["https://paypa1.test/", "https://arnazon.test/", "https://micosoft.test/", "https://ollx.test/", "https://paypal.test/", "https://pay-pal.test/"]
+negative = ["https://www.paypal.com/", "https://apply.test/", "https://example.test/", "https://steam.test/"]
+
+["url.combosquat"]
+positive = ["https://paypal-login.test/", "https://inpost-paczka.test/", "https://olxkonto.test/", "https://secure-mbank.test/"]
+negative = ["https://mbank-opinie.test/", "https://mbank.pl/", "https://example-login.test/"]
+
+["url.brand_in_domain"]
+positive = ["https://mbank-opinie.test/", "https://allegro-poradnik.test/"]
+negative = ["https://paypal-login.test/", "https://allegro.pl/", "https://example.test/"]
+
+["url.brand_in_subdomain"]
+positive = ["https://paypal.com.evil.test/", "https://login.mbank.pl.check.test/", "https://paypal.evil.test/", "https://www.allegro.pl-konto.check.test/"]
+negative = ["https://www.paypal.com/", "https://login.example.test/", "https://mail.google.com/"]

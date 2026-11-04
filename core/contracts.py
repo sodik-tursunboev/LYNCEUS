@@ -140,6 +140,7 @@ class Verdict(_Model):
     applied_response: ResponseAction  # NONE until a response has actually run
     explanation: Annotated[str, Field(min_length=1)]
     engine_version: Annotated[str, Field(min_length=1)]
+    ruleset_version: Annotated[str, Field(min_length=1)]  # semver + hash of the rule data
     created_at: AwareDatetime = Field(default_factory=_now)
 
     @model_validator(mode="after")

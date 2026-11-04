@@ -17,7 +17,7 @@ TASKS: dict[str, list[list[str]]] = {
     "lint": [
         [PY, "-m", "ruff", "check", "."],
         [PY, "-m", "ruff", "format", "--check", "."],
-        [PY, "-m", "mypy", "core", "eval", "tasks.py"],
+        [PY, "-m", "mypy", "core", "eval", "rules", "tasks.py"],
     ],
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
     # extras beyond the five core tasks

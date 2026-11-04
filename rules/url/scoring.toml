@@ -1,0 +1,28 @@
+# Scoring config for the URL rule pack. Model: docs/DETECTION_ENGINE.md, ADR-013.
+# Tune against the dev split only. Any change here changes ruleset_version.
+
+[ruleset]
+version = "1.0.0"
+
+[thresholds]
+suspicious = 45     # score at or above: SUSPICIOUS
+malicious = 80      # score at or above, plus independent categories below: MALICIOUS
+high_weight = 0.5   # a category counts as independent evidence with a signal this strong
+min_categories = 2  # one feature alone never makes something malicious
+
+# Most a category can contribute, however many of its signals fire.
+[category_caps]
+host = 0.6
+deception = 0.75
+impersonation = 0.85
+
+[weights]
+"url.ip_literal" = 0.3
+"url.ip_obfuscated" = 0.55
+"url.userinfo_deception" = 0.7
+"url.homograph_brand" = 0.8
+"url.mixed_script" = 0.55
+"url.typosquat" = 0.7
+"url.combosquat" = 0.7
+"url.brand_in_subdomain" = 0.7
+"url.brand_in_domain" = 0.3

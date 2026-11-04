@@ -18,4 +18,5 @@ def analyze(artifact: Artifact) -> Verdict:
         applied_response=ResponseAction.NONE,
         explanation="Stub engine (M0): no detection rules are implemented.",
         engine_version=ENGINE_VERSION,
+        ruleset_version="none",
     )

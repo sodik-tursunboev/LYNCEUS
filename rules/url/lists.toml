@@ -1,0 +1,22 @@
+# Word and host lists for the URL rules. Provenance: drafted by hand 2026-11-04 from general
+# knowledge, unverified. These are data, not code: changing them changes the ruleset hash.
+
+# Words that turn "brand in a domain" into a combosquat, and brand mentions into credential bait.
+keywords = [
+  "login", "log-in", "signin", "sign-in", "secure", "security", "verify", "verification", "account",
+  "update", "support", "billing", "confirm", "invoice", "recovery", "alert", "auth", "wallet",
+  "payment", "suspended", "unlock", "helpdesk", "webmail",
+  # Polish, without diacritics (hostnames rarely carry them)
+  "logowanie", "zaloguj", "weryfikacja", "potwierdzenie", "potwierdz", "konto", "platnosc",
+  "platnosci", "odbior", "paczka", "paczki", "przesylka", "doplata", "dostawa", "bezpieczenstwo",
+  "aktualizacja", "blokada", "faktura", "odblokuj", "zwrot",
+]
+
+# Ordinary words one edit away from a brand term: never a typosquat.
+not_typos = ["apply", "ample", "maple", "stream", "paypay", "adore", "abode", "goggles", "giggle"]
+
+# Official hosts where anyone can publish content: never allowlisted, whoever owns the domain.
+shared_hosts = [
+  "sites.google.com", "docs.google.com", "drive.google.com", "forms.office.com", "sharepoint.com",
+  "onedrive.live.com", "1drv.ms", "storage.googleapis.com",
+]

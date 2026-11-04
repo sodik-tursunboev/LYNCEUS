@@ -222,6 +222,11 @@
       ],
       "title": "Risk Score"
     },
+    "ruleset_version": {
+      "minLength": 1,
+      "title": "Ruleset Version",
+      "type": "string"
+    },
     "signals": {
       "items": {
         "$ref": "#/$defs/Signal"
@@ -244,7 +249,8 @@
     "recommended_response",
     "applied_response",
     "explanation",
-    "engine_version"
+    "engine_version",
+    "ruleset_version"
   ],
   "title": "Verdict",
   "type": "object"
