@@ -21,7 +21,7 @@ TASKS: dict[str, list[list[str]]] = {
     ],
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
     # extras beyond the five core tasks
-    "fmt": [[PY, "-m", "ruff", "check", "--fix", "."], [PY, "-m", "ruff", "format", "."]],
+    "fmt": [[PY, "-m", "ruff", "format", "."], [PY, "-m", "ruff", "check", "--fix", "."]],
     "secrets": [  # secret scan against .secrets.baseline; callers append the file names
         [
             PY,

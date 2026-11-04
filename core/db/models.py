@@ -70,7 +70,8 @@ class Artifact(Base):
     )
     kind: Mapped[str] = mapped_column(String(16))
     sha256: Mapped[str] = mapped_column(String(64), index=True)
-    ref: Mapped[str] = mapped_column(Text)  # locator; a URL here is sensitive (ADR-007)
+    ref: Mapped[str] = mapped_column(Text)  # "sha256:<hash>" in M1: no URL text before ADR-007
+    host: Mapped[str | None] = mapped_column(String(253), index=True)
     created_at: Mapped[CreatedAt]
 
 
@@ -148,6 +149,7 @@ class Verdict(Base):
     applied_response: Mapped[str] = mapped_column(String(16))
     explanation: Mapped[str] = mapped_column(Text)
     engine_version: Mapped[str] = mapped_column(String(64))
+    ruleset_version: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[CreatedAt] = mapped_column(index=True)
 
 
@@ -202,6 +204,19 @@ class Evidence(Base):
     summary: Mapped[str] = mapped_column(Text)  # redacted; safe to log and display
     sha256: Mapped[str | None] = mapped_column(String(64), index=True)
     created_at: Mapped[CreatedAt]
+
+
+class DetectionEvidence(Base):
+    """Which evidence backs which detection (a contract `Signal.evidence_ids`)."""
+
+    __tablename__ = "detection_evidence"
+
+    detection_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("detections.id", ondelete="CASCADE"), primary_key=True
+    )
+    evidence_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evidence.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
 
 
 class AuditLog(Base):

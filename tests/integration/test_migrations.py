@@ -1,102 +1,56 @@
-"""Migration tests.
+"""Migration tests. See conftest.py for how each runs on SQLite and on real PostgreSQL."""
 
-Every test runs on SQLite (fast schema check). The `postgres` variant runs the same tests against a
-real server when MIRAGE_TEST_DATABASE_URL points at one, inside a throw-away schema; otherwise it
-is skipped. PostgreSQL is the production target, so until that variant has run, "migrations apply
-to an empty database" is only verified for SQLite (see docs/KNOWN_LIMITATIONS.md).
-"""
-
-import os
 import uuid
-from collections.abc import Iterator
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 import pytest
 import sqlalchemy as sa
 from alembic import command
 from alembic.autogenerate import compare_metadata
-from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import Engine, create_engine, inspect, text
-from sqlalchemy.exc import IntegrityError, OperationalError
+from dbhelp import alembic_config, upgrade
+from sqlalchemy import Engine, inspect
+from sqlalchemy.exc import IntegrityError
 
 from core.db.models import Base
 
-ROOT = Path(__file__).parents[2]
 TABLES = {
     "events", "artifacts", "extracted_urls", "domains", "provider_results", "detections",
-    "verdicts", "evidence", "evidence_payloads", "audit_logs",
+    "verdicts", "evidence", "evidence_payloads", "detection_evidence", "audit_logs",
 }  # fmt: skip
 LOOKUPS = {
     "events": ["observed_at"],
-    "artifacts": ["sha256", "event_id"],
+    "artifacts": ["sha256", "event_id", "host"],
     "domains": ["name", "registered_domain"],
     "extracted_urls": ["artifact_id", "url_sha256", "domain_id"],
     "provider_results": ["artifact_id", "provider"],
     "detections": ["artifact_id", "rule_id"],
     "verdicts": ["artifact_id", "state"],
     "evidence": ["artifact_id", "sha256", "payload_id"],
+    "detection_evidence": ["evidence_id"],
     "audit_logs": ["action", "target_id", "at"],
 }
 
 
-@pytest.fixture(params=["sqlite", pytest.param("postgres", marks=pytest.mark.integration)])
-def engine(request: pytest.FixtureRequest, tmp_path: Path) -> Iterator[Engine]:
-    if request.param == "sqlite":
-        eng = create_engine(f"sqlite:///{tmp_path / 'm.db'}")
-        yield eng
-        eng.dispose()
-        return
-    url = os.environ.get("MIRAGE_TEST_DATABASE_URL")
-    if not url:
-        pytest.skip("MIRAGE_TEST_DATABASE_URL not set")
-    admin = create_engine(url)
-    try:
-        admin.connect().close()
-    except OperationalError:
-        pytest.skip("PostgreSQL not reachable")
-    schema = f"t_{uuid.uuid4().hex[:12]}"
-    with admin.begin() as c:
-        c.execute(text(f'CREATE SCHEMA "{schema}"'))  # noqa: S608
-    eng = create_engine(url, connect_args={"options": f"-csearch_path={schema}"})
-    yield eng
-    eng.dispose()
-    with admin.begin() as c:
-        c.execute(text(f'DROP SCHEMA "{schema}" CASCADE'))  # noqa: S608
-    admin.dispose()
-
-
-def _cfg(conn: sa.Connection) -> Config:
-    cfg = Config(str(ROOT / "alembic.ini"))
-    cfg.attributes["connection"] = conn
-    return cfg
-
-
-def _upgrade(engine: Engine) -> None:
-    with engine.begin() as conn:
-        command.upgrade(_cfg(conn), "head")
-
-
 def test_migrations_apply_to_an_empty_database(engine: Engine) -> None:
     assert inspect(engine).get_table_names() == []
-    _upgrade(engine)
+    upgrade(engine)
     assert set(inspect(engine).get_table_names()) == TABLES | {"alembic_version"}
 
 
 def test_upgrade_is_repeatable_and_downgrade_is_clean(engine: Engine) -> None:
-    _upgrade(engine)
-    _upgrade(engine)  # already at head: no-op, no error
+    upgrade(engine)
+    upgrade(engine)  # already at head: no-op, no error
     with engine.begin() as conn:
-        command.downgrade(_cfg(conn), "base")
+        command.downgrade(alembic_config(conn), "base")
     assert set(inspect(engine).get_table_names()) <= {"alembic_version"}
-    _upgrade(engine)  # and it comes back
+    upgrade(engine)  # and it comes back
     assert set(inspect(engine).get_table_names()) == TABLES | {"alembic_version"}
 
 
 def test_lookup_columns_are_indexed(engine: Engine) -> None:
-    _upgrade(engine)
+    upgrade(engine)
     insp = inspect(engine)
     for table, cols in LOOKUPS.items():
         covered = [i["column_names"] for i in insp.get_indexes(table)]
@@ -106,14 +60,14 @@ def test_lookup_columns_are_indexed(engine: Engine) -> None:
 
 
 def test_migration_matches_the_models(engine: Engine) -> None:
-    _upgrade(engine)
+    upgrade(engine)
     with engine.connect() as conn:
         ctx = MigrationContext.configure(conn, opts={"compare_type": True})
         assert compare_metadata(ctx, Base.metadata) == []
 
 
 def test_sensitive_bytes_live_only_in_evidence_payloads(engine: Engine) -> None:
-    _upgrade(engine)
+    upgrade(engine)
     insp = inspect(engine)
     for table in TABLES - {"evidence_payloads"}:
         blobs = [
@@ -129,7 +83,7 @@ def test_sensitive_bytes_live_only_in_evidence_payloads(engine: Engine) -> None:
 
 @pytest.fixture
 def artifact_id(engine: Engine) -> uuid.UUID:
-    _upgrade(engine)
+    upgrade(engine)
     t = Base.metadata.tables
     event_id, art_id = uuid.uuid4(), uuid.uuid4()
     with engine.begin() as conn:
@@ -148,7 +102,7 @@ def _verdict(art: uuid.UUID, **over: Any) -> dict[str, Any]:
     row = {
         "id": uuid.uuid4(), "artifact_id": art, "state": "SUSPICIOUS", "risk_score": 40,
         "confidence": "LOW", "recommended_response": "NONE", "applied_response": "NONE",
-        "explanation": "t", "engine_version": "t",
+        "explanation": "t", "engine_version": "t", "ruleset_version": "t",
     }  # fmt: skip
     return row | over
 

@@ -1,5 +1,6 @@
 """The deterministic URL engine: raw URL in, verdict and evidence out. Offline by construction."""
 
+import hashlib
 import logging
 from uuid import UUID, uuid4
 
@@ -15,7 +16,7 @@ from core.contracts import (
     VerdictState,
 )
 from core.risk.scoring import Scored, score
-from core.urls.parse import HostKind, ParsedUrl, ParseFailure, parse_url
+from core.urls.parse import HostKind, ParsedUrl, ParseFailure, UrlFlag, parse_url
 from rules.url import RULES
 from rules.url.data import lists, official_domains, ruleset_version, scoring
 
@@ -24,12 +25,35 @@ _NOT_SAFE = "This is not evidence of safety: there are no reputation, age or pag
 log = logging.getLogger(__name__)
 
 
+class UrlReport(BaseModel):
+    """What callers see: the API and the CLI print this shape."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    verdict: Verdict
+    evidence: tuple[Evidence, ...]
+    normalized_url: str | None
+    flags: tuple[UrlFlag, ...]
+    reason: str | None  # why the URL was not analysed: empty, too_long, unparseable, no_host, error
+
+
 class UrlAnalysis(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    input_sha256: str
     url: ParsedUrl | None  # None when the input could not be parsed
     verdict: Verdict
     evidence: tuple[Evidence, ...]
+    reason: str | None = None
+
+    def report(self) -> UrlReport:
+        return UrlReport(
+            verdict=self.verdict,
+            evidence=self.evidence,
+            normalized_url=self.url.normalized if self.url else None,
+            flags=self.url.flags if self.url else (),
+            reason=self.reason,
+        )
 
 
 def _allowlisted(u: ParsedUrl) -> bool:
@@ -71,9 +95,12 @@ def _explain(scored: Scored, signals: list[Signal], allowlisted: bool) -> str:
     return f"Score {scored.risk_score} from: {names}."
 
 
-def _unscored(artifact_id: UUID, state: VerdictState, why: str) -> UrlAnalysis:
+def _unscored(
+    artifact_id: UUID, digest: str, state: VerdictState, why: str, reason: str
+) -> UrlAnalysis:
     scored = Scored(state, None, Confidence.LOW, ResponseAction.NONE)
-    return UrlAnalysis(url=None, verdict=_verdict(artifact_id, scored, [], [], why), evidence=())
+    verdict = _verdict(artifact_id, scored, [], [], why)
+    return UrlAnalysis(input_sha256=digest, url=None, verdict=verdict, evidence=(), reason=reason)
 
 
 def _rules(u: ParsedUrl) -> tuple[list[Signal], list[Evidence]]:
@@ -100,20 +127,27 @@ def _rules(u: ParsedUrl) -> tuple[list[Signal], list[Evidence]]:
 
 def analyze_url(raw: str, artifact_id: UUID | None = None) -> UrlAnalysis:
     aid = artifact_id or uuid4()
+    digest = hashlib.sha256(raw.encode("utf-8", "surrogatepass")).hexdigest()
     try:
         parsed = parse_url(raw)
         if isinstance(parsed, ParseFailure):
             why = f"Not analysed ({parsed.reason.value}): {parsed.detail}. {_NOT_SAFE}"
-            return _unscored(aid, VerdictState.UNKNOWN, why)
+            return _unscored(aid, digest, VerdictState.UNKNOWN, why, parsed.reason.value.lower())
         signals, evidence = _rules(parsed)
+        if parsed.has(UrlFlag.REFANGED):
+            note = "the input was defanged; it was restored before analysis"
+            evidence.append(Evidence(kind="input_note", summary=note, sha256=digest))
         allowlisted = _allowlisted(parsed)
         scored = score(signals, allowlisted, scoring())
         why = _explain(scored, signals, allowlisted)
         verdict = _verdict(aid, scored, signals, evidence, why)
-        return UrlAnalysis(url=parsed, verdict=verdict, evidence=tuple(evidence))
+        return UrlAnalysis(
+            input_sha256=digest, url=parsed, verdict=verdict, evidence=tuple(evidence)
+        )
     except Exception:  # never let a bug read as "no verdict": ERROR is an explicit state
         log.exception("url analysis failed")
-        return _unscored(aid, VerdictState.ERROR, f"Analysis failed. {_NOT_SAFE}")
+        why = f"Analysis failed. {_NOT_SAFE}"
+        return _unscored(aid, digest, VerdictState.ERROR, why, "error")
 
 
 def analyze(artifact: Artifact) -> Verdict:

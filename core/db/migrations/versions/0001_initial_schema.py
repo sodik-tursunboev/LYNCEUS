@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-11-04 21:45:26.684210
+Create Date: 2026-11-04 23:29:51.951625
 
 """
 
@@ -24,12 +24,7 @@ def upgrade() -> None:
     op.create_table(
         "audit_logs",
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column(
-            "at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
-        ),
+        sa.Column("at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("actor", sa.String(length=64), nullable=False),
         sa.Column("action", sa.String(length=64), nullable=False),
         sa.Column("target_type", sa.String(length=32), nullable=False),
@@ -52,10 +47,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column(
-            "last_seen_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "last_seen_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_domains")),
         sa.UniqueConstraint("name", name=op.f("uq_domains_name")),
@@ -69,10 +61,7 @@ def upgrade() -> None:
         sa.Column("source", sa.String(length=32), nullable=False),
         sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_events")),
     )
@@ -83,10 +72,7 @@ def upgrade() -> None:
         sa.Column("ciphertext", sa.LargeBinary(), nullable=False),
         sa.Column("key_id", sa.String(length=64), nullable=False),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_evidence_payloads")),
     )
@@ -97,11 +83,9 @@ def upgrade() -> None:
         sa.Column("kind", sa.String(length=16), nullable=False),
         sa.Column("sha256", sa.String(length=64), nullable=False),
         sa.Column("ref", sa.Text(), nullable=False),
+        sa.Column("host", sa.String(length=253), nullable=True),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["event_id"],
@@ -112,6 +96,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_artifacts")),
     )
     op.create_index(op.f("ix_artifacts_event_id"), "artifacts", ["event_id"], unique=False)
+    op.create_index(op.f("ix_artifacts_host"), "artifacts", ["host"], unique=False)
     op.create_index(op.f("ix_artifacts_sha256"), "artifacts", ["sha256"], unique=False)
     op.create_table(
         "extracted_urls",
@@ -122,10 +107,7 @@ def upgrade() -> None:
         sa.Column("url_sha256", sa.String(length=64), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["artifact_id"],
@@ -197,11 +179,9 @@ def upgrade() -> None:
         sa.Column("applied_response", sa.String(length=16), nullable=False),
         sa.Column("explanation", sa.Text(), nullable=False),
         sa.Column("engine_version", sa.String(length=64), nullable=False),
+        sa.Column("ruleset_version", sa.String(length=64), nullable=False),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.CheckConstraint(
             "(state IN ('UNKNOWN', 'ERROR')) = (risk_score IS NULL)",
@@ -248,10 +228,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("attack", sa.String(length=16), nullable=True),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.CheckConstraint("weight >= 0 AND weight <= 1", name=op.f("ck_detections_weight_range")),
         sa.ForeignKeyConstraint(
@@ -281,10 +258,7 @@ def upgrade() -> None:
         sa.Column("summary", sa.Text(), nullable=False),
         sa.Column("sha256", sa.String(length=64), nullable=True),
         sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
         sa.ForeignKeyConstraint(
             ["artifact_id"],
@@ -309,12 +283,38 @@ def upgrade() -> None:
     op.create_index(op.f("ix_evidence_payload_id"), "evidence", ["payload_id"], unique=False)
     op.create_index(op.f("ix_evidence_sha256"), "evidence", ["sha256"], unique=False)
     op.create_index(op.f("ix_evidence_verdict_id"), "evidence", ["verdict_id"], unique=False)
+    op.create_table(
+        "detection_evidence",
+        sa.Column("detection_id", sa.Uuid(), nullable=False),
+        sa.Column("evidence_id", sa.Uuid(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["detection_id"],
+            ["detections.id"],
+            name=op.f("fk_detection_evidence_detection_id_detections"),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["evidence_id"],
+            ["evidence.id"],
+            name=op.f("fk_detection_evidence_evidence_id_evidence"),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint("detection_id", "evidence_id", name=op.f("pk_detection_evidence")),
+    )
+    op.create_index(
+        op.f("ix_detection_evidence_evidence_id"),
+        "detection_evidence",
+        ["evidence_id"],
+        unique=False,
+    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f("ix_detection_evidence_evidence_id"), table_name="detection_evidence")
+    op.drop_table("detection_evidence")
     op.drop_index(op.f("ix_evidence_verdict_id"), table_name="evidence")
     op.drop_index(op.f("ix_evidence_sha256"), table_name="evidence")
     op.drop_index(op.f("ix_evidence_payload_id"), table_name="evidence")
@@ -337,6 +337,7 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_extracted_urls_artifact_id"), table_name="extracted_urls")
     op.drop_table("extracted_urls")
     op.drop_index(op.f("ix_artifacts_sha256"), table_name="artifacts")
+    op.drop_index(op.f("ix_artifacts_host"), table_name="artifacts")
     op.drop_index(op.f("ix_artifacts_event_id"), table_name="artifacts")
     op.drop_table("artifacts")
     op.drop_table("evidence_payloads")
