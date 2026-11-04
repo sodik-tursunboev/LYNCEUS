@@ -11,7 +11,7 @@ PY = str(_VENV_PY) if _VENV_PY.exists() else sys.executable  # works without act
 COMPOSE = "infra/docker-compose.yml"
 
 TASKS: dict[str, list[list[str]]] = {
-    "up": [["docker", "compose", "-f", COMPOSE, "up", "-d", "--wait"]],
+    "up": [["docker", "compose", "--env-file", ".env", "-f", COMPOSE, "up", "-d", "--wait"]],
     "test": [[PY, "-m", "pytest"]],
     "eval": [[PY, "-m", "eval"]],
     "lint": [

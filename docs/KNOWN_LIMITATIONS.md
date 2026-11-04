@@ -3,7 +3,7 @@
 Written to be read before trusting anything in the repo. Items marked **unverified** have code or config but were never run.
 
 ## Not verified
-- **PostgreSQL.** Docker is not installed on the development machine, so `infra/docker-compose.yml` has never been started and the PostgreSQL variant of the migration tests (21 tests, skipped) has never run. The migration is verified on SQLite only: it applies to an empty database, downgrades to base, matches the models, and its CHECK constraints reject bad rows. Native PostgreSQL behaviour (native uuid, timestamptz, how the boolean CHECK expressions evaluate) is **unverified**.
+- **PostgreSQL in CI.** Verified locally on PostgreSQL 17 through Docker (2026-11-04): all 21 PostgreSQL migration tests pass and `migrate` applies. CI has no PostgreSQL service yet, so those tests skip there.
 - **CI.** `.github/workflows/ci.yml` has never run: there is no remote. Its steps are the same `tasks.py` commands that pass locally. Action versions are pinned by tag, not commit SHA.
 - **Python 3.12.** CI targets the declared floor (3.12); everything was run on 3.14.7 only.
 - **Linux/macOS.** Developed and tested on Windows 11 only.
