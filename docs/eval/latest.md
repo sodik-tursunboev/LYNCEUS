@@ -1,6 +1,6 @@
 # Eval report
 
-Engine `stub-0` | split `all` | n=30 | 2026-11-04 20:36Z
+Engine `stub-0` | split `all` | n=30 | 2026-11-04 20:50Z
 
 | TP | FP | FN | TN | abstain (pos/neg) | error (pos/neg) |
 |---|---|---|---|---|---|
@@ -10,6 +10,6 @@ Engine `stub-0` | split `all` | n=30 | 2026-11-04 20:36Z
 |---|---|---|---|---|---|
 | n/a | 0.000 | n/a | 0.000 | 1.000 | 0.000 |
 
-Latency: p50 0.006 ms, p95 0.012 ms, max 0.036 ms.
+Latency: p50 0.006 ms, p95 0.016 ms, max 0.039 ms.
 
 FN counts abstentions and errors on positive samples (ADR-005). `n/a` = undefined (zero denominator). Small corpus: treat as a pipeline check, not a quality claim.

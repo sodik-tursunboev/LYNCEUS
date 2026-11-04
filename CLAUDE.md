@@ -92,4 +92,9 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `test` | pytest (integration tests skip when no database is reachable) |
 | `eval` | run the stub engine over `corpus/`, write a report to `docs/eval/` |
 | `lint` | ruff check + format check + mypy |
-| `migrate` | `alembic upgrade head` |
+| `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
+| `fmt` | `ruff check --fix` + `ruff format` |
+| `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |
+| `hooks` | enable `.githooks` for this clone (run once) |
+
+Setup on a fresh clone: `python -m venv .venv`, `.venv\Scripts\pip install -r requirements-dev.txt`, `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.

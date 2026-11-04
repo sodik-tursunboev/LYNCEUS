@@ -11,8 +11,11 @@ Local-first phishing detection and threat intelligence for Windows. Work in prog
 ```
 python -m venv .venv
 .venv\Scripts\pip install -r requirements-dev.txt
+python tasks.py hooks
 python tasks.py test
 python tasks.py eval
 ```
+
+Known limitations and what is still unverified: [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 
 See the Commands table in `CLAUDE.md` for all tasks.
