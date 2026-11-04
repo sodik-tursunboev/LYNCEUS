@@ -8,6 +8,7 @@ import ada_url
 
 DATA = Path(__file__).parent / "data" / "public_suffix_list.dat"
 _PRIVATE_SECTION = "===BEGIN PRIVATE DOMAINS==="
+_MAX_RULE_LABELS = 8  # a test checks every rule in the snapshot fits
 
 
 class Match(NamedTuple):
@@ -67,18 +68,19 @@ def lookup(host: str) -> Match:
     """
     rules = _load()
     labels = host.split(".")
-    for i in range(len(labels)):
-        tail = ".".join(labels[i:])
+    window = labels[-_MAX_RULE_LABELS:]  # no rule is longer; hostile hosts have thousands of labels
+    for i in range(len(window)):
+        tail = ".".join(window[i:])
         if tail in rules.exception:
-            return _result(labels, len(labels) - i - 1, rules.exception[tail])
-    for i in range(len(labels)):  # longest candidate first, so the first hit is the longest rule
-        n = len(labels) - i
+            return _result(labels, len(window) - i - 1, rules.exception[tail])
+    for i in range(len(window)):  # longest candidate first, so the first hit is the longest rule
+        n = len(window) - i
         if n < 2:
             break
-        tail = ".".join(labels[i:])
+        tail = ".".join(window[i:])
         if tail in rules.plain:
             return _result(labels, n, rules.plain[tail])
-        parent = ".".join(labels[i + 1 :])
+        parent = ".".join(window[i + 1 :])
         if parent in rules.wildcard:
             return _result(labels, n, rules.wildcard[parent])
     # Single-label rules (com, uk, ...) and the implicit `*` rule both give: the last label.

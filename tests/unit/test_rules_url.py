@@ -21,6 +21,9 @@ ATTACK_V20 = {"T1566.002", "T1598.003", "T1204.001"}  # checked on attack.mitre.
 
 
 def parsed(url: str) -> ParsedUrl:
+    # PATH<n> pads to n characters: a long fixture stays readable.
+    if m := re.search(r"PATH(\d+)$", url):
+        url = url[: m.start()] + "a" * (int(m.group(1)) - m.start())
     u = parse_url(url)
     assert isinstance(u, ParsedUrl), url
     return u

@@ -1,3 +1,4 @@
+import time
 from collections.abc import Sequence
 from typing import Any
 
@@ -53,6 +54,12 @@ def test_official_domain_is_benign_high() -> None:
     assert (v.state, v.risk_score) == (V.BENIGN, 0)
 
 
+def test_the_allowlist_never_silences_an_open_redirect() -> None:
+    a = analyze_url("https://www.google.com/out?to=http://phish.invalid/")
+    assert a.verdict.state is V.SUSPICIOUS
+    assert [s.rule_id for s in a.verdict.signals] == ["url.open_redirect"]
+
+
 @pytest.mark.parametrize(
     "url",
     [
@@ -95,6 +102,26 @@ def test_signals_carry_evidence_and_attack_tags() -> None:
     assert ids == set(a.verdict.evidence_ids) and ids
     for s in a.verdict.signals:
         assert s.attack and set(s.evidence_ids) <= ids
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://" + "a." * 4000 + "test/",
+        "https://" + "a-" * 4000 + "a.test/",
+        "https://" + "a" * 8000 + ".test/",
+        "https://" + "a.a." * 2000 + "@evil.test/",
+        "https://example.test/?" + "url=http://x.invalid&" * 370,
+        "https://example.test/?x=" + "A" * 8000,
+        "https://example.test/" + "paypal/" * 1100,
+        "https://example.test/" + "a-" * 4000,
+    ],
+)
+def test_hostile_urls_stay_fast_and_never_crash(url: str) -> None:
+    t0 = time.perf_counter()
+    state = analyze_url(url).verdict.state
+    assert time.perf_counter() - t0 < 0.5
+    assert state is not V.ERROR
 
 
 def test_signals_are_in_a_stable_order() -> None:

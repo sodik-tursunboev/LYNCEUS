@@ -153,14 +153,11 @@ def brand_in_domain(u: ParsedUrl) -> str | None:
 def brand_in_subdomain(u: ParsedUrl) -> str | None:
     if not _candidate(u) or not u.subdomain:
         return None
-    labels = u.subdomain.split(".")
-    n = len(labels)
-    runs = {".".join(labels[i:j]) for i in range(n) for j in range(i + 1, n + 1)}
-    hit = next((d for d in official_domains() if d in runs), None)
-    if hit is None:  # www.paypal.com-login.evil.test: the domain glued to a word
-        hit = next((d for d in official_domains() if f".{d}-" in f".{u.subdomain}"), None)
-    if hit:
-        return f"{hit} appears as a subdomain of {u.registered_domain}"
+    wrapped = f".{u.subdomain}."
+    for d in official_domains():  # also catches the domain glued to a word: paypal.com-login
+        if f".{d}." in wrapped or f".{d}-" in wrapped:
+            return f"{d} appears as a subdomain of {u.registered_domain}"
+    labels = set(u.subdomain.split("."))
     for b, t in _terms():
         if t in labels:
             return f"{b.name}'s name appears as a subdomain of {u.registered_domain}"

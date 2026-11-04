@@ -4,7 +4,7 @@ import hashlib
 import tomllib
 import unicodedata
 from dataclasses import dataclass
-from functools import cache
+from functools import cache, lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +60,7 @@ def _confusables() -> dict[str, str]:
     return table
 
 
-@cache
+@lru_cache(maxsize=4096)  # bounded: labels come from hostile input
 def skeleton(text: str) -> str:
     """UTS #39 skeleton, lowercased: two strings that look alike share one."""
     mapped = "".join(_confusables().get(c, c) for c in unicodedata.normalize("NFD", text))

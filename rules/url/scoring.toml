@@ -5,16 +5,24 @@
 version = "1.0.0"
 
 [thresholds]
-suspicious = 45     # score at or above: SUSPICIOUS
-malicious = 80      # score at or above, plus independent categories below: MALICIOUS
-high_weight = 0.5   # a category counts as independent evidence with a signal this strong
-min_categories = 2  # one feature alone never makes something malicious
+suspicious = 45       # score at or above: SUSPICIOUS
+malicious = 80        # score at or above, plus independent categories below: MALICIOUS
+high_weight = 0.5     # a category counts as independent evidence with a signal this strong
+min_categories = 2    # one feature alone never makes something malicious
+long_url = 2000       # characters, url.excessive_length
+many_hyphens = 4      # in the registered domain, url.host_shape
+deep_subdomains = 5   # labels, url.host_shape
 
 # Most a category can contribute, however many of its signals fire.
 [category_caps]
 host = 0.6
 deception = 0.75
 impersonation = 0.85
+redirect = 0.7
+credential = 0.75
+scheme = 0.8
+structure = 0.4
+obfuscation = 0.4
 
 [weights]
 "url.ip_literal" = 0.3
@@ -26,3 +34,14 @@ impersonation = 0.85
 "url.combosquat" = 0.7
 "url.brand_in_subdomain" = 0.7
 "url.brand_in_domain" = 0.3
+"url.shortener" = 0.2
+"url.open_redirect" = 0.5
+"url.encoded_target" = 0.6
+"url.credential_bait" = 0.55
+"url.prefilled_identity" = 0.5
+"url.login_path" = 0.4
+"url.dangerous_scheme" = 0.75
+"url.odd_port" = 0.25
+"url.excessive_length" = 0.35
+"url.host_shape" = 0.3
+"url.parser_tricks" = 0.35

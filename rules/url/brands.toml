@@ -19,7 +19,7 @@ brands = [
   { name = "Santander PL", terms = ["santander"], domains = ["santander.pl", "santander.com"] },
   { name = "ING", terms = ["ing", "ingbank"], domains = ["ing.pl", "ing.com", "ing.de", "ing.nl"], fuzzy = false },
   { name = "Bank Pekao", terms = ["pekao"], domains = ["pekao.com.pl", "pekao24.pl"] },
-  { name = "BNP Paribas", terms = ["bnpparibas"], domains = ["bnpparibas.pl", "bnpparibas.com", "bnpparibas"] },
+  { name = "BNP Paribas", terms = ["bnpparibas"], domains = ["bnpparibas.pl", "bnpparibas.com"] },
   { name = "Millennium", terms = ["bankmillennium"], domains = ["bankmillennium.pl"] },
   { name = "Alior Bank", terms = ["aliorbank"], domains = ["aliorbank.pl"] },
   { name = "Credit Agricole", terms = ["creditagricole", "credit-agricole"], domains = ["credit-agricole.pl", "credit-agricole.com"] },
@@ -36,7 +36,7 @@ brands = [
   { name = "Orange", terms = ["orange"], domains = ["orange.pl", "orange.com", "orange.fr"], fuzzy = false },
   # Technology and accounts
   { name = "Microsoft", terms = ["microsoft", "office365", "outlook", "onedrive", "sharepoint", "hotmail"], domains = ["microsoft.com", "microsoftonline.com", "microsoft365.com", "office.com", "outlook.com", "live.com", "hotmail.com", "onedrive.com", "sharepoint.com", "windows.com", "azure.com", "bing.com", "msn.com", "skype.com"] },
-  { name = "Google", terms = ["google", "gmail"], domains = ["google.com", "google.pl", "gmail.com", "googlemail.com", "youtube.com", "accounts.google.com"] },
+  { name = "Google", terms = ["google", "gmail"], domains = ["google.com", "google.pl", "gmail.com", "googlemail.com", "youtube.com"] },
   { name = "Apple", terms = ["apple", "icloud", "appleid"], domains = ["apple.com", "icloud.com"] },
   { name = "Amazon", terms = ["amazon", "primevideo"], domains = ["amazon.com", "amazon.pl", "amazon.de", "amazon.co.uk", "amazon.fr", "amazon.it", "amazon.es", "primevideo.com"] },
   { name = "Facebook", terms = ["facebook", "meta"], domains = ["facebook.com", "fb.com", "meta.com"] },

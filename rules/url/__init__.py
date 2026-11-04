@@ -34,4 +34,4 @@ def rule(
     return register
 
 
-from rules.url import host, impersonation  # noqa: E402, F401  (imported to register their rules)
+from rules.url import content, host, impersonation  # noqa: E402, F401  (registers their rules)

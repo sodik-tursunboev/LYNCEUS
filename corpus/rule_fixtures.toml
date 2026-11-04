@@ -36,3 +36,47 @@ negative = ["https://paypal-login.test/", "https://allegro.pl/", "https://exampl
 ["url.brand_in_subdomain"]
 positive = ["https://paypal.com.evil.test/", "https://login.mbank.pl.check.test/", "https://paypal.evil.test/", "https://www.allegro.pl-konto.check.test/"]
 negative = ["https://www.paypal.com/", "https://login.example.test/", "https://mail.google.com/"]
+
+["url.shortener"]
+positive = ["https://s.shorty.test/abc123", "https://go.tinylink.test/x"]
+negative = ["https://shorty-reviews.test/", "https://example.test/abc123"]
+
+["url.open_redirect"]
+positive = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://go.portal.test/r?next=//phish.invalid/x"]
+negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.example.test/o?url=https%3A%2F%2Fb.example.test%2F", "https://www.google.com/out?to=https%3A%2F%2Fmail.google.com%2F", "https://x.test/track?dl=https%3A%2F%2Fy.test%2F"]
+
+["url.encoded_target"]
+positive = ["https://go.portal.test/r?x=aHR0cDovL3BoaXNoLmludmFsaWQvbG9naW4=", "https://go.portal.test/r?x=http%253A%252F%252Fphish.invalid%252Flogin"]
+negative = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://x.test/a?sig=readable-signature-1"]
+
+["url.credential_bait"]
+positive = ["http://203.0.113.5/inpost/paczka/odbior", "https://evil.test/paypal/verify?x=1"]
+negative = ["https://en.wikipedia.org/wiki/PayPal", "https://www.paypal.com/signin", "https://example.test/help/verify"]
+
+["url.prefilled_identity"]
+positive = ["https://evil.test/a?email=jane.doe%40example.test", "https://evil.test/a?login_hint=jane%40example.test"]
+negative = ["https://example.test/search?q=user%40example.test", "https://accounts.google.com/?login_hint=jane%40example.test", "https://evil.test/a?email=none"]
+
+["url.login_path"]
+positive = ["http://203.0.113.5/login.php", "https://evil.test/account/verify", "https://evil.test/webmail/index.php", "https://evil.test/secure/update-billing", "https://evil.test/wp-content/x/verify.php"]
+negative = ["https://example.test/blog/login-security-tips", "https://example.test/help/how-to-verify-your-email", "https://github.com/login", "https://example.test/"]
+
+["url.dangerous_scheme"]
+positive = ["javascript:alert(1)", "data:text/html,<b>x</b>", "file:///etc/hosts"]
+negative = ["https://example.test/javascript:alert(1)", "mailto:a@example.test"]
+
+["url.odd_port"]
+positive = ["https://example.test:4443/", "http://203.0.113.5:2083/"]
+negative = ["https://example.test:8443/", "https://example.test/"]
+
+["url.excessive_length"]
+positive = ["https://example.test/PATH2000"]
+negative = ["https://example.test/PATH1000"]
+
+["url.host_shape"]
+positive = ["https://a-b-c-d-e.test/", "https://a.b.c.d.e.example.test/"]
+negative = ["https://a-b.test/", "https://a.b.c.example.test/", "http://203.0.113.5/", "https://xn--mnchen-3ya.test/"]
+
+["url.parser_tricks"]
+positive = ["http://evil.test\\@good.test/", "https://example.test/?q=%2525", "http://exa%6Dple.test/", "https://exa\tmple.test/"]
+negative = ["https://example.test/", "https://example.test/?q=%25"]

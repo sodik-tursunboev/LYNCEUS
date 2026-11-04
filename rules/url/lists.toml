@@ -12,6 +12,31 @@ keywords = [
   "aktualizacja", "blokada", "faktura", "odblokuj", "zwrot",
 ]
 
+# A whole path segment made only of these looks like a login or verification page.
+login_words = [
+  "login", "signin", "logon", "verify", "auth", "reauth", "account", "update", "billing", "confirm",
+  "identity", "webscr", "webmail", "secure", "password", "logowanie", "zaloguj", "weryfikacja",
+]
+
+# Query parameters that open-redirect kits and legitimate apps both use. Off-site targets only.
+redirect_params = [
+  "url", "uri", "redirect", "redirect_uri", "redirect_url", "redirecturl", "redir", "next",
+  "continue", "dest", "destination", "goto", "go", "return", "return_to", "returnurl", "r", "u",
+  "target", "to", "link", "out",
+]
+
+# Query parameters that prefill a victim's identity on a fake login page.
+identity_params = ["email", "e-mail", "mail", "user", "username", "userid", "login", "login_hint"]
+
+ordinary_ports = [80, 443, 8000, 8080, 8443]
+
+# The last four are the reserved names used by the test corpus.
+shorteners = [
+  "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "cutt.ly", "rebrand.ly",
+  "rb.gy", "shorturl.at", "tiny.cc", "t.ly", "s.id", "v.gd", "shorte.st", "bl.ink", "lnkd.in",
+  "shorty.test", "tinylink.test", "shrtn.test", "minilink.test",
+]
+
 # Ordinary words one edit away from a brand term: never a typosquat.
 not_typos = ["apply", "ample", "maple", "stream", "paypay", "adore", "abode", "goggles", "giggle"]
 

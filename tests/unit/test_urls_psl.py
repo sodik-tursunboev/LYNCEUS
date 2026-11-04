@@ -53,6 +53,12 @@ def test_lookup(host: str, suffix: str, registered: str | None, private: bool) -
     assert psl.lookup(host) == (suffix, registered, private)
 
 
+def test_no_rule_is_longer_than_the_lookup_window() -> None:
+    rules = psl._load()
+    longest = max(r.count(".") + 1 for table in rules for r in table)
+    assert longest + 1 <= psl._MAX_RULE_LABELS  # +1: wildcard rules match one more label
+
+
 def test_every_plain_rule_resolves_to_itself() -> None:
     rules = psl._load()
     for rule in rules.plain:

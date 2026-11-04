@@ -27,9 +27,7 @@ def userinfo_deception(u: ParsedUrl) -> str | None:
     name = (u.username or "").lower()
     if not name or u.host_kind is HostKind.NONE:
         return None
-    labels = name.split(".")
-    tails = [".".join(labels[i:]) for i in range(len(labels))]
-    if any(t in official_domains() for t in tails):
+    if any(name == d or name.endswith("." + d) for d in official_domains()):
         return f"a known brand's domain sits before the @; the real host is {u.host}"
     if any(t in name for b in brands() for t in b.terms if len(t) >= 5):
         return f"a known brand's name sits before the @; the real host is {u.host}"
