@@ -60,6 +60,7 @@ class EventSource(StrEnum):
     CORPUS = "CORPUS"
 
 
+REF_MAX_LEN = 8192
 Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 AttackId = Annotated[str, Field(pattern=r"^T\d{4}(\.\d{3})?$")]  # e.g. T1566.002
 
@@ -78,7 +79,8 @@ class Artifact(_Model):
     id: UUID = Field(default_factory=uuid4)
     kind: ArtifactKind
     sha256: Sha256
-    ref: Annotated[str, Field(min_length=1, max_length=2048)]  # sensitive for URLs: never log
+    # Sensitive for URLs: never log. Same cap as the URL parser (MAX_URL_LEN), checked by a test.
+    ref: Annotated[str, Field(min_length=1, max_length=REF_MAX_LEN)]
 
 
 class Event(_Model):

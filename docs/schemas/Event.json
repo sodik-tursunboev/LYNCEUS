@@ -13,7 +13,7 @@
           "$ref": "#/$defs/ArtifactKind"
         },
         "ref": {
-          "maxLength": 2048,
+          "maxLength": 8192,
           "minLength": 1,
           "title": "Ref",
           "type": "string"

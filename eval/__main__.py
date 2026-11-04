@@ -105,7 +105,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="eval")
     ap.add_argument("--manifest", type=Path, default=Path("corpus/manifest.jsonl"))
     ap.add_argument("--out", type=Path, default=Path("docs/eval"))
-    ap.add_argument("--split", choices=("all", "dev", "holdout"), default="all")
+    # No "all", no "reserve": dev by default, holdout only on request, reserve stays sealed.
+    ap.add_argument("--split", choices=("dev", "holdout"), default="dev")
     args = ap.parse_args(argv)
 
     report = run(load_manifest(args.manifest), stub.analyze, args.split)

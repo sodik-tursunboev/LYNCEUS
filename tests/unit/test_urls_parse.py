@@ -264,6 +264,12 @@ def test_trailing_dot_removal_that_breaks_the_host_is_unparseable_not_an_excepti
     assert fail("https://.127../@").reason is FailReason.UNPARSEABLE
 
 
+def test_every_parseable_url_fits_an_artifact() -> None:
+    from core.contracts import REF_MAX_LEN  # contracts stay free of parser imports; keep caps equal
+
+    assert REF_MAX_LEN == MAX_URL_LEN
+
+
 def test_length_cap_boundary() -> None:
     base = "http://example.test/"
     assert isinstance(parse_url(base + "a" * (MAX_URL_LEN - len(base))), ParsedUrl)

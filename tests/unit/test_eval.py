@@ -60,8 +60,9 @@ def test_stub_engine_never_says_benign_on_the_corpus() -> None:
 
 def test_splits_partition_the_corpus() -> None:
     entries = load_manifest(MANIFEST)
-    a, b = run(entries, stub.analyze, "dev"), run(entries, stub.analyze, "holdout")
-    assert a.counts.n + b.counts.n == len(entries) == run(entries, stub.analyze).counts.n
+    parts = [run(entries, stub.analyze, s).counts.n for s in ("dev", "holdout", "reserve")]
+    assert sum(parts) == len(entries) == run(entries, stub.analyze).counts.n
+    assert all(parts)
 
 
 def test_cli_end_to_end_writes_schema_valid_report(
@@ -69,7 +70,10 @@ def test_cli_end_to_end_writes_schema_valid_report(
 ) -> None:
     assert main(["--manifest", str(MANIFEST), "--out", str(tmp_path)]) == 0
     report = EvalReport.model_validate_json((tmp_path / "latest.json").read_text(encoding="utf-8"))
-    assert report.counts.n == 30
+    assert report.split == "dev"  # the default; holdout is explicit, reserve is not selectable
+    assert report.counts.n == sum(e.split.value == "dev" for e in load_manifest(MANIFEST))
+    with pytest.raises(SystemExit):
+        main(["--manifest", str(MANIFEST), "--out", str(tmp_path), "--split", "reserve"])
     assert report.rates.abstain_rate == 1.0
     assert (tmp_path / "latest.md").read_text(encoding="utf-8").startswith("# Eval report")
     assert "precision" in capsys.readouterr().out
