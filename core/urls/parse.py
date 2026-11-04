@@ -40,6 +40,7 @@ _KNOWN_NO_SLASHES = frozenset(  # schemes that are valid without "//"
 )
 _DANGEROUS = frozenset({"javascript", "data", "vbscript", "file", "blob"})
 _SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.\-]*):")
+_PORT_NEXT = re.compile(r"\d{1,5}(?:[/\\?#]|$)")
 _DOUBLE_ENCODED = re.compile(r"%25[0-9A-Fa-f]{2}")
 _REFANG_SCHEME = re.compile(r"(?i)^hxxp(s?)(?=[\[:])")
 _REFANG_TOKEN = re.compile(r"(?i)\[(?:\.|dot|:|://|/|@|at)\]|\((?:\.|dot)\)|\{(?:\.|dot)\}")
@@ -137,9 +138,9 @@ def _scheme_of(text: str) -> str | None:
     if not m:
         return None
     scheme = m.group(1).lower()
-    rest = text[m.end() :]
-    slashes = rest[:2] in ("//", "\\\\", "/\\", "\\/")
-    return scheme if (scheme in _NEEDS_HOST or scheme in _KNOWN_NO_SLASHES or slashes) else None
+    if scheme in _NEEDS_HOST or scheme in _KNOWN_NO_SLASHES:
+        return scheme
+    return None if _PORT_NEXT.match(text, m.end()) else scheme  # name:8080 is host:port
 
 
 def _authority_tokens(candidate: str) -> tuple[str, str]:

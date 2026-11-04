@@ -32,7 +32,7 @@ TASKS: dict[str, list[list[str]]] = {
     ],
     "hooks": [["git", "config", "core.hooksPath", ".githooks"]],  # once per clone
 }
-_SCAN_SKIP = ("docs/schemas/",)  # generated files: high-entropy ids, nothing to find
+_SCAN_SKIP = ("docs/schemas/", "tests/data/")  # generated files and third-party test vectors
 
 
 def run(task: str, extra: list[str]) -> int:

@@ -16,7 +16,7 @@ jobs:
           cache-dependency-path: requirements*.txt
       - run: pip install -r requirements-dev.txt
       - name: Secret scan (same task as the local pre-commit hook)
-        run: git ls-files | grep -v '^docs/schemas/' | xargs python tasks.py secrets
+        run: git ls-files | grep -Ev '^(docs/schemas|tests/data)/' | xargs python tasks.py secrets
       - name: Lint and type check
         run: python tasks.py lint
       - name: Tests
