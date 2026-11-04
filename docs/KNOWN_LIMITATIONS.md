@@ -1,36 +1,41 @@
-# Known limitations (end of M0)
+# Known limitations (end of M1)
 
-Written to be read before trusting anything in the repo. Items marked **unverified** have code or config but were never run.
+Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
-## Not verified
-- **PostgreSQL in CI.** Verified locally on PostgreSQL 17 through Docker (2026-11-04): all 21 PostgreSQL migration tests pass and `migrate` applies. CI has no PostgreSQL service yet, so those tests skip there.
-- **CI.** `.github/workflows/ci.yml` has never run: there is no remote. Its steps are the same `tasks.py` commands that pass locally. Action versions are pinned by tag, not commit SHA.
-- **Python 3.12.** CI targets the declared floor (3.12); everything was run on 3.14.7 only.
-- **Linux/macOS.** Developed and tested on Windows 11 only.
-- **Spec reconciliation (2026-11-04).** `docs/SPEC.md` is now in the repo and was read. Contracts match §7 and §8 except that `risk_score` is null for UNKNOWN/ERROR (to confirm). §13 lists entities not yet in the schema: users, devices, integrations, response_actions, allowlist, blocklist (added in M4 to M6). ADR-010's polling baseline deviates from §11 (push) and needs sign-off. §9 requires strict API authentication and rate limiting, which the M0 `/health` endpoint does not have.
+## What the M1 engine cannot catch
+- **It sees only the URL string.** No reputation, domain age, WHOIS, page content, meta-refresh or JavaScript redirects, QR codes, email or files. A freshly registered phishing domain with no brand name or keyword in it is UNKNOWN, never BENIGN.
+- **It rarely says MALICIOUS on its own.** MALICIOUS needs two independent strong categories (ADR-013). On the synthetic corpus 13 of 87 malicious dev samples and 3 of 30 malicious holdout samples reached it; the rest are SUSPICIOUS, which recommends WARN, not BLOCK. Blocking confidence has to come from threat-intel providers (M3).
+- **Shorteners are unknowable offline.** The one holdout miss is a shortener. Following redirects would help, but the resolver is off (below).
+- **The brand list is general knowledge, not verified.** 105 brands, Polish and global; every entry is `verified = false`. A wrong official domain means a false positive or a wrongly BENIGN fake. Only listed brands are protected; there are no non-Latin brands, and keywords are ASCII only.
+- **UNKNOWN is common by design:** 32% of dev and 26% of holdout. On benign samples it means "no rule fired", not "safe".
+- **Edit-distance matching can flag ordinary words** near a brand name. `not_typos` and `fuzzy = false` cover the cases found so far; the corpus has 0 false positives, but it was written by the rule author.
+- **Script detection is approximate** (Unicode character names, not the Scripts table). It separates Latin, Cyrillic and Greek well; rarer pairs are unproven.
+- **`url.credential_bait` never fired** on either split. It passes its fixtures but has no corpus coverage.
 
-## Detection and eval
-- There is no detection logic. The stub engine returns UNKNOWN for everything: abstain rate 1.0, recall 0.0, precision undefined, by design.
-- The corpus is 30 hand-written synthetic URLs (19 malicious, 11 benign; 20 dev, 10 holdout). One sample moves recall by 5 points, so M0 numbers prove the pipeline, not quality.
-- Shortener seeds are labelled by assumption (the destination is hypothetical) and one benign shortener is indistinguishable from the malicious ones without resolving. That is deliberate; expect an abstain.
-- Seeds were written by the same author who will write the rules. The holdout split exists to limit tuning, but it is small and not independent.
-- Latency numbers measure the stub only.
-- `resolve_state` is a conservative placeholder, not correlation.
+## How far the numbers can be trusted
+- 253 synthetic URLs from seeded templates (150 dev, 49 holdout, 54 sealed reserve), written by the same author as the rules. **They measure rule correctness, not the real-world detection rate.** The holdout shares the dev templates, so it tests new brands and variants, not new attack styles; it came out like dev (precision 1.000, recall 0.967), which is what shared templates predict.
+- The holdout was run **once**, on 2026-11-04, and logged in `docs/eval/holdout_runs.md`. Nothing in the rules or data changed afterwards. It has 49 samples, so recall's 95% interval is 0.833 to 0.994.
+- A holdout failure should be fixed by moving those samples to dev and drawing a new holdout from the reserve. The reserve has never been run.
+- **Latency is an order of magnitude, not a benchmark.** The same code measured 1.4 ms and 14 ms p50 on the same machine hours apart (A/B of old and new commits, no regression). `url.typosquat` is about two thirds of analysis time.
+- Parser: 554 of 560 WPT cases match; the 6 differences are deliberate (ADR-012). 320,000 fuzzed inputs produced no exception.
 
 ## Security gaps
-- **Evidence is not encrypted yet.** The schema isolates it (`evidence_payloads`), nothing writes it. `artifacts.ref` and `extracted_urls.url` store URL text in plaintext. (ADR-007)
-- `audit_logs` is append-only by convention, not enforced by the database.
-- Signal-to-evidence links (`Signal.evidence_ids`) are validated in the contract but not persisted; a `detection_evidence` table is needed when rules start producing evidence.
-- **Log redaction is heuristic** (key names plus regexes). It is tested against known patterns only. Email addresses and other personal data in free text are not redacted. A URL hash can be brute-forced for guessable URLs. Anything not routed through `core/log.py` (for example uvicorn's own access log) bypasses it; run uvicorn with `--no-access-log`.
-- `/health` is unauthenticated (acceptable while started by hand; see ADR-009).
-- No SSRF guard, sandbox or IPC exists yet; the threat model lists them as planned, not done.
+- **No URL text is stored** (decision D2), but `artifacts.host` keeps the host of every analysed URL in plaintext, which records which sites a user checked. Evidence payload encryption (ADR-007) is not implemented, and nothing writes `evidence_payloads`.
+- **No audit records.** `audit_logs` exists and is append-only by convention only; nothing writes to it, including API calls, although SPEC §9 asks for audit logging.
+- **API access is minimal:** one static bearer token from `.env` shared by every caller, no rotation, a per-process rate limit, loopback only and no TLS. The real design is ADR-009 (draft). `/health` is open.
+- **The redirect resolver is off and unwired** (ADR-011, draft). The guard has 151 offline tests, 13 mutation checks and a manual live run. Not verified: IPv6-only networks, corporate proxies, TLS-inspecting firewalls, DNS-over-HTTPS. A resolved chain is never proof of safety: phishing kits show scanners something else.
+- Log redaction is pattern-based and tested on known patterns only. Dependencies are lower-bounded, not pinned.
+
+## Not verified
+- **CI has never run.** There is no remote. Its steps are the commands that pass locally. It has no PostgreSQL service, so the PostgreSQL tests would skip there. This is the one open item in M0.
+- **Python 3.12 and Linux/macOS.** Everything ran on Windows 11 with Python 3.14.7. The `ada-url` wheels for Linux and 3.12 exist but were only downloaded, not run.
+- PostgreSQL 17 is verified locally through Docker (migrations, the store, and the API with a real uvicorn). No Docker in CI.
 
 ## Tooling and process
-- Dependencies are lower-bounded, not pinned; no lock file until M7. pytest prints one Starlette deprecation warning about `TestClient` and `httpx` (see ADR-004).
-- The git hook must be enabled once per clone (`python tasks.py hooks`). It lints the working tree rather than the index.
-- Git for Windows' `sh` cannot fork on this machine (symptoms: Git Bash fails, `git clone` of hook repos fails). Likely security software; unresolved. It is why the project uses plain `.githooks` instead of the pre-commit framework.
-- Empty future folders (`agent/`, `extension/`, `console/`) are not created; `rules/` holds only a README.
-- Uvicorn has not been started in this session; `/health` is tested through FastAPI's `TestClient` only.
+- The git hook must be enabled once per clone (`python tasks.py hooks`). Git for Windows' `sh` cannot fork on this machine, which is why hooks are plain `.githooks`.
+- pytest prints a Starlette deprecation warning about `TestClient` and `httpx` (ADR-004).
+- Tests block non-loopback network use (`tests/conftest.py`); the manual live test turns the block off on purpose.
+- `agent/`, `extension/` and `console/` do not exist yet. ADR-007 to ADR-011 are drafts waiting for your sign-off.
 
-## Next milestone
-M1, the URL engine. Plan: `docs/milestones/M1.md` (proposed, awaiting approval).
+## Next
+`docs/milestones/M2.md` (proposed, awaiting approval).

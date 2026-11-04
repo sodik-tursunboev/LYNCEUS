@@ -4,7 +4,7 @@ Local-first phishing detection and threat-intelligence system for Windows.
 **Mission:** detect phishing before the user interacts, investigate the evidence, protect the user, explain every decision.
 
 Read this file at the start of every session. Full spec: `docs/SPEC.md` (read only the sections the current milestone needs).
-**Current milestone: M0** → `docs/milestones/M0.md`
+**Current milestone: M1 complete, pending review** → `docs/milestones/M1.md`. **Next: M2 (proposed, not approved)** → `docs/milestones/M2.md`. Open from M0: CI has never run.
 
 ## What it is
 - A continuous endpoint anti-phishing system: Windows agent + Chrome/Edge extension + local analysis engine + desktop console for investigation.
