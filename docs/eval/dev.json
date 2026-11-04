@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-04T22:27:08.392146Z",
+  "generated_at": "2026-11-04T22:58:58.678586Z",
   "engine_version": "1.0.0",
   "ruleset_version": "1.0.0+a01a3baf2dc5",
   "split": "dev",
@@ -41,9 +41,9 @@
     }
   },
   "latency": {
-    "p50_ms": 1.5798000003997004,
-    "p95_ms": 3.200500000275497,
-    "max_ms": 37.119999999958964
+    "p50_ms": 16.881800000192015,
+    "p95_ms": 33.7413999995988,
+    "max_ms": 357.46449999987817
   },
   "rules": [
     {
@@ -267,7 +267,7 @@
         "url.login_path",
         "url.odd_port"
       ],
-      "latency_ms": 0.4698000002463232
+      "latency_ms": 3.5675999997692998
     },
     {
       "id": "u-002",
@@ -278,7 +278,7 @@
         "url.ip_literal",
         "url.login_path"
       ],
-      "latency_ms": 0.32300000020768493
+      "latency_ms": 2.9185999992478173
     },
     {
       "id": "u-004",
@@ -289,7 +289,7 @@
         "url.ip_literal",
         "url.login_path"
       ],
-      "latency_ms": 0.36869999985356117
+      "latency_ms": 2.577700000074401
     },
     {
       "id": "u-006",
@@ -301,7 +301,7 @@
         "url.ip_obfuscated",
         "url.login_path"
       ],
-      "latency_ms": 0.30149999975037645
+      "latency_ms": 3.661900000224705
     },
     {
       "id": "u-008",
@@ -313,7 +313,7 @@
         "url.login_path",
         "url.odd_port"
       ],
-      "latency_ms": 0.2830000003086752
+      "latency_ms": 4.111299999749463
     },
     {
       "id": "u-010",
@@ -325,7 +325,7 @@
         "url.ip_obfuscated",
         "url.login_path"
       ],
-      "latency_ms": 0.277399999959016
+      "latency_ms": 3.9707000005364534
     },
     {
       "id": "u-011",
@@ -336,7 +336,7 @@
         "url.ip_literal",
         "url.login_path"
       ],
-      "latency_ms": 0.32190000001719454
+      "latency_ms": 3.4408000001349137
     },
     {
       "id": "u-013",
@@ -347,7 +347,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 37.119999999958964
+      "latency_ms": 357.46449999987817
     },
     {
       "id": "u-014",
@@ -358,7 +358,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 1.8909999998868443
+      "latency_ms": 19.441700000243145
     },
     {
       "id": "u-016",
@@ -369,7 +369,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 1.2480000000323344
+      "latency_ms": 14.263299999583978
     },
     {
       "id": "u-018",
@@ -380,7 +380,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 1.2649999998757266
+      "latency_ms": 14.479100000244216
     },
     {
       "id": "u-020",
@@ -391,7 +391,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 1.6996999997900275
+      "latency_ms": 25.525000000016007
     },
     {
       "id": "u-022",
@@ -402,7 +402,7 @@
         "url.login_path",
         "url.userinfo_deception"
       ],
-      "latency_ms": 3.2179999998334097
+      "latency_ms": 20.490100000642997
     },
     {
       "id": "u-023",
@@ -414,7 +414,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.5928999999014195
+      "latency_ms": 6.241099999897415
     },
     {
       "id": "u-024",
@@ -426,7 +426,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.46030000021346495
+      "latency_ms": 5.238099999587575
     },
     {
       "id": "u-026",
@@ -438,7 +438,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.4672000000027765
+      "latency_ms": 6.571799999619543
     },
     {
       "id": "u-028",
@@ -450,7 +450,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.44950000028620707
+      "latency_ms": 6.14419999965321
     },
     {
       "id": "u-030",
@@ -462,7 +462,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.5369000000428059
+      "latency_ms": 5.962100000033388
     },
     {
       "id": "u-032",
@@ -474,7 +474,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.45319999981074943
+      "latency_ms": 5.859599999894272
     },
     {
       "id": "u-033",
@@ -486,7 +486,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.4582999999911408
+      "latency_ms": 6.122099999629427
     },
     {
       "id": "u-035",
@@ -498,7 +498,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.5203999999139342
+      "latency_ms": 5.4136999997354
     },
     {
       "id": "u-037",
@@ -510,7 +510,7 @@
         "url.login_path",
         "url.mixed_script"
       ],
-      "latency_ms": 0.5635000002257584
+      "latency_ms": 7.073599999785074
     },
     {
       "id": "u-039",
@@ -521,7 +521,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 0.9765999998307962
+      "latency_ms": 13.852399999450427
     },
     {
       "id": "u-040",
@@ -532,7 +532,7 @@
         "url.brand_in_domain",
         "url.typosquat"
       ],
-      "latency_ms": 0.4395999999360356
+      "latency_ms": 6.06320000042615
     },
     {
       "id": "u-042",
@@ -543,7 +543,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 1.0829000002559042
+      "latency_ms": 10.15819999975065
     },
     {
       "id": "u-044",
@@ -554,7 +554,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 0.9066999996321101
+      "latency_ms": 7.962200000292796
     },
     {
       "id": "u-046",
@@ -564,7 +564,7 @@
       "rules": [
         "url.typosquat"
       ],
-      "latency_ms": 0.8439999996880942
+      "latency_ms": 5.639500000143016
     },
     {
       "id": "u-048",
@@ -575,7 +575,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 0.8806999999251275
+      "latency_ms": 12.990899999749672
     },
     {
       "id": "u-049",
@@ -586,7 +586,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 0.43060000007244525
+      "latency_ms": 6.658799999968323
     },
     {
       "id": "u-051",
@@ -597,7 +597,7 @@
         "url.login_path",
         "url.typosquat"
       ],
-      "latency_ms": 0.8195999998861225
+      "latency_ms": 10.987399999976333
     },
     {
       "id": "u-053",
@@ -607,7 +607,7 @@
       "rules": [
         "url.typosquat"
       ],
-      "latency_ms": 0.682899999901565
+      "latency_ms": 3.4375000004729372
     },
     {
       "id": "u-055",
@@ -617,7 +617,7 @@
       "rules": [
         "url.typosquat"
       ],
-      "latency_ms": 1.1899999999513966
+      "latency_ms": 8.41960000070685
     },
     {
       "id": "u-057",
@@ -627,7 +627,7 @@
       "rules": [
         "url.combosquat"
       ],
-      "latency_ms": 1.5636999996786471
+      "latency_ms": 12.046100000588922
     },
     {
       "id": "u-058",
@@ -637,7 +637,7 @@
       "rules": [
         "url.combosquat"
       ],
-      "latency_ms": 2.0777999998244923
+      "latency_ms": 20.789399999557645
     },
     {
       "id": "u-060",
@@ -648,7 +648,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 0.6847999998171872
+      "latency_ms": 8.670499999425374
     },
     {
       "id": "u-062",
@@ -658,7 +658,7 @@
       "rules": [
         "url.combosquat"
       ],
-      "latency_ms": 0.988700000107201
+      "latency_ms": 6.819100000029721
     },
     {
       "id": "u-064",
@@ -669,7 +669,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 2.8706000002785004
+      "latency_ms": 20.954700000402227
     },
     {
       "id": "u-066",
@@ -680,7 +680,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 1.8973999999616353
+      "latency_ms": 18.52430000053573
     },
     {
       "id": "u-067",
@@ -690,7 +690,7 @@
       "rules": [
         "url.combosquat"
       ],
-      "latency_ms": 1.5798000003997004
+      "latency_ms": 15.955699999722128
     },
     {
       "id": "u-069",
@@ -701,7 +701,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 2.8144999996584374
+      "latency_ms": 23.689200000262645
     },
     {
       "id": "u-071",
@@ -711,7 +711,7 @@
       "rules": [
         "url.combosquat"
       ],
-      "latency_ms": 1.401399999849673
+      "latency_ms": 17.45329999994283
     },
     {
       "id": "u-073",
@@ -722,7 +722,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 0.7633999998688523
+      "latency_ms": 8.666599999742175
     },
     {
       "id": "u-075",
@@ -733,7 +733,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 1.6901999997571693
+      "latency_ms": 20.347700000456825
     },
     {
       "id": "u-076",
@@ -744,7 +744,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 2.9557999996541184
+      "latency_ms": 24.539099999856262
     },
     {
       "id": "u-078",
@@ -755,7 +755,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 0.9215000000040163
+      "latency_ms": 11.711799999829964
     },
     {
       "id": "u-080",
@@ -766,7 +766,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 1.3922000002821733
+      "latency_ms": 15.760900000714173
     },
     {
       "id": "u-081",
@@ -777,7 +777,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 1.7602999996597646
+      "latency_ms": 18.985499999871536
     },
     {
       "id": "u-082",
@@ -788,7 +788,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 2.272700000048644
+      "latency_ms": 16.881800000192015
     },
     {
       "id": "u-084",
@@ -799,7 +799,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 2.5172999999085732
+      "latency_ms": 25.399600000127975
     },
     {
       "id": "u-086",
@@ -810,7 +810,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 2.1163999999771477
+      "latency_ms": 23.129700000026787
     },
     {
       "id": "u-088",
@@ -821,7 +821,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 2.7982999999949243
+      "latency_ms": 26.130999999622873
     },
     {
       "id": "u-090",
@@ -832,7 +832,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 1.641700000163837
+      "latency_ms": 18.04230000016105
     },
     {
       "id": "u-091",
@@ -843,7 +843,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 1.7642000002524583
+      "latency_ms": 23.299299999962386
     },
     {
       "id": "u-093",
@@ -854,7 +854,7 @@
         "url.brand_in_subdomain",
         "url.login_path"
       ],
-      "latency_ms": 1.373799999782932
+      "latency_ms": 15.153700000155368
     },
     {
       "id": "u-095",
@@ -864,7 +864,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 2.4113999998007785
+      "latency_ms": 13.860400000339723
     },
     {
       "id": "u-096",
@@ -874,7 +874,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 1.377900000079535
+      "latency_ms": 14.90509999985079
     },
     {
       "id": "u-098",
@@ -884,7 +884,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 2.130099999703816
+      "latency_ms": 27.979600000435312
     },
     {
       "id": "u-100",
@@ -896,7 +896,7 @@
         "url.open_redirect",
         "url.parser_tricks"
       ],
-      "latency_ms": 2.7019999997719424
+      "latency_ms": 23.257200000443845
     },
     {
       "id": "u-101",
@@ -906,7 +906,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 2.395199999682518
+      "latency_ms": 28.852999999799067
     },
     {
       "id": "u-103",
@@ -916,7 +916,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 1.7128000004049682
+      "latency_ms": 24.724899999455374
     },
     {
       "id": "u-105",
@@ -926,7 +926,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 1.9707999999809545
+      "latency_ms": 22.28430000013759
     },
     {
       "id": "u-107",
@@ -937,7 +937,7 @@
         "url.encoded_target",
         "url.open_redirect"
       ],
-      "latency_ms": 2.893699999731325
+      "latency_ms": 28.586600000380713
     },
     {
       "id": "u-109",
@@ -947,7 +947,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 2.2854000003462716
+      "latency_ms": 26.86959999937244
     },
     {
       "id": "u-110",
@@ -957,7 +957,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 2.5931000000127824
+      "latency_ms": 25.06600000015169
     },
     {
       "id": "u-112",
@@ -967,7 +967,7 @@
       "rules": [
         "url.open_redirect"
       ],
-      "latency_ms": 1.7668000000412576
+      "latency_ms": 17.872600000373495
     },
     {
       "id": "u-114",
@@ -979,7 +979,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 0.9738999997352948
+      "latency_ms": 9.855000000243308
     },
     {
       "id": "u-115",
@@ -990,7 +990,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1.755799999955343
+      "latency_ms": 20.696399999906134
     },
     {
       "id": "u-117",
@@ -1002,7 +1002,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 2.2075000001677836
+      "latency_ms": 20.808000000215543
     },
     {
       "id": "u-119",
@@ -1013,7 +1013,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1.8970000000990694
+      "latency_ms": 24.31059999980789
     },
     {
       "id": "u-121",
@@ -1025,7 +1025,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1.8719999998211279
+      "latency_ms": 23.690999999416817
     },
     {
       "id": "u-123",
@@ -1037,7 +1037,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 2.054800000223622
+      "latency_ms": 21.367100000134087
     },
     {
       "id": "u-124",
@@ -1048,7 +1048,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 2.218500000253698
+      "latency_ms": 26.559000000816013
     },
     {
       "id": "u-126",
@@ -1060,7 +1060,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1.8700999999055057
+      "latency_ms": 21.739299999353534
     },
     {
       "id": "u-128",
@@ -1070,7 +1070,7 @@
       "rules": [
         "url.dangerous_scheme"
       ],
-      "latency_ms": 0.19040000006498303
+      "latency_ms": 2.664500000719272
     },
     {
       "id": "u-129",
@@ -1080,7 +1080,7 @@
       "rules": [
         "url.dangerous_scheme"
       ],
-      "latency_ms": 0.1661999999669206
+      "latency_ms": 2.2780999997848994
     },
     {
       "id": "u-131",
@@ -1090,7 +1090,7 @@
       "rules": [
         "url.dangerous_scheme"
       ],
-      "latency_ms": 0.16380000033677788
+      "latency_ms": 2.7970000001005246
     },
     {
       "id": "u-133",
@@ -1102,7 +1102,7 @@
         "url.host_shape",
         "url.login_path"
       ],
-      "latency_ms": 0.7694000000810775
+      "latency_ms": 10.991899999680754
     },
     {
       "id": "u-135",
@@ -1114,7 +1114,7 @@
         "url.odd_port",
         "url.typosquat"
       ],
-      "latency_ms": 1.1045999999623746
+      "latency_ms": 17.31999999992695
     },
     {
       "id": "u-137",
@@ -1125,7 +1125,7 @@
         "url.excessive_length",
         "url.login_path"
       ],
-      "latency_ms": 2.390399999967485
+      "latency_ms": 30.60249999998632
     },
     {
       "id": "u-138",
@@ -1136,7 +1136,7 @@
         "url.open_redirect",
         "url.userinfo_deception"
       ],
-      "latency_ms": 3.047699999569886
+      "latency_ms": 31.21220000048197
     },
     {
       "id": "u-139",
@@ -1147,7 +1147,7 @@
         "url.open_redirect",
         "url.userinfo_deception"
       ],
-      "latency_ms": 3.978999999617372
+      "latency_ms": 32.890299999962735
     },
     {
       "id": "u-141",
@@ -1158,7 +1158,7 @@
         "url.open_redirect",
         "url.typosquat"
       ],
-      "latency_ms": 1.2775000000146974
+      "latency_ms": 16.522100000656792
     },
     {
       "id": "u-143",
@@ -1170,7 +1170,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 2.110499999616877
+      "latency_ms": 24.29539999957342
     },
     {
       "id": "u-145",
@@ -1182,7 +1182,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 2.382200000283774
+      "latency_ms": 29.922400000032212
     },
     {
       "id": "u-147",
@@ -1194,7 +1194,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1.7951999998331303
+      "latency_ms": 26.277400000253692
     },
     {
       "id": "u-148",
@@ -1205,7 +1205,7 @@
         "url.open_redirect",
         "url.typosquat"
       ],
-      "latency_ms": 1.2526999998954125
+      "latency_ms": 16.359600000214414
     },
     {
       "id": "u-150",
@@ -1216,7 +1216,7 @@
         "url.open_redirect",
         "url.userinfo_deception"
       ],
-      "latency_ms": 3.150099999857048
+      "latency_ms": 30.013299999154697
     },
     {
       "id": "u-151",
@@ -1224,7 +1224,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.6069999998981075
+      "latency_ms": 23.285999999643536
     },
     {
       "id": "u-152",
@@ -1232,7 +1232,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.116199999818491
+      "latency_ms": 29.48359999936656
     },
     {
       "id": "u-154",
@@ -1240,7 +1240,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.300300000115385
+      "latency_ms": 24.177500000405416
     },
     {
       "id": "u-156",
@@ -1248,7 +1248,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.5568000000930624
+      "latency_ms": 28.25810000013007
     },
     {
       "id": "u-158",
@@ -1256,7 +1256,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1.999699999942095
+      "latency_ms": 27.937800000472635
     },
     {
       "id": "u-160",
@@ -1264,7 +1264,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.2535999996762257
+      "latency_ms": 28.116200000113167
     },
     {
       "id": "u-161",
@@ -1272,7 +1272,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.6754000000437372
+      "latency_ms": 29.030300000158604
     },
     {
       "id": "u-163",
@@ -1280,7 +1280,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.3550000001268927
+      "latency_ms": 2.479299999322393
     },
     {
       "id": "u-164",
@@ -1288,7 +1288,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.279900000350608
+      "latency_ms": 2.6782000004459405
     },
     {
       "id": "u-166",
@@ -1296,7 +1296,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.2760000002126617
+      "latency_ms": 2.5260000002162997
     },
     {
       "id": "u-168",
@@ -1304,7 +1304,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.27829999999084976
+      "latency_ms": 2.0524999999906868
     },
     {
       "id": "u-170",
@@ -1312,7 +1312,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.28699999984382885
+      "latency_ms": 2.2069999995437684
     },
     {
       "id": "u-172",
@@ -1320,7 +1320,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.33759999996618717
+      "latency_ms": 1.8853000001399778
     },
     {
       "id": "u-173",
@@ -1328,7 +1328,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.20429999995030812
+      "latency_ms": 2.383999999437947
     },
     {
       "id": "u-175",
@@ -1336,7 +1336,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.1878000002761837
+      "latency_ms": 2.5294000006397255
     },
     {
       "id": "u-177",
@@ -1344,7 +1344,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.17130000014731195
+      "latency_ms": 3.2221000001300126
     },
     {
       "id": "u-179",
@@ -1352,7 +1352,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.16709999999875436
+      "latency_ms": 2.3035000003801542
     },
     {
       "id": "u-181",
@@ -1360,7 +1360,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.17059999981938745
+      "latency_ms": 1.6170999997484614
     },
     {
       "id": "u-182",
@@ -1368,7 +1368,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.30490000017380225
+      "latency_ms": 3.4906999999293475
     },
     {
       "id": "u-184",
@@ -1376,7 +1376,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.20110000014028628
+      "latency_ms": 2.0695999992312863
     },
     {
       "id": "u-185",
@@ -1384,7 +1384,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.16770000001997687
+      "latency_ms": 2.2084000001996174
     },
     {
       "id": "u-187",
@@ -1392,7 +1392,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.15489999987039482
+      "latency_ms": 2.5389999991602963
     },
     {
       "id": "u-189",
@@ -1400,7 +1400,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.13949999993201345
+      "latency_ms": 2.012799999647541
     },
     {
       "id": "u-191",
@@ -1408,7 +1408,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.13449999960357673
+      "latency_ms": 2.311300000656047
     },
     {
       "id": "u-193",
@@ -1416,7 +1416,7 @@
       "label": "benign",
       "state": "BENIGN",
       "rules": [],
-      "latency_ms": 0.13159999980416615
+      "latency_ms": 1.87389999973675
     },
     {
       "id": "u-194",
@@ -1424,7 +1424,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1.9900000002053275
+      "latency_ms": 23.316600000725884
     },
     {
       "id": "u-196",
@@ -1434,7 +1434,7 @@
       "rules": [
         "url.brand_in_domain"
       ],
-      "latency_ms": 2.064400000108435
+      "latency_ms": 25.947099999939383
     },
     {
       "id": "u-198",
@@ -1442,7 +1442,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.5342999997992592
+      "latency_ms": 6.083600000238221
     },
     {
       "id": "u-199",
@@ -1450,7 +1450,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.4357999996500439
+      "latency_ms": 6.159800000204996
     },
     {
       "id": "u-201",
@@ -1458,7 +1458,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.5971000000499771
+      "latency_ms": 5.629100000078324
     },
     {
       "id": "u-203",
@@ -1466,7 +1466,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.5424999999377178
+      "latency_ms": 5.734100000154285
     },
     {
       "id": "u-205",
@@ -1474,7 +1474,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.7690999996157188
+      "latency_ms": 5.2615000004152535
     },
     {
       "id": "u-206",
@@ -1484,7 +1484,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 1.9989999996141705
+      "latency_ms": 21.344100000533217
     },
     {
       "id": "u-207",
@@ -1494,7 +1494,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 2.1203999999670486
+      "latency_ms": 28.270900000279653
     },
     {
       "id": "u-209",
@@ -1504,7 +1504,7 @@
       "rules": [
         "url.shortener"
       ],
-      "latency_ms": 2.6514000001043314
+      "latency_ms": 27.365300000383286
     },
     {
       "id": "u-211",
@@ -1512,7 +1512,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 3.412000000025728
+      "latency_ms": 31.8849000004775
     },
     {
       "id": "u-212",
@@ -1520,7 +1520,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 3.3207000001311826
+      "latency_ms": 33.7413999995988
     },
     {
       "id": "u-214",
@@ -1528,7 +1528,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 4.657200000110606
+      "latency_ms": 47.85439999977825
     },
     {
       "id": "u-216",
@@ -1536,7 +1536,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 3.200500000275497
+      "latency_ms": 36.622100000386126
     },
     {
       "id": "u-218",
@@ -1544,7 +1544,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.521400000205176
+      "latency_ms": 38.70999999980995
     },
     {
       "id": "u-220",
@@ -1552,7 +1552,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.2509999998874264
+      "latency_ms": 38.370600000234845
     },
     {
       "id": "u-221",
@@ -1560,7 +1560,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.68740000001344
+      "latency_ms": 23.75229999961448
     },
     {
       "id": "u-222",
@@ -1568,7 +1568,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.1283999999468506
+      "latency_ms": 28.09739999975136
     },
     {
       "id": "u-224",
@@ -1576,7 +1576,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1.9296000000394997
+      "latency_ms": 28.77230000012787
     },
     {
       "id": "u-226",
@@ -1584,7 +1584,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.636900000197784
+      "latency_ms": 24.0776000000551
     },
     {
       "id": "u-227",
@@ -1594,7 +1594,7 @@
       "rules": [
         "url.login_path"
       ],
-      "latency_ms": 3.3253999999942607
+      "latency_ms": 34.90010000041366
     },
     {
       "id": "u-228",
@@ -1604,7 +1604,7 @@
       "rules": [
         "url.login_path"
       ],
-      "latency_ms": 2.6078999999299413
+      "latency_ms": 27.81539999978122
     },
     {
       "id": "u-230",
@@ -1612,7 +1612,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.984100000048784
+      "latency_ms": 32.96339999997144
     },
     {
       "id": "u-232",
@@ -1620,7 +1620,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1.9385000000511354
+      "latency_ms": 29.51130000019475
     },
     {
       "id": "u-233",
@@ -1630,7 +1630,7 @@
       "rules": [
         "url.ip_literal"
       ],
-      "latency_ms": 0.2849999996215047
+      "latency_ms": 3.2608999999865773
     },
     {
       "id": "u-234",
@@ -1640,7 +1640,7 @@
       "rules": [
         "url.ip_literal"
       ],
-      "latency_ms": 0.24069999972198275
+      "latency_ms": 3.5182999999960884
     },
     {
       "id": "u-235",
@@ -1650,7 +1650,7 @@
       "rules": [
         "url.ip_literal"
       ],
-      "latency_ms": 0.22559999979421264
+      "latency_ms": 3.67889999961335
     },
     {
       "id": "u-237",
@@ -1658,7 +1658,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.11780000022554304
+      "latency_ms": 1.7663999997239443
     },
     {
       "id": "u-238",
@@ -1666,7 +1666,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 0.09829999999055872
+      "latency_ms": 1.7593000002307235
     },
     {
       "id": "u-240",
@@ -1674,7 +1674,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.2722000003341236
+      "latency_ms": 26.346500000727247
     },
     {
       "id": "u-241",
@@ -1682,7 +1682,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.478700000210665
+      "latency_ms": 26.304500000151165
     },
     {
       "id": "u-243",
@@ -1690,7 +1690,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 3.1589999998686835
+      "latency_ms": 35.7056000002558
     },
     {
       "id": "u-245",
@@ -1698,7 +1698,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.238900000065769
+      "latency_ms": 26.242699999784236
     },
     {
       "id": "u-247",
@@ -1706,7 +1706,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.067200000055891
+      "latency_ms": 33.73890000057145
     },
     {
       "id": "u-248",
@@ -1716,7 +1716,7 @@
       "rules": [
         "url.host_shape"
       ],
-      "latency_ms": 0.7298000000446336
+      "latency_ms": 9.73470000008092
     },
     {
       "id": "u-249",
@@ -1724,7 +1724,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.4677999999767053
+      "latency_ms": 26.972700000442273
     },
     {
       "id": "u-251",
@@ -1732,7 +1732,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.4728999997023493
+      "latency_ms": 25.247399999898334
     },
     {
       "id": "u-253",
@@ -1740,7 +1740,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 2.188899999964633
+      "latency_ms": 29.59720000035304
     }
   ]
 }

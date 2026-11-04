@@ -95,6 +95,8 @@ def mixed_script(u: ParsedUrl) -> str | None:
 
 @rule("url.typosquat", "impersonation")
 def typosquat(u: ParsedUrl) -> str | None:
+    # ponytail: tries every brand term with a pure-Python edit distance, about two thirds of
+    # analysis time (profiled). Bucket terms by length if the M4 latency budget needs it.
     if not _candidate(u):
         return None
     label = _label(u)

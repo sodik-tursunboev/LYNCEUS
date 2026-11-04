@@ -167,7 +167,8 @@ def render_md(r: EvalReport) -> str:
         f"| Error rate | {_num(q.error_rate)} | |",
         "",
         f"Latency per URL: p50 {r.latency.p50_ms:.3f} ms, p95 {r.latency.p95_ms:.3f} ms, "
-        f"max {r.latency.max_ms:.3f} ms.",
+        f"max {r.latency.max_ms:.3f} ms. Wall time on a shared development machine: the same code "
+        "measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.",
         "",
         "## Rules",
         "",
