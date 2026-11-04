@@ -120,7 +120,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   - B. Loopback HTTP on a random port with a bearer token and strict `Host` check (DNS rebinding defence). Fits FastAPI; the token must be stored with a DPAPI-protected file.
   - C. Unix domain sockets. Windows supports AF_UNIX; whether the Python and uvicorn versions in use support it there needs checking.
 - **Proposal:** A between host and agent, B (or C if verified) between agent and core. Spike in early M4 and decide on measured complexity.
-- **Tension to resolve:** `/health` is unauthenticated today. Fine for M0 (started by hand); from M4 it must be authenticated or reachable only through the chosen channel. SPEC §9 requires "strict API authentication" and rate limiting, so the M1 analysis endpoint needs a bearer token (proposed amendment in `milestones/M1.md`) on top of binding `127.0.0.1`, checking the `Host` header, having no CORS, and never exposing a per-request fetch option.
+- **Tension to resolve:** `/health` is unauthenticated today. Fine for M0 (started by hand); from M4 it must be authenticated or reachable only through the chosen channel. SPEC §9 requires "strict API authentication" and rate limiting. The M1 analysis endpoint therefore has a bearer token (constant-time compare, refuses to serve without one), a per-process rate limit, a counted body cap, a `Host` allowlist, no CORS, no served docs, a loopback bind and no per-request fetch option. This is the minimum until this ADR is decided, not the final IPC design.
 
 ## ADR-010: Email transport
 **Status:** Draft: needs human sign-off. Decide before M5. Lean: pull/polling, to stay local-first.

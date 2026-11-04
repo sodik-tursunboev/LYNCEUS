@@ -95,9 +95,9 @@ def open_redirect(u: ParsedUrl) -> str | None:
 
 @rule("url.encoded_target", "redirect")
 def encoded_target(u: ParsedUrl) -> str | None:
-    for name, hidden, target in _targets(u):
-        if hidden:
-            return f"{hidden} URL to another site in parameter '{name}' ({target.host})"
+    for _, hidden, target in _targets(u):
+        if hidden:  # the parameter name is free text from the URL: it stays out of the evidence
+            return f"{hidden} URL to another site ({target.host})"
     return None
 
 

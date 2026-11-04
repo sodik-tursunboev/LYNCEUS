@@ -20,6 +20,21 @@ TASKS: dict[str, list[list[str]]] = {
         [PY, "-m", "mypy", "core", "eval", "rules", "tasks.py"],
     ],
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
+    "serve": [
+        [
+            PY,
+            "-m",
+            "uvicorn",
+            "core.api.app:create_app",
+            "--factory",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8765",
+            "--no-access-log",
+            "--no-server-header",
+        ]  # fmt: skip
+    ],
     # extras beyond the five core tasks
     "fmt": [[PY, "-m", "ruff", "format", "."], [PY, "-m", "ruff", "check", "--fix", "."]],
     "secrets": [  # secret scan against .secrets.baseline; callers append the file names

@@ -135,3 +135,5 @@ def test_summaries_do_not_leak_the_query() -> None:
     a = analyze_url("https://paypal.com@evil.test/?email=jane%40example.test&tok=SECRETVALUE")
     assert "SECRETVALUE" not in a.model_dump_json(exclude={"url"})
     assert all("jane" not in e.summary for e in a.evidence)
+    hidden = analyze_url("https://go.test/r?SECRETNAME%00=aHR0cDovL3BoaXNoLmludmFsaWQvbG9naW4=")
+    assert hidden.evidence and "SECRETNAME" not in hidden.model_dump_json(exclude={"url"})
