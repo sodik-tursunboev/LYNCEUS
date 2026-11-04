@@ -1,7 +1,7 @@
 # Decisions (ADR log)
 
 Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposal only; do not build on it yet).
-`docs/SPEC.md` is being added by the owner; until it is in the repo, statements about what the SPEC says are taken from `CLAUDE.md`.
+`docs/SPEC.md` is the owner's original spec, saved verbatim (byte-identical; kept out of line-ending conversion). Section references (§) point into it.
 
 | ADR | Title | Status |
 |---|---|---|
@@ -10,7 +10,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 | 003 | Task runner and git hooks | Accepted |
 | 004 | Dependencies and their purpose | Accepted |
 | 005 | Eval scoring rule | Accepted (flag-rate line added in M1, see below) |
-| 006 | M0 conventions: contracts, logging, corpus, migrations | Accepted (contracts provisional until SPEC.md) |
+| 006 | M0 conventions: contracts, logging, corpus, migrations | Accepted (checked against SPEC §7/§8; one difference to confirm) |
 | 007 | Evidence encryption at rest and key management | Draft: needs human sign-off, decide before M1 writes evidence |
 | 008 | Parser sandbox | Draft: needs human sign-off, decide before M2 |
 | 009 | Local IPC | Draft: needs human sign-off, decide before M4 |
@@ -21,14 +21,14 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 ---
 
 ## ADR-001: Modular monolith, trimmed layout
-**Status:** Accepted. **Deviates from SPEC §14** (as described in CLAUDE.md; the SPEC itself is not in the repo yet).
+**Status:** Accepted. **Deviates from SPEC §14**, which permits it ("may adjust this structure when justified by engineering requirements"). The spec's monorepo (`apps/`, one folder per service, `integrations/`, `shared/`) is collapsed into one `core/` package, and the Compose file lives in `infra/`.
 
 - **Context:** one developer, local-first, a single machine. Microservices would add deployment and IPC surface for no measured benefit.
 - **Decision:** one FastAPI app with internal packages (`core/api`, `core/contracts`, ... ) and the simpler top-level layout in `CLAUDE.md`. `agent/`, `extension/` and `console/` are created in the milestones that need them (M4, M6); empty folders are not tracked by git.
 - **Consequences:** split a package into a service only after a measured need (throughput, isolation, independent deploy). The parser sandbox (ADR-008) is the one expected out-of-process piece.
 
 ## ADR-002: Redis deferred
-**Status:** Accepted. **Deviates from SPEC §4.**
+**Status:** Accepted. **Deviates from SPEC §4** (task queue: Redis; §15 phase 1 also lists Redis).
 
 - **Decision:** no queue or cache server until something needs one. PostgreSQL plus in-process asyncio covers M0-M2.
 - **Revisit when:** provider fan-out (M3) or the email backlog (M5) shows a measured need for a durable queue, or caching hit rates justify a shared cache.
@@ -73,12 +73,12 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **Latency:** per-sample wall time of `analyze()`, p50 / p95 / max (nearest-rank).
 
 ## ADR-006: M0 conventions
-**Status:** Accepted. The contract details are provisional until `docs/SPEC.md` is in the repo.
+**Status:** Accepted. Checked against SPEC §7 and §8 on 2026-11-04: every field §7 requires is present (risk score, confidence, signals, evidence references, provider results, timestamp, recommended and applied response). One deliberate difference, for the owner to confirm: §7 lists a risk score on every verdict, but ours is `null` for UNKNOWN and ERROR, because a number (above all 0) would read as a safety judgement.
 
 - **Contracts** (`core/contracts.py`): frozen, `extra=forbid` pydantic models; timestamps must be timezone-aware; JSON Schemas are exported to `docs/schemas/` and a test fails if they drift. Artifacts hold a hash and a locator, never raw email or file content.
 - **Verdict invariants:** `risk_score` is `None` exactly when the state is UNKNOWN or ERROR (a 0 would read as "safe"); every signal's evidence must be listed on the verdict; a provider result carries a state only when its status is OK. The same rules are CHECK constraints in the database.
 - **`resolve_state`** (provider opinions to one state) is a conservative placeholder: no results is UNKNOWN, only failures is ERROR, BENIGN needs every queried provider to say BENIGN, otherwise the most severe answer wins. M3 replaces it with real correlation.
-- **`ResponseAction`** has no delete action: responses are reversible. Its members (NONE, WARN, BLOCK, QUARANTINE) are a guess pending the SPEC.
+- **`ResponseAction`** has no delete action: responses are reversible (§8: never auto-delete). Its members follow §8: record only (NONE), notify or warn (WARN), block browser navigation (BLOCK), isolate or quarantine (QUARANTINE). "Request confirmation before destructive actions" is a gate in the response engine (M6), not an action. §13 also lists a `response_actions` table; it arrives with that engine.
 - **Logging:** JSON lines. Secret-looking keys and bearer/`password=`-style text are redacted. Any URL (any scheme) is logged only as `url[host=... sha=...]`. Run uvicorn with `--no-access-log` because its access log would carry raw URLs.
 - **Corpus:** every seed host must be unregisterable (`.test`, `.invalid`, `.example`, `example.com/.org/.net`, RFC 5737 and 3849 addresses); the loader rejects anything else (M1 relaxes this for benign hard negatives only, via an `origin` field). Each entry has `split`; never tune against holdout. SSRF probe inputs live in `tests/adversarial/`, outside the scored corpus.
 - **Migrations:** the initial migration may be edited in place until M3 (v0.1); nothing is deployed before then. After that, forward-only.
@@ -119,11 +119,12 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   - B. Loopback HTTP on a random port with a bearer token and strict `Host` check (DNS rebinding defence). Fits FastAPI; the token must be stored with a DPAPI-protected file.
   - C. Unix domain sockets. Windows supports AF_UNIX; whether the Python and uvicorn versions in use support it there needs checking.
 - **Proposal:** A between host and agent, B (or C if verified) between agent and core. Spike in early M4 and decide on measured complexity.
-- **Tension to resolve:** `/health` is unauthenticated today. Fine for M0 (started by hand); from M4 it must be authenticated or reachable only through the chosen channel. The M1 analysis endpoint inherits this: it binds `127.0.0.1`, checks the `Host` header, has no CORS, and never exposes a per-request fetch option.
+- **Tension to resolve:** `/health` is unauthenticated today. Fine for M0 (started by hand); from M4 it must be authenticated or reachable only through the chosen channel. SPEC §9 requires "strict API authentication" and rate limiting, so the M1 analysis endpoint needs a bearer token (proposed amendment in `milestones/M1.md`) on top of binding `127.0.0.1`, checking the `Host` header, having no CORS, and never exposing a per-request fetch option.
 
 ## ADR-010: Email transport
 **Status:** Draft: needs human sign-off. Decide before M5. Lean: pull/polling, to stay local-first.
 
+- **Conflict with the spec:** SPEC §11 lists Gmail watch with Pub/Sub notifications and Microsoft Graph change subscriptions with webhook validation (§9 also says "secure webhook validation"). Those are push designs. Graph webhooks and Gmail push need a public HTTPS endpoint; polling and Pub/Sub *pull* do not. The polling baseline below therefore deviates from §11 and needs your sign-off. §11 requires watch/subscription renewal and missed-event recovery either way.
 - **Gmail:**
   - Pub/Sub push needs a public HTTPS endpoint: not local-first.
   - Pub/Sub pull works from a local machine but needs a Google Cloud project and a watch that must be renewed.

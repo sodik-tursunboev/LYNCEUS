@@ -7,7 +7,7 @@ Written to be read before trusting anything in the repo. Items marked **unverifi
 - **CI.** `.github/workflows/ci.yml` has never run: there is no remote. Its steps are the same `tasks.py` commands that pass locally. Action versions are pinned by tag, not commit SHA.
 - **Python 3.12.** CI targets the declared floor (3.12); everything was run on 3.14.7 only.
 - **Linux/macOS.** Developed and tested on Windows 11 only.
-- **`docs/SPEC.md` is missing.** It has not been supplied, so the contracts (including the members of `ResponseAction`) and the claims about SPEC §4 and §14 are taken from `CLAUDE.md` and are provisional.
+- **Spec reconciliation (2026-11-04).** `docs/SPEC.md` is now in the repo and was read. Contracts match §7 and §8 except that `risk_score` is null for UNKNOWN/ERROR (to confirm). §13 lists entities not yet in the schema: users, devices, integrations, response_actions, allowlist, blocklist (added in M4 to M6). ADR-010's polling baseline deviates from §11 (push) and needs sign-off. §9 requires strict API authentication and rate limiting, which the M0 `/health` endpoint does not have.
 
 ## Detection and eval
 - There is no detection logic. The stub engine returns UNKNOWN for everything: abstain rate 1.0, recall 0.0, precision undefined, by design.
