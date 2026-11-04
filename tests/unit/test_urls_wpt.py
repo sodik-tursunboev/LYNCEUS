@@ -3,8 +3,10 @@
 import hashlib
 import json
 import re
+import socket
 from pathlib import Path
 
+import pytest
 from ada_url import URL
 
 from core.urls.parse import ParsedUrl, UrlFlag, parse_url
@@ -12,8 +14,10 @@ from core.urls.parse import ParsedUrl, UrlFlag, parse_url
 DATA = Path(__file__).parents[1] / "data" / "wpt"
 SUBSET = DATA / "urltestdata.subset.json"
 CASES: list[dict[str, str]] = json.loads(SUBSET.read_text(encoding="ascii"))
-# We strip trailing dots: nothing is left of these, or the rest is a bad IPv4. We report failure.
-TRAILING_DOT_BY_DESIGN = {"http://./", "http://../", "http://foo.09.."}
+# The six deliberate differences, with reasons, are tabled in ADR-012. The list is exact: a new
+# difference, or one that goes away, must be looked at.
+COMPLETED_WITH_HTTPS = {"a", "a/", "a//"}  # the standard fails text with no scheme
+TRAILING_DOTS_FAIL = {"http://./", "http://../", "http://foo.09.."}  # we strip dots, then give up
 
 
 def want(case: dict[str, str]) -> str | None:
@@ -39,17 +43,21 @@ def test_ada_url_matches_the_standard() -> None:
     assert not bad
 
 
-def test_our_layer_differs_only_where_documented() -> None:
-    assumed, bad = 0, []
+def test_our_layer_differs_only_in_the_six_documented_cases() -> None:
+    differs = {}
     for case in CASES:
         r = parse_url(case["input"])
         got = r.normalized if isinstance(r, ParsedUrl) else None
-        if got == want(case) or case["input"] in TRAILING_DOT_BY_DESIGN:
-            continue
-        # The standard fails text with no scheme; we complete it, and say so in a flag.
-        if want(case) is None and isinstance(r, ParsedUrl) and UrlFlag.SCHEME_ASSUMED in r.flags:
-            assumed += 1
-            continue
-        bad.append((case["input"], got, want(case)))
-    assert not bad
-    assert assumed <= 10  # a sudden rise means the scheme heuristic has started guessing
+        if got != want(case):
+            differs[case["input"]] = r
+    assert set(differs) == COMPLETED_WITH_HTTPS | TRAILING_DOTS_FAIL
+    for raw in COMPLETED_WITH_HTTPS:
+        r = differs[raw]
+        assert isinstance(r, ParsedUrl) and UrlFlag.SCHEME_ASSUMED in r.flags
+    for raw in TRAILING_DOTS_FAIL:
+        assert not isinstance(differs[raw], ParsedUrl)  # fails, so the verdict is UNKNOWN
+
+
+def test_network_guard_is_on() -> None:
+    with pytest.raises(RuntimeError):
+        socket.getaddrinfo("example.com", 80)

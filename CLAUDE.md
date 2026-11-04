@@ -90,7 +90,7 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 |---|---|
 | `up` | start Postgres via Docker Compose |
 | `test` | pytest (integration tests skip when no database is reachable) |
-| `eval` | run the stub engine over `corpus/`, write a report to `docs/eval/` |
+| `eval` | run the engine over the dev split, write `docs/eval/dev.{json,md}`. `--split holdout` is explicit and logged; reserve cannot be selected |
 | `lint` | ruff check + format check + mypy |
 | `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
 | `fmt` | `ruff check --fix` + `ruff format` |

@@ -31,14 +31,40 @@ class Counts(BaseModel):
         """Positives not flagged, whatever the reason."""
         return self.fn_benign + self.abstain_pos + self.error_pos
 
+    @property
+    def negatives(self) -> int:
+        """Benign samples, whatever the engine said."""
+        return self.tn + self.fp + self.abstain_neg + self.error_neg
+
+
+class Interval(BaseModel):
+    low: float
+    high: float
+
 
 class Rates(BaseModel):
     precision: float | None  # None = undefined (denominator 0)
     recall: float | None  # headline: abstain/error on a positive counts as a miss
     recall_answered: float | None  # recall over positives the engine actually answered
     f1: float | None  # from the headline recall
+    flag_rate: float | None  # flagged benign samples; UNKNOWN counts as not flagged
     abstain_rate: float | None
     error_rate: float | None
+    precision_ci: Interval | None
+    recall_ci: Interval | None
+    flag_rate_ci: Interval | None
+    abstain_ci: Interval | None
+
+
+def wilson(k: int, n: int, z: float = 1.959964) -> Interval | None:
+    """Wilson score interval: honest at small n and at 0 or 1, where the normal one collapses."""
+    if n == 0:
+        return None
+    p = k / n
+    d = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / d
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return Interval(low=0.0 if k == 0 else centre - half, high=1.0 if k == n else centre + half)
 
 
 def tally(pairs: Iterable[tuple[Label, VerdictState]]) -> Counts:
@@ -78,8 +104,13 @@ def rates(c: Counts) -> Rates:
         recall=_div(c.tp, c.tp + c.fn),
         recall_answered=_div(c.tp, c.tp + c.fn_benign),
         f1=_div(2 * c.tp, 2 * c.tp + c.fp + c.fn),
+        flag_rate=_div(c.fp, c.negatives),
         abstain_rate=_div(c.abstain_pos + c.abstain_neg, c.n),
         error_rate=_div(c.error_pos + c.error_neg, c.n),
+        precision_ci=wilson(c.tp, c.tp + c.fp),
+        recall_ci=wilson(c.tp, c.tp + c.fn),
+        flag_rate_ci=wilson(c.fp, c.negatives),
+        abstain_ci=wilson(c.abstain_pos + c.abstain_neg, c.n),
     )
 
 

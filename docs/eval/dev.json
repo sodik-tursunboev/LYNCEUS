@@ -1,0 +1,1746 @@
+{
+  "generated_at": "2026-11-04T22:27:08.392146Z",
+  "engine_version": "1.0.0",
+  "ruleset_version": "1.0.0+a01a3baf2dc5",
+  "split": "dev",
+  "samples_sha256": "415799284229c9c5de3fe39d1f8b849d32d7ac57dae114361b4370b461e7bb8c",
+  "counts": {
+    "n": 150,
+    "tp": 84,
+    "fp": 0,
+    "tn": 18,
+    "fn_benign": 0,
+    "abstain_pos": 3,
+    "abstain_neg": 45,
+    "error_pos": 0,
+    "error_neg": 0
+  },
+  "rates": {
+    "precision": 1.0,
+    "recall": 0.9655172413793104,
+    "recall_answered": 1.0,
+    "f1": 0.9824561403508771,
+    "flag_rate": 0.0,
+    "abstain_rate": 0.32,
+    "error_rate": 0.0,
+    "precision_ci": {
+      "low": 0.95626827092561,
+      "high": 1.0
+    },
+    "recall_ci": {
+      "low": 0.9034591754446504,
+      "high": 0.988204179564256
+    },
+    "flag_rate_ci": {
+      "low": 0.0,
+      "high": 0.05747120044339639
+    },
+    "abstain_ci": {
+      "low": 0.2506452900754418,
+      "high": 0.3983439980353374
+    }
+  },
+  "latency": {
+    "p50_ms": 1.5798000003997004,
+    "p95_ms": 3.200500000275497,
+    "max_ms": 37.119999999958964
+  },
+  "rules": [
+    {
+      "rule_id": "url.brand_in_domain",
+      "hits": 2,
+      "on_malicious": 1,
+      "on_benign": 1,
+      "precision": 0.5,
+      "precision_ci": {
+        "low": 0.09453120463920084,
+        "high": 0.9054687953607992
+      }
+    },
+    {
+      "rule_id": "url.brand_in_subdomain",
+      "hits": 8,
+      "on_malicious": 8,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6755924316585924,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.combosquat",
+      "hits": 23,
+      "on_malicious": 23,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.8568833796149266,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.dangerous_scheme",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.encoded_target",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.excessive_length",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.homograph_brand",
+      "hits": 9,
+      "on_malicious": 9,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.700854948272956,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.host_shape",
+      "hits": 2,
+      "on_malicious": 1,
+      "on_benign": 1,
+      "precision": 0.5,
+      "precision_ci": {
+        "low": 0.09453120463920084,
+        "high": 0.9054687953607992
+      }
+    },
+    {
+      "rule_id": "url.ip_literal",
+      "hits": 10,
+      "on_malicious": 7,
+      "on_benign": 3,
+      "precision": 0.7,
+      "precision_ci": {
+        "low": 0.3967781453459709,
+        "high": 0.892208733443606
+      }
+    },
+    {
+      "rule_id": "url.ip_obfuscated",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.login_path",
+      "hits": 61,
+      "on_malicious": 59,
+      "on_benign": 2,
+      "precision": 0.9672131147540983,
+      "precision_ci": {
+        "low": 0.8881050949020723,
+        "high": 0.9909621096830188
+      }
+    },
+    {
+      "rule_id": "url.mixed_script",
+      "hits": 9,
+      "on_malicious": 9,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.700854948272956,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.odd_port",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.open_redirect",
+      "hits": 13,
+      "on_malicious": 13,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7719046248681998,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.parser_tricks",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.prefilled_identity",
+      "hits": 11,
+      "on_malicious": 11,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7411670300055737,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.shortener",
+      "hits": 6,
+      "on_malicious": 3,
+      "on_benign": 3,
+      "precision": 0.5,
+      "precision_ci": {
+        "low": 0.18761630498040816,
+        "high": 0.8123836950195918
+      }
+    },
+    {
+      "rule_id": "url.typosquat",
+      "hits": 13,
+      "on_malicious": 13,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7719046248681998,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.userinfo_deception",
+      "hits": 9,
+      "on_malicious": 9,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.700854948272956,
+        "high": 1.0
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "u-001",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.login_path",
+        "url.odd_port"
+      ],
+      "latency_ms": 0.4698000002463232
+    },
+    {
+      "id": "u-002",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.login_path"
+      ],
+      "latency_ms": 0.32300000020768493
+    },
+    {
+      "id": "u-004",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.login_path"
+      ],
+      "latency_ms": 0.36869999985356117
+    },
+    {
+      "id": "u-006",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.ip_obfuscated",
+        "url.login_path"
+      ],
+      "latency_ms": 0.30149999975037645
+    },
+    {
+      "id": "u-008",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.login_path",
+        "url.odd_port"
+      ],
+      "latency_ms": 0.2830000003086752
+    },
+    {
+      "id": "u-010",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.ip_obfuscated",
+        "url.login_path"
+      ],
+      "latency_ms": 0.277399999959016
+    },
+    {
+      "id": "u-011",
+      "category": "ip_based",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.ip_literal",
+        "url.login_path"
+      ],
+      "latency_ms": 0.32190000001719454
+    },
+    {
+      "id": "u-013",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 37.119999999958964
+    },
+    {
+      "id": "u-014",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 1.8909999998868443
+    },
+    {
+      "id": "u-016",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 1.2480000000323344
+    },
+    {
+      "id": "u-018",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 1.2649999998757266
+    },
+    {
+      "id": "u-020",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 1.6996999997900275
+    },
+    {
+      "id": "u-022",
+      "category": "userinfo_deception",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 3.2179999998334097
+    },
+    {
+      "id": "u-023",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.5928999999014195
+    },
+    {
+      "id": "u-024",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.46030000021346495
+    },
+    {
+      "id": "u-026",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.4672000000027765
+    },
+    {
+      "id": "u-028",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.44950000028620707
+    },
+    {
+      "id": "u-030",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.5369000000428059
+    },
+    {
+      "id": "u-032",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.45319999981074943
+    },
+    {
+      "id": "u-033",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.4582999999911408
+    },
+    {
+      "id": "u-035",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.5203999999139342
+    },
+    {
+      "id": "u-037",
+      "category": "punycode_homograph",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.homograph_brand",
+        "url.login_path",
+        "url.mixed_script"
+      ],
+      "latency_ms": 0.5635000002257584
+    },
+    {
+      "id": "u-039",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.9765999998307962
+    },
+    {
+      "id": "u-040",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_domain",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.4395999999360356
+    },
+    {
+      "id": "u-042",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 1.0829000002559042
+    },
+    {
+      "id": "u-044",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.9066999996321101
+    },
+    {
+      "id": "u-046",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.typosquat"
+      ],
+      "latency_ms": 0.8439999996880942
+    },
+    {
+      "id": "u-048",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.8806999999251275
+    },
+    {
+      "id": "u-049",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.43060000007244525
+    },
+    {
+      "id": "u-051",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.typosquat"
+      ],
+      "latency_ms": 0.8195999998861225
+    },
+    {
+      "id": "u-053",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.typosquat"
+      ],
+      "latency_ms": 0.682899999901565
+    },
+    {
+      "id": "u-055",
+      "category": "lookalike_typo",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.typosquat"
+      ],
+      "latency_ms": 1.1899999999513966
+    },
+    {
+      "id": "u-057",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat"
+      ],
+      "latency_ms": 1.5636999996786471
+    },
+    {
+      "id": "u-058",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat"
+      ],
+      "latency_ms": 2.0777999998244923
+    },
+    {
+      "id": "u-060",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 0.6847999998171872
+    },
+    {
+      "id": "u-062",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat"
+      ],
+      "latency_ms": 0.988700000107201
+    },
+    {
+      "id": "u-064",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 2.8706000002785004
+    },
+    {
+      "id": "u-066",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 1.8973999999616353
+    },
+    {
+      "id": "u-067",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat"
+      ],
+      "latency_ms": 1.5798000003997004
+    },
+    {
+      "id": "u-069",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 2.8144999996584374
+    },
+    {
+      "id": "u-071",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat"
+      ],
+      "latency_ms": 1.401399999849673
+    },
+    {
+      "id": "u-073",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 0.7633999998688523
+    },
+    {
+      "id": "u-075",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 1.6901999997571693
+    },
+    {
+      "id": "u-076",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 2.9557999996541184
+    },
+    {
+      "id": "u-078",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 0.9215000000040163
+    },
+    {
+      "id": "u-080",
+      "category": "combosquat",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 1.3922000002821733
+    },
+    {
+      "id": "u-081",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 1.7602999996597646
+    },
+    {
+      "id": "u-082",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 2.272700000048644
+    },
+    {
+      "id": "u-084",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 2.5172999999085732
+    },
+    {
+      "id": "u-086",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 2.1163999999771477
+    },
+    {
+      "id": "u-088",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 2.7982999999949243
+    },
+    {
+      "id": "u-090",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 1.641700000163837
+    },
+    {
+      "id": "u-091",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 1.7642000002524583
+    },
+    {
+      "id": "u-093",
+      "category": "brand_in_subdomain",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.brand_in_subdomain",
+        "url.login_path"
+      ],
+      "latency_ms": 1.373799999782932
+    },
+    {
+      "id": "u-095",
+      "category": "shortener",
+      "label": "malicious",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 2.4113999998007785
+    },
+    {
+      "id": "u-096",
+      "category": "shortener",
+      "label": "malicious",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 1.377900000079535
+    },
+    {
+      "id": "u-098",
+      "category": "shortener",
+      "label": "malicious",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 2.130099999703816
+    },
+    {
+      "id": "u-100",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.encoded_target",
+        "url.open_redirect",
+        "url.parser_tricks"
+      ],
+      "latency_ms": 2.7019999997719424
+    },
+    {
+      "id": "u-101",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 2.395199999682518
+    },
+    {
+      "id": "u-103",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 1.7128000004049682
+    },
+    {
+      "id": "u-105",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 1.9707999999809545
+    },
+    {
+      "id": "u-107",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.encoded_target",
+        "url.open_redirect"
+      ],
+      "latency_ms": 2.893699999731325
+    },
+    {
+      "id": "u-109",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 2.2854000003462716
+    },
+    {
+      "id": "u-110",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 2.5931000000127824
+    },
+    {
+      "id": "u-112",
+      "category": "encoded_redirect",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.open_redirect"
+      ],
+      "latency_ms": 1.7668000000412576
+    },
+    {
+      "id": "u-114",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 0.9738999997352948
+    },
+    {
+      "id": "u-115",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1.755799999955343
+    },
+    {
+      "id": "u-117",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 2.2075000001677836
+    },
+    {
+      "id": "u-119",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1.8970000000990694
+    },
+    {
+      "id": "u-121",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1.8719999998211279
+    },
+    {
+      "id": "u-123",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 2.054800000223622
+    },
+    {
+      "id": "u-124",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 2.218500000253698
+    },
+    {
+      "id": "u-126",
+      "category": "credential_harvest",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1.8700999999055057
+    },
+    {
+      "id": "u-128",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.dangerous_scheme"
+      ],
+      "latency_ms": 0.19040000006498303
+    },
+    {
+      "id": "u-129",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.dangerous_scheme"
+      ],
+      "latency_ms": 0.1661999999669206
+    },
+    {
+      "id": "u-131",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.dangerous_scheme"
+      ],
+      "latency_ms": 0.16380000033677788
+    },
+    {
+      "id": "u-133",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.host_shape",
+        "url.login_path"
+      ],
+      "latency_ms": 0.7694000000810775
+    },
+    {
+      "id": "u-135",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.login_path",
+        "url.odd_port",
+        "url.typosquat"
+      ],
+      "latency_ms": 1.1045999999623746
+    },
+    {
+      "id": "u-137",
+      "category": "structure_oddity",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "url.excessive_length",
+        "url.login_path"
+      ],
+      "latency_ms": 2.390399999967485
+    },
+    {
+      "id": "u-138",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.open_redirect",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 3.047699999569886
+    },
+    {
+      "id": "u-139",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.open_redirect",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 3.978999999617372
+    },
+    {
+      "id": "u-141",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.open_redirect",
+        "url.typosquat"
+      ],
+      "latency_ms": 1.2775000000146974
+    },
+    {
+      "id": "u-143",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 2.110499999616877
+    },
+    {
+      "id": "u-145",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 2.382200000283774
+    },
+    {
+      "id": "u-147",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1.7951999998331303
+    },
+    {
+      "id": "u-148",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.open_redirect",
+        "url.typosquat"
+      ],
+      "latency_ms": 1.2526999998954125
+    },
+    {
+      "id": "u-150",
+      "category": "multi_signal",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "url.open_redirect",
+        "url.userinfo_deception"
+      ],
+      "latency_ms": 3.150099999857048
+    },
+    {
+      "id": "u-151",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.6069999998981075
+    },
+    {
+      "id": "u-152",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.116199999818491
+    },
+    {
+      "id": "u-154",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.300300000115385
+    },
+    {
+      "id": "u-156",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.5568000000930624
+    },
+    {
+      "id": "u-158",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1.999699999942095
+    },
+    {
+      "id": "u-160",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.2535999996762257
+    },
+    {
+      "id": "u-161",
+      "category": "benign_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.6754000000437372
+    },
+    {
+      "id": "u-163",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.3550000001268927
+    },
+    {
+      "id": "u-164",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.279900000350608
+    },
+    {
+      "id": "u-166",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.2760000002126617
+    },
+    {
+      "id": "u-168",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.27829999999084976
+    },
+    {
+      "id": "u-170",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.28699999984382885
+    },
+    {
+      "id": "u-172",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.33759999996618717
+    },
+    {
+      "id": "u-173",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.20429999995030812
+    },
+    {
+      "id": "u-175",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.1878000002761837
+    },
+    {
+      "id": "u-177",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.17130000014731195
+    },
+    {
+      "id": "u-179",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.16709999999875436
+    },
+    {
+      "id": "u-181",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.17059999981938745
+    },
+    {
+      "id": "u-182",
+      "category": "benign_login_real",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.30490000017380225
+    },
+    {
+      "id": "u-184",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.20110000014028628
+    },
+    {
+      "id": "u-185",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.16770000001997687
+    },
+    {
+      "id": "u-187",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.15489999987039482
+    },
+    {
+      "id": "u-189",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.13949999993201345
+    },
+    {
+      "id": "u-191",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.13449999960357673
+    },
+    {
+      "id": "u-193",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "BENIGN",
+      "rules": [],
+      "latency_ms": 0.13159999980416615
+    },
+    {
+      "id": "u-194",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1.9900000002053275
+    },
+    {
+      "id": "u-196",
+      "category": "benign_brand_adjacent",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.brand_in_domain"
+      ],
+      "latency_ms": 2.064400000108435
+    },
+    {
+      "id": "u-198",
+      "category": "benign_idn",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.5342999997992592
+    },
+    {
+      "id": "u-199",
+      "category": "benign_idn",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.4357999996500439
+    },
+    {
+      "id": "u-201",
+      "category": "benign_idn",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.5971000000499771
+    },
+    {
+      "id": "u-203",
+      "category": "benign_idn",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.5424999999377178
+    },
+    {
+      "id": "u-205",
+      "category": "benign_idn",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.7690999996157188
+    },
+    {
+      "id": "u-206",
+      "category": "shortener",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 1.9989999996141705
+    },
+    {
+      "id": "u-207",
+      "category": "shortener",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 2.1203999999670486
+    },
+    {
+      "id": "u-209",
+      "category": "shortener",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.shortener"
+      ],
+      "latency_ms": 2.6514000001043314
+    },
+    {
+      "id": "u-211",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 3.412000000025728
+    },
+    {
+      "id": "u-212",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 3.3207000001311826
+    },
+    {
+      "id": "u-214",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 4.657200000110606
+    },
+    {
+      "id": "u-216",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 3.200500000275497
+    },
+    {
+      "id": "u-218",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.521400000205176
+    },
+    {
+      "id": "u-220",
+      "category": "benign_cdn_tracking",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.2509999998874264
+    },
+    {
+      "id": "u-221",
+      "category": "benign_at_sign",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.68740000001344
+    },
+    {
+      "id": "u-222",
+      "category": "benign_at_sign",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.1283999999468506
+    },
+    {
+      "id": "u-224",
+      "category": "benign_at_sign",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1.9296000000394997
+    },
+    {
+      "id": "u-226",
+      "category": "benign_at_sign",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.636900000197784
+    },
+    {
+      "id": "u-227",
+      "category": "benign_redirect",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.login_path"
+      ],
+      "latency_ms": 3.3253999999942607
+    },
+    {
+      "id": "u-228",
+      "category": "benign_redirect",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.login_path"
+      ],
+      "latency_ms": 2.6078999999299413
+    },
+    {
+      "id": "u-230",
+      "category": "benign_redirect",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.984100000048784
+    },
+    {
+      "id": "u-232",
+      "category": "benign_redirect",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1.9385000000511354
+    },
+    {
+      "id": "u-233",
+      "category": "benign_ip",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.ip_literal"
+      ],
+      "latency_ms": 0.2849999996215047
+    },
+    {
+      "id": "u-234",
+      "category": "benign_ip",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.ip_literal"
+      ],
+      "latency_ms": 0.24069999972198275
+    },
+    {
+      "id": "u-235",
+      "category": "benign_ip",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.ip_literal"
+      ],
+      "latency_ms": 0.22559999979421264
+    },
+    {
+      "id": "u-237",
+      "category": "benign_nonweb",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.11780000022554304
+    },
+    {
+      "id": "u-238",
+      "category": "benign_nonweb",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 0.09829999999055872
+    },
+    {
+      "id": "u-240",
+      "category": "benign_keywords",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.2722000003341236
+    },
+    {
+      "id": "u-241",
+      "category": "benign_keywords",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.478700000210665
+    },
+    {
+      "id": "u-243",
+      "category": "benign_keywords",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 3.1589999998686835
+    },
+    {
+      "id": "u-245",
+      "category": "benign_keywords",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.238900000065769
+    },
+    {
+      "id": "u-247",
+      "category": "benign_keywords",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.067200000055891
+    },
+    {
+      "id": "u-248",
+      "category": "benign_structure",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "url.host_shape"
+      ],
+      "latency_ms": 0.7298000000446336
+    },
+    {
+      "id": "u-249",
+      "category": "benign_structure",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.4677999999767053
+    },
+    {
+      "id": "u-251",
+      "category": "benign_structure",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.4728999997023493
+    },
+    {
+      "id": "u-253",
+      "category": "benign_structure",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 2.188899999964633
+    }
+  ]
+}
