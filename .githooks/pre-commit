@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fork-free on purpose: Git for Windows' sh cannot fork on some machines, so no $(...) or pipes.
+# Enable once per clone: python tasks.py hooks
+exec python tasks.py precommit

@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "ProviderStatus": {
+      "enum": [
+        "OK",
+        "TIMEOUT",
+        "ERROR",
+        "RATE_LIMITED",
+        "UNAVAILABLE"
+      ],
+      "title": "ProviderStatus",
+      "type": "string"
+    },
+    "VerdictState": {
+      "enum": [
+        "MALICIOUS",
+        "SUSPICIOUS",
+        "BENIGN",
+        "UNKNOWN",
+        "ERROR"
+      ],
+      "title": "VerdictState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "latency_ms": {
+      "minimum": 0,
+      "title": "Latency Ms",
+      "type": "integer"
+    },
+    "provenance": {
+      "minLength": 1,
+      "title": "Provenance",
+      "type": "string"
+    },
+    "provider": {
+      "minLength": 1,
+      "title": "Provider",
+      "type": "string"
+    },
+    "queried_at": {
+      "format": "date-time",
+      "title": "Queried At",
+      "type": "string"
+    },
+    "state": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VerdictState"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "status": {
+      "$ref": "#/$defs/ProviderStatus"
+    }
+  },
+  "required": [
+    "provider",
+    "status",
+    "queried_at",
+    "latency_ms",
+    "provenance"
+  ],
+  "title": "ProviderResult",
+  "type": "object"
+}

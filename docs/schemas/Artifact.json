@@ -1,0 +1,43 @@
+{
+  "$defs": {
+    "ArtifactKind": {
+      "enum": [
+        "URL",
+        "EMAIL",
+        "FILE"
+      ],
+      "title": "ArtifactKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A thing to analyse. Holds a hash and a locator, never raw email/file content.",
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/ArtifactKind"
+    },
+    "ref": {
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Ref",
+      "type": "string"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "kind",
+    "sha256",
+    "ref"
+  ],
+  "title": "Artifact",
+  "type": "object"
+}

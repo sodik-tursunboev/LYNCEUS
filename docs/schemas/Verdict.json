@@ -1,0 +1,251 @@
+{
+  "$defs": {
+    "Confidence": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ],
+      "title": "Confidence",
+      "type": "string"
+    },
+    "ProviderResult": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "latency_ms": {
+          "minimum": 0,
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "provenance": {
+          "minLength": 1,
+          "title": "Provenance",
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "queried_at": {
+          "format": "date-time",
+          "title": "Queried At",
+          "type": "string"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VerdictState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "$ref": "#/$defs/ProviderStatus"
+        }
+      },
+      "required": [
+        "provider",
+        "status",
+        "queried_at",
+        "latency_ms",
+        "provenance"
+      ],
+      "title": "ProviderResult",
+      "type": "object"
+    },
+    "ProviderStatus": {
+      "enum": [
+        "OK",
+        "TIMEOUT",
+        "ERROR",
+        "RATE_LIMITED",
+        "UNAVAILABLE"
+      ],
+      "title": "ProviderStatus",
+      "type": "string"
+    },
+    "ResponseAction": {
+      "description": "Never includes deletion: responses are reversible (CLAUDE.md rule 7).",
+      "enum": [
+        "NONE",
+        "WARN",
+        "BLOCK",
+        "QUARANTINE"
+      ],
+      "title": "ResponseAction",
+      "type": "string"
+    },
+    "Signal": {
+      "additionalProperties": false,
+      "properties": {
+        "attack": {
+          "anyOf": [
+            {
+              "pattern": "^T\\d{4}(\\.\\d{3})?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Attack"
+        },
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "rule_id": {
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "weight": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "rule_id",
+        "category",
+        "weight",
+        "description"
+      ],
+      "title": "Signal",
+      "type": "object"
+    },
+    "VerdictState": {
+      "enum": [
+        "MALICIOUS",
+        "SUSPICIOUS",
+        "BENIGN",
+        "UNKNOWN",
+        "ERROR"
+      ],
+      "title": "VerdictState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "applied_response": {
+      "$ref": "#/$defs/ResponseAction"
+    },
+    "artifact_id": {
+      "format": "uuid",
+      "title": "Artifact Id",
+      "type": "string"
+    },
+    "confidence": {
+      "$ref": "#/$defs/Confidence"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "engine_version": {
+      "minLength": 1,
+      "title": "Engine Version",
+      "type": "string"
+    },
+    "evidence_ids": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "explanation": {
+      "minLength": 1,
+      "title": "Explanation",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "provider_results": {
+      "items": {
+        "$ref": "#/$defs/ProviderResult"
+      },
+      "title": "Provider Results",
+      "type": "array"
+    },
+    "recommended_response": {
+      "$ref": "#/$defs/ResponseAction"
+    },
+    "risk_score": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Risk Score"
+    },
+    "signals": {
+      "items": {
+        "$ref": "#/$defs/Signal"
+      },
+      "title": "Signals",
+      "type": "array"
+    },
+    "state": {
+      "$ref": "#/$defs/VerdictState"
+    }
+  },
+  "required": [
+    "artifact_id",
+    "state",
+    "risk_score",
+    "confidence",
+    "signals",
+    "evidence_ids",
+    "provider_results",
+    "recommended_response",
+    "applied_response",
+    "explanation",
+    "engine_version"
+  ],
+  "title": "Verdict",
+  "type": "object"
+}
