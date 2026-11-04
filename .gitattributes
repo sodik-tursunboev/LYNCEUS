@@ -1,1 +1,2 @@
 * text=auto eol=lf
+core/urls/data/*.dat -text

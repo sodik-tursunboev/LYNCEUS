@@ -12,10 +12,14 @@ extend-exclude = ["infra"]
 select = ["E", "F", "I", "B", "UP", "S", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106"]   # assert is how pytest works; fake secrets are test data
+"tests/**" = ["S101", "S105", "S106", "S311"]   # assert is pytest; fake secrets and seeded fuzz are test data
 "tasks.py" = ["S603", "S607"]   # fixed argv lists, no shell; git/docker come from PATH
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["ada_url", "ada_url.*"]
+ignore_missing_imports = true  # ada-url ships no type information
