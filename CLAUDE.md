@@ -98,4 +98,6 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |
 | `hooks` | enable `.githooks` for this clone (run once) |
 
+Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`.
+
 Setup on a fresh clone: `python -m venv .venv`, `.venv\Scripts\pip install -r requirements-dev.txt`, `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.
