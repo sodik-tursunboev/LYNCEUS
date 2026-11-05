@@ -69,7 +69,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   | Pillow 13.0.0 | MIT-CMU | image header check, decode, format allow-list |
   | opencv-python-headless 5.0.0.93 | Apache-2.0 | `QRCodeDetector` only. Brings **numpy 2.5.4** (BSD-3-Clause and others). The wheel bundles an FFmpeg plugin (29 MB, not reviewed); the sandbox build deletes it because nothing here decodes video |
 
-  Not done: **OCR.** Tesseract is not installed here, and the sandbox allows one process (`ActiveProcessLimit=1`), so an OCR step would need an in-process binding (not chosen) or a change to ADR-008. Image text is therefore not read.
+  **OCR is deferred (owner decision, 2026-11-05).** Tesseract is not installed here, and the sandbox allows one process (`ActiveProcessLimit=1`), so an OCR step would need an in-process binding or a change to ADR-008. Image text is not read in M2. Reopen with its own plan when it is wanted: it needs a Tesseract install with Polish data, a decision on how it runs inside the sandbox, and a corpus of screenshots with typed URLs to measure it.
 - **Open:** pytest prints a Starlette deprecation warning saying `TestClient` over `httpx` is deprecated in favour of a package named `httpx2`. Not acted on (a dependency change needs approval); revisit when it stops being a warning.
 
 ## ADR-005: Eval scoring rule
