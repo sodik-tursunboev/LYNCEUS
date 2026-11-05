@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from mailhelp import PHISH_LINK, eml, in_process
+from mailhelp import PHISH_LINK, eml, in_process, in_process_inspect
 
 from core import sandbox
 from core.cli import main
@@ -16,6 +16,7 @@ from core.email.engine import MAX_MESSAGE_BYTES
 @pytest.fixture(autouse=True)
 def fake_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(engine, "run_sandbox", in_process)
+    monkeypatch.setattr(engine, "run_inspect", in_process_inspect)
 
 
 def run(capsys: pytest.CaptureFixture[str], path: Path, *args: str) -> tuple[int, str, str]:

@@ -8,6 +8,7 @@ import json
 from collections.abc import Sequence
 from email.message import EmailMessage
 
+import filescan
 import mailparse
 
 from core import sandbox
@@ -76,13 +77,24 @@ def in_process(raw: bytes) -> sandbox.Result:
     return ok_result(json.dumps({"ok": True, "scan": mailparse.scan(raw)}).encode())
 
 
+def in_process_inspect(raw: bytes, path: str) -> sandbox.Result:
+    """The same, for one attachment (op "inspect")."""
+    data = mailparse.part_bytes(raw, path)
+    reply = (
+        {"error": "no_such_part"}
+        if data is None
+        else {"ok": True, "file": filescan.inspect_data(data)}
+    )
+    return ok_result(json.dumps(reply).encode())
+
+
 def parsed(raw: bytes) -> MessageScan:
     """What the host would accept from the worker for `raw` (validates the guest's output)."""
     return MessageScan.model_validate(mailparse.scan(raw))
 
 
 def analyze(raw: bytes) -> EmailAnalysis:
-    return analyze_message(raw, run=in_process)
+    return analyze_message(raw, run=in_process, inspect_run=in_process_inspect)
 
 
 def fired(raw: bytes) -> set[str]:

@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.0.0"
+version = "1.1.0"
 
 [thresholds]
 suspicious = 45
@@ -11,6 +11,8 @@ high_weight = 0.5   # a category counts as independent evidence with a signal th
 min_categories = 2  # one feature alone never makes a message malicious (SPEC section 6)
 many_links = 40     # distinct links before email.link_flood fires
 link_cap = 100      # distinct links sent through the URL engine; the rest are only counted
+archive_bomb_bytes = 268435456  # declared size from which an archive can count as a bomb (256 MiB)
+archive_bomb_ratio = 100        # ...if it also expands this many times beyond its own size
 
 # Most a category can contribute, however many of its signals fire. "link.*" categories carry what
 # the URL engine found in the message's links.
@@ -61,3 +63,19 @@ content = 0.3
 "email.malformed_mime" = 0.3
 "email.parser_limits" = 0.4
 "email.social_engineering" = 0.3
+"email.archive_bomb" = 0.5
+"email.archive_encrypted" = 0.4
+"email.archive_traversal" = 0.6
+"email.archive_contents_dangerous" = 0.75
+"email.archive_double_extension" = 0.7
+"email.archive_contains_macro" = 0.45
+"email.archive_nested" = 0.35
+"email.pdf_javascript" = 0.6
+"email.pdf_launch_action" = 0.7
+"email.pdf_embedded_file" = 0.4
+"email.pdf_xfa" = 0.3
+"email.pdf_encrypted" = 0.2
+"email.qr_code_link" = 0.35
+"email.image_bomb" = 0.3
+"email.html_smuggling" = 0.6
+"email.file_inspection_incomplete" = 0.3

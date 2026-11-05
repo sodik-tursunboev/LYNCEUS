@@ -15,8 +15,8 @@ AuthResult = Literal[
     "pass", "fail", "softfail", "neutral", "none", "temperror", "permerror", "policy", "unknown"
 ]
 Magic = Literal[
-    "pdf", "zip", "rar", "7z", "gz", "bz2", "exe", "elf", "ole", "rtf", "png", "jpeg", "gif", "bmp",
-    "tiff", "webp", "lnk", "iso", "html", "svg",
+    "pdf", "zip", "rar", "7z", "gz", "bz2", "xz", "tar", "exe", "elf", "ole", "rtf", "png", "jpeg",
+    "gif", "bmp", "tiff", "webp", "lnk", "iso", "html", "svg",
 ]  # fmt: skip
 PartFlag = Literal[
     "decode_error",
@@ -25,13 +25,16 @@ PartFlag = Literal[
     "path_in_filename",
     "long_filename",
 ]
-LinkKind = Literal["a", "area", "form", "iframe", "script", "meta_refresh", "text"]
+LinkKind = Literal["a", "area", "form", "iframe", "script", "meta_refresh", "text", "pdf_uri", "qr"]
 LinkFlag = Literal["hidden", "javascript", "invisible_text", "image_link", "empty_text"]
 LimitHit = Literal[
     "parts", "depth", "headers", "part_bytes", "decoded_bytes", "links", "text_urls", "html_tags",
     "html_depth", "html_error",
 ]  # fmt: skip
-WorkerError = Literal["mime_too_deep", "memory", "unknown_op"]
+WorkerError = Literal["mime_too_deep", "memory", "unknown_op", "no_such_part"]
+ExtKey = Annotated[str, Field(pattern=r"^(?:[a-z0-9]{1,10}|\(odd\))$")]
+ArchiveLimit = Literal["entries", "depth", "nested_size", "decompressed_bytes", "bad_archive"]
+PdfLimit = Literal["objects", "uris", "broken_objects", "page_tree"]
 
 
 class _Strict(BaseModel):
@@ -95,6 +98,11 @@ class HtmlStats(_Strict):
     tracking_pixels: Count
     iframes: Count
     html_parts: Count
+    blob_apis: Count  # HTML smuggling indicators, counted in script text (see rules)
+    base64_blobs: Count
+    decoders: Count
+    auto_saves: Count
+    data_downloads: Count
 
 
 class MessageScan(_Strict):
@@ -122,4 +130,75 @@ class WorkerReply(_Strict):
             self.ok
         ):
             raise ValueError("a reply is either a scan or an error")
+        return self
+
+
+# ---- one attachment, inspected in its own sandbox process (op "inspect") -------------------------
+
+Url = Annotated[str, Field(min_length=1, max_length=2048)]
+
+
+class ArchiveScan(_Strict):
+    kind: Literal["archive"]
+    format: Literal["zip", "gz", "bz2", "xz", "tar"]
+    entries: Count
+    total_size: Annotated[int, Field(ge=0, le=1 << 50)]  # declared sizes, never expanded
+    ratio: Annotated[float, Field(ge=0, le=1e12)]  # largest declared size / packed size of an entry
+    encrypted: Count
+    traversal: Count  # entry names or link targets that escape the folder
+    nested: Count  # archives opened inside this one
+    depth: Annotated[int, Field(ge=0, le=10)]
+    exts: Annotated[dict[ExtKey, Count], Field(max_length=41)]
+    magics: Annotated[dict[Magic, Count], Field(max_length=30)]  # what the entries really are
+    double_pairs: Annotated[list[tuple[ExtKey, ExtKey]], Field(max_length=10)]
+    limits: Annotated[list[ArchiveLimit], Field(max_length=10)]
+
+
+class PdfScan(_Strict):
+    kind: Literal["pdf"]
+    parse: Literal["ok", "failed", "encrypted"]
+    encrypted: bool
+    pages: Count
+    objects: Count
+    javascript: Count
+    launch: Count
+    submit_form: Count
+    embedded_files: Count
+    rich_media: Count
+    open_action: bool
+    additional_actions: bool
+    forms: bool
+    xfa: bool
+    uris: Annotated[list[Url], Field(max_length=100)]
+    limits: Annotated[list[PdfLimit], Field(max_length=10)]
+
+
+class ImageScan(_Strict):
+    kind: Literal["image"]
+    format: Annotated[str, Field(pattern=r"^[a-z]{0,10}$")] | None
+    width: Annotated[int, Field(ge=0, le=10_000_000)]
+    height: Annotated[int, Field(ge=0, le=10_000_000)]
+    parse: Literal["ok", "failed", "bomb"]
+    bomb: bool
+    qr: Annotated[list[Url], Field(max_length=20)]  # decoded QR payloads: attacker text
+
+
+class NoScan(_Strict):
+    kind: Literal["none"]
+
+
+FileScan = Annotated[ArchiveScan | PdfScan | ImageScan | NoScan, Field(discriminator="kind")]
+
+
+class FileReply(_Strict):
+    ok: Literal[True] | None = None
+    file: FileScan | None = None
+    error: WorkerError | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one(self) -> "FileReply":
+        if (self.file is not None) == (self.error is not None) or (self.file is not None) != bool(
+            self.ok
+        ):
+            raise ValueError("a reply is either a file scan or an error")
         return self

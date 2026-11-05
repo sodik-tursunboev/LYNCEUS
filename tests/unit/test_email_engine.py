@@ -8,14 +8,29 @@ import json
 from collections.abc import Callable
 from typing import Any
 
+import filehelp as fh
 import mailparse
 import pytest
-from mailhelp import PHISH_LINK, analyze, eml, in_process, ok_result
+from mailhelp import (
+    PHISH_LINK,
+    analyze,
+    eml,
+    in_process,
+    in_process_inspect,
+    ok_result,
+)
 
 from core import sandbox
 from core.contracts import ResponseAction, VerdictState
 from core.email import engine
-from core.email.engine import ENGINE_VERSION, MAX_MESSAGE_BYTES, EmailAnalysis, analyze_message
+from core.email.engine import (
+    ENGINE_VERSION,
+    INSPECT_CAP,
+    MAX_MESSAGE_BYTES,
+    EmailAnalysis,
+    _qr_url,
+    analyze_message,
+)
 
 HELLO = b"From: a@x.test\r\n\r\nhi"
 Run = Callable[[bytes], sandbox.Result]
@@ -251,7 +266,7 @@ def test_every_reference_in_a_verdict_resolves() -> None:
     assert set(r.verdict.evidence_ids) == ids
     assert all(set(s.evidence_ids) <= ids for s in r.verdict.signals)
     assert r.verdict.engine_version == ENGINE_VERSION
-    assert r.verdict.ruleset_version.startswith("1.0.0+")
+    assert r.verdict.ruleset_version.startswith("1.1.0+")
 
 
 def test_what_storage_gets_is_hashes_and_hosts() -> None:
@@ -266,3 +281,198 @@ def test_what_storage_gets_is_hashes_and_hosts() -> None:
 def test_the_default_runner_is_looked_up_when_called(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(engine, "run_sandbox", in_process)
     assert analyze_message(eml(), None).report.reason is None
+
+
+# ---- attachments: each opened in its own sandbox process -----------------------------------------
+
+
+def pdf_mail(*extra: tuple[str, bytes, str]) -> bytes:
+    return eml(attachments=[("a.pdf", fh.PDF_JS, "application/pdf"), *extra])
+
+
+def inspecting(raw: bytes, inspect: Any) -> EmailAnalysis:
+    return analyze_message(raw, run=in_process, inspect_run=inspect)
+
+
+def rule_ids(a: EmailAnalysis) -> set[str]:
+    return {s.rule_id for s in a.report.verdict.signals}
+
+
+@pytest.mark.parametrize("why", ["timeout", "cpu_limit", "memory_limit", "output_limit", "crashed"])
+def test_an_attachment_that_stopped_its_sandbox_is_stated_not_ignored(why: str) -> None:
+    a = inspecting(pdf_mail(), lambda _raw, _path: ok_result(b"", why))
+    (f,) = a.report.files
+    assert (f.kind, f.status) == ("pdf", why)
+    assert "email.file_inspection_incomplete" in rule_ids(a)
+    assert a.report.verdict.state is not VerdictState.ERROR  # the rest of the message still counts
+
+
+@pytest.mark.parametrize("failure", [OSError("CreateProcess failed"), RuntimeError("bug")])
+def test_a_launcher_failure_for_one_attachment_does_not_end_the_analysis(
+    failure: Exception,
+) -> None:
+    def broken(_raw: bytes, _path: str) -> sandbox.Result:
+        raise failure
+
+    a = inspecting(pdf_mail(), broken)
+    assert a.report.files[0].status == "sandbox_error" and a.report.reason is None
+    assert "email.file_inspection_incomplete" in rule_ids(a)
+
+
+def test_no_sandbox_for_an_attachment_is_stated() -> None:
+    def unavailable(_raw: bytes, _path: str) -> sandbox.Result:
+        raise sandbox.SandboxUnavailable("gone")
+
+    assert inspecting(pdf_mail(), unavailable).report.files[0].status == "sandbox_unavailable"
+
+
+def archive_scan() -> dict[str, Any]:
+    import archives
+
+    return archives.scan_archive(fh.make_zip({"a.txt": b"x"}))
+
+
+def pdf_scan() -> dict[str, Any]:
+    import pdfscan
+
+    return pdfscan.scan_pdf(fh.PDF_PLAIN)
+
+
+def image_scan() -> dict[str, Any]:
+    import imagescan
+
+    return imagescan.scan_image(fh.blank_png())
+
+
+HOSTILE_FILES: dict[str, dict[str, Any] | bytes] = {
+    "not json": b"nope",
+    "unknown kind": {"ok": True, "file": {"kind": "exe"}},
+    "extra field": {"ok": True, "file": {"kind": "none", "extra": 1}},
+    "file and error": {"ok": True, "file": {"kind": "none"}, "error": "memory"},
+    "neither": {"ok": True},
+    "ok missing": {"file": {"kind": "none"}},
+    "bad extension key": {"ok": True, "file": {**archive_scan(), "exts": {"../x": 1}}},
+    "negative count": {"ok": True, "file": {**archive_scan(), "entries": -1}},
+    "too many uris": {"ok": True, "file": {**pdf_scan(), "uris": ["https://x.test/"] * 101}},
+    "uri too long": {"ok": True, "file": {**pdf_scan(), "uris": ["h" * 3000]}},
+    "too many qr": {"ok": True, "file": {**image_scan(), "qr": ["https://x.test/"] * 21}},
+    "unknown limit": {"ok": True, "file": {**archive_scan(), "limits": ["boom"]}},
+}
+
+
+@pytest.mark.parametrize("name", sorted(HOSTILE_FILES))
+def test_a_hostile_file_reply_is_a_stated_failure_not_data(name: str) -> None:
+    payload = HOSTILE_FILES[name]
+    output = payload if isinstance(payload, bytes) else json.dumps(payload).encode()
+    a = inspecting(pdf_mail(), lambda _raw, _path: ok_result(output))
+    assert a.report.files[0].status == "invalid", name
+    assert "email.pdf_javascript" not in rule_ids(a)
+
+
+def test_unsupported_archive_formats_are_named_and_never_opened() -> None:
+    def never(_raw: bytes, _path: str) -> sandbox.Result:
+        raise AssertionError("an unsupported format must not start a sandbox")
+
+    raw = eml(
+        attachments=[("x.7z", b"7z\xbc\xaf\x27\x1c" + b"\x00" * 40, "application/x-7z-compressed")]
+    )
+    a = inspecting(raw, never)
+    assert (a.report.files[0].kind, a.report.files[0].status) == ("7z", "unsupported")
+    assert "email.file_inspection_incomplete" not in rule_ids(a)
+    assert "email.archive_attachment" in rule_ids(a)
+
+
+def test_identical_attachments_are_inspected_once_but_all_reported() -> None:
+    calls: list[str] = []
+
+    def counting(raw: bytes, path: str) -> sandbox.Result:
+        calls.append(path)
+        return in_process_inspect(raw, path)
+
+    raw = eml(attachments=[(f"copy{i}.pdf", fh.PDF_JS, "application/pdf") for i in range(3)])
+    a = inspecting(raw, counting)
+    assert len(calls) == 1 and len(a.report.files) == 3
+    assert {f.status for f in a.report.files} == {"ok"}
+
+
+def test_inspection_is_capped_per_message_and_the_rest_are_reported_as_skipped() -> None:
+    calls: list[str] = []
+
+    def counting(raw: bytes, path: str) -> sandbox.Result:
+        calls.append(path)
+        return in_process_inspect(raw, path)
+
+    raw = eml(
+        attachments=[
+            (f"i{n}.png", fh.blank_png(10 + n, 10), "image/png") for n in range(INSPECT_CAP + 4)
+        ]
+    )
+    a = inspecting(raw, counting)
+    assert len(calls) == INSPECT_CAP
+    assert sorted(f.status for f in a.report.files).count("skipped") == 4
+    assert "email.file_inspection_incomplete" in rule_ids(a)
+
+
+def test_urls_found_in_a_pdf_go_through_the_url_engine() -> None:
+    pdf = fh.pdf_with_uris("https://paypal-login.test/login.php?email=jane%40example.test")
+    a = analyze(eml(attachments=[("statement.pdf", pdf, "application/pdf")]))
+    assert {"url.combosquat", "url.prefilled_identity"} <= rule_ids(a)
+    assert [link.kind for link in a.report.links] == ["pdf_uri"]
+    assert a.urls and a.urls[0].host == "paypal-login.test"
+
+
+def test_a_qr_code_url_goes_through_the_url_engine() -> None:
+    png = fh.qr_png("https://paypal-login.test/login.php?email=jane%40example.test")
+    a = analyze(eml(attachments=[("scan-me.png", png, "image/png")]))
+    assert {"email.qr_code_link", "url.combosquat"} <= rule_ids(a)
+    assert [link.kind for link in a.report.links] == ["qr"]
+
+
+@pytest.mark.parametrize(
+    ("payload", "url"),
+    [
+        ("https://x.test/a", "https://x.test/a"),
+        ("phish-site.test/x?y=1", "https://phish-site.test/x?y=1"),
+        ("mailto:a@x.test", "mailto:a@x.test"),
+        ("just some words", None),
+        ("", None),
+        ("a b.test", None),
+    ],
+)
+def test_qr_payloads_become_links_only_when_they_look_like_one(
+    payload: str, url: str | None
+) -> None:
+    assert _qr_url(payload) == url
+
+
+def test_attachment_findings_name_facts_and_not_file_text() -> None:
+    entries = {"ENTRYMARK.pdf.exe": b"x", "readme.txt": b"hello"}
+    pdf = fh.pdf_with_uris("https://uri-site.test/URIMARK")
+    raw = eml(
+        subject="SUBJMARK",
+        attachments=[
+            ("FILEMARK.zip", fh.make_zip(entries), "application/zip"),
+            ("doc.pdf", pdf, "application/pdf"),
+            ("QRFILE.png", fh.qr_png("https://qr-site.test/QRMARK"), "image/png"),
+        ],
+    )
+    a = analyze(raw)
+    said = " ".join(
+        [a.report.verdict.explanation]
+        + [s.description for s in a.report.verdict.signals]
+        + [e.summary for e in a.report.evidence]
+        + [fact for f in a.report.files for fact in (f.kind, f.status, *f.facts)]
+    )
+    assert a.report.files and "email.archive_double_extension" in rule_ids(a)
+    for marker in ("ENTRYMARK", "FILEMARK", "URIMARK", "QRMARK", "QRFILE", "SUBJMARK"):
+        assert marker not in said, marker
+
+
+def test_a_page_that_builds_and_saves_a_file_is_flagged_as_smuggling() -> None:
+    page = (
+        b'<html><script>var b = new Blob([atob("QUJD")]); var a = document.createElement("a");'
+        b'a.href = URL.createObjectURL(b); a.download = "invoice.zip"; a.click();</script></html>'
+    )
+    a = analyze(eml(attachments=[("invoice.html", page, "text/html")]))
+    assert {"email.html_smuggling", "email.html_attachment"} <= rule_ids(a)
+    assert a.report.verdict.state in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS)

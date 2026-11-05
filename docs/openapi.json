@@ -92,6 +92,14 @@
             "title": "Evidence",
             "type": "array"
           },
+          "files": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FileSummary"
+            },
+            "title": "Files",
+            "type": "array"
+          },
           "links": {
             "items": {
               "$ref": "#/components/schemas/LinkSummary"
@@ -187,6 +195,39 @@
           "summary"
         ],
         "title": "Evidence",
+        "type": "object"
+      },
+      "FileSummary": {
+        "additionalProperties": false,
+        "description": "What was found in one attachment, in fixed words and numbers (never file content).",
+        "properties": {
+          "facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "part": {
+            "title": "Part",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "part",
+          "kind",
+          "status",
+          "facts"
+        ],
+        "title": "FileSummary",
         "type": "object"
       },
       "HTTPValidationError": {

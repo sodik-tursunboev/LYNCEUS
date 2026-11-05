@@ -34,6 +34,15 @@ def handle(header: dict[str, Any], body: bytes) -> dict[str, Any]:
 
         scan = mailparse.scan(body)
         return scan if "error" in scan else {"ok": True, "scan": scan}
+    if op == "inspect":  # one attachment of a message, addressed by part path, in its own process
+        import filescan
+        import mailparse
+
+        path = header.get("path")
+        data = mailparse.part_bytes(body, path) if isinstance(path, str) else None
+        if data is None:
+            return {"error": "no_such_part"}
+        return {"ok": True, "file": filescan.inspect_data(data)}
     return {"error": "unknown_op"}
 
 

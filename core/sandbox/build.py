@@ -16,6 +16,7 @@ from pathlib import Path
 from core.sandbox import APP, CONTAINER, RUNTIME, SANDBOX_DIR, SandboxUnavailable
 
 GUEST = Path(__file__).parent / "guest"
+REQUIREMENTS = Path(__file__).parents[2] / "requirements-sandbox.txt"
 _SKIP = {  # parts of the standard library the worker never needs
     "site-packages", "test", "tests", "idlelib", "tkinter", "turtledemo", "ensurepip",
     "__pycache__", "venv", "lib2to3",
@@ -25,6 +26,23 @@ _SKIP = {  # parts of the standard library the worker never needs
 def _copy_lib(src: Path, dst: Path) -> None:
     shutil.copytree(src, dst, ignore=lambda _d, names: [n for n in names if n in _SKIP])
     (dst / "site-packages").mkdir()
+
+
+def _install_parsers() -> None:
+    """The PDF and image libraries, from hash-pinned wheels only, into the sandbox's own Lib."""
+    done = subprocess.run(  # noqa: S603
+        [
+            sys.executable, "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
+            "--target", str(RUNTIME / "Lib" / "site-packages"),
+            "--require-hashes", "--only-binary=:all:", "--no-deps",
+            "-r", str(REQUIREMENTS),
+        ],
+        capture_output=True, text=True, check=False,
+    )  # fmt: skip
+    if done.returncode != 0:
+        raise SandboxUnavailable(f"could not install the parser libraries: {done.stderr.strip()}")
+    for video_plugin in (RUNTIME / "Lib" / "site-packages" / "cv2").glob("opencv_videoio_ffmpeg*"):
+        video_plugin.unlink()  # 29 MB of media decoders that QR detection never calls
 
 
 def build() -> None:
@@ -42,6 +60,7 @@ def build() -> None:
     shutil.copytree(base / "DLLs", RUNTIME / "DLLs")
     _copy_lib(base / "Lib", RUNTIME / "Lib")
     shutil.copytree(GUEST, APP, ignore=shutil.ignore_patterns("__pycache__"))
+    _install_parsers()
 
     sid = _win32.register_container(CONTAINER)
     done = subprocess.run(  # noqa: S603

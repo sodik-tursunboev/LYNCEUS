@@ -25,5 +25,13 @@ module = ["ada_url", "ada_url.*"]
 ignore_missing_imports = true  # ada-url ships no type information
 
 [[tool.mypy.overrides]]
-module = ["limits", "htmlscan", "mailparse", "textscan", "worker"]
+module = [
+  "limits", "htmlscan", "mailparse", "textscan", "worker", "filetype", "filescan", "archives",
+  "pdfscan", "imagescan",
+]
 ignore_missing_imports = true  # sandbox guest modules run with their own folder as the path
+
+[[tool.mypy.overrides]]
+module = ["cv2", "cv2.*", "pikepdf", "pikepdf.*", "lxml", "lxml.*", "numpy", "numpy.*", "PIL", "PIL.*"]
+ignore_missing_imports = true  # sandbox-only libraries; the host never imports them
+ignore_errors = false

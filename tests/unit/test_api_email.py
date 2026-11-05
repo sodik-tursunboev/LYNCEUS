@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from mailhelp import PHISH_LINK, eml, in_process
+from mailhelp import PHISH_LINK, eml, in_process, in_process_inspect
 from sqlalchemy import create_engine, func, select
 
 from core import sandbox
@@ -27,6 +27,7 @@ PHISH = eml(sender='"PayPal Support" <help@paypal-login.test>', subject="Urgent"
 @pytest.fixture(autouse=True)
 def fake_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(engine, "run_sandbox", in_process)
+    monkeypatch.setattr(engine, "run_inspect", in_process_inspect)
 
 
 def client(**over: Any) -> TestClient:

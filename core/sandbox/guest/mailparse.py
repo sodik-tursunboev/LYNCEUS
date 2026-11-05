@@ -15,6 +15,7 @@ from typing import Any
 
 import htmlscan
 import textscan
+from filetype import detect_magic
 from limits import (
     MAX_ADDRS,
     MAX_DECODED_TOTAL,
@@ -87,30 +88,6 @@ def _auth(msg: Any) -> dict[str, Any]:
     return auth
 
 
-def detect_magic(data: bytes) -> str | None:
-    head = data[:16]
-    table = (
-        (b"%PDF-", "pdf"), (b"PK\x03\x04", "zip"), (b"PK\x05\x06", "zip"), (b"Rar!\x1a\x07", "rar"),
-        (b"7z\xbc\xaf\x27\x1c", "7z"), (b"\x1f\x8b", "gz"), (b"BZh", "bz2"), (b"MZ", "exe"),
-        (b"\x7fELF", "elf"), (b"\xd0\xcf\x11\xe0", "ole"), (b"{\\rtf", "rtf"), (b"\x89PNG", "png"),
-        (b"\xff\xd8\xff", "jpeg"), (b"GIF8", "gif"), (b"BM", "bmp"), (b"II*\x00", "tiff"),
-        (b"MM\x00*", "tiff"), (b"L\x00\x00\x00\x01\x14\x02\x00", "lnk"),
-    )  # fmt: skip
-    for sig, name in table:
-        if head.startswith(sig):
-            return name
-    if head[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        return "webp"
-    if data[0x8001:0x8006] == b"CD001":
-        return "iso"
-    text = data[:512].lstrip(b"\xef\xbb\xbf \t\r\n").lower()
-    if text.startswith((b"<!doctype html", b"<html", b"<head", b"<body", b"<script", b"<meta")):
-        return "html"
-    if b"<svg" in text:
-        return "svg"
-    return None
-
-
 def _filename(node: Any) -> tuple[str | None, list[str]]:
     flags: list[str] = []
     try:
@@ -162,6 +139,28 @@ def _message_headers(msg: Any, hit: set[str]) -> dict[str, Any]:
         "list_unsubscribe": bool(msg.get("List-Unsubscribe")),
         "date_present": bool(msg.get("Date")),
     }
+
+
+_PATH = re.compile(r"^1(?:\.[1-9][0-9]{0,3}){0,20}$")
+
+
+def part_bytes(raw: bytes, path: str) -> bytes | None:
+    """The decoded bytes of one leaf part, addressed by the paths `scan` reports (None: no such)."""
+    if not _PATH.match(path):
+        return None
+    node: Any = email.message_from_bytes(raw, policy=email.policy.compat32)
+    for index in (int(i) for i in path.split(".")[1:]):
+        children = node.get_payload()
+        if not node.is_multipart() or not isinstance(children, list) or index > len(children):
+            return None
+        node = children[index - 1]
+    if node.is_multipart():
+        return None
+    try:
+        data = node.get_payload(decode=True)
+    except Exception:  # noqa: BLE001
+        return b""
+    return data[:MAX_PART_BYTES] if isinstance(data, bytes) else b""
 
 
 def scan(raw: bytes) -> dict[str, Any]:

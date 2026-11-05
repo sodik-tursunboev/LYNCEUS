@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import pytest
-from mailhelp import eml, in_process
+from mailhelp import eml, in_process, in_process_inspect
 
 from core.contracts import VerdictState as V
 from core.detection import stub
@@ -92,6 +92,7 @@ MAIL_MANIFEST = Path(__file__).parents[2] / "corpus" / "mail" / "manifest.jsonl"
 
 def test_mail_eval_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(email_engine, "run_sandbox", in_process)
+    monkeypatch.setattr(email_engine, "run_inspect", in_process_inspect)
     assert main(["--kind", "mail", "--manifest", str(MAIL_MANIFEST), "--out", str(tmp_path)]) == 0
     report = EvalReport.model_validate_json(
         (tmp_path / "mail-dev.json").read_text(encoding="utf-8")
@@ -108,6 +109,7 @@ def test_mail_holdout_runs_are_logged_in_their_own_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(email_engine, "run_sandbox", in_process)
+    monkeypatch.setattr(email_engine, "run_inspect", in_process_inspect)
     raw = eml()
     (tmp_path / "h1.eml").write_bytes(raw)
     line = {

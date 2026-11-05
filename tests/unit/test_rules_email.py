@@ -3,6 +3,7 @@ consistent with its config. Messages are built here, parsed by the real guest pa
 the real engine; only the sandbox is replaced (tests/sandbox/test_email_sandbox.py covers that).
 """
 
+import filehelp as fh
 import pytest
 from mailhelp import PHISH_LINK, analyze, eml, fired, multipart
 
@@ -28,8 +29,19 @@ ATTACK_IDS = {
 }
 
 
+SMUGGLER = (
+    '<script>var b = new Blob([atob("QUJD")], {type: "application/zip"});'
+    'var a = document.createElement("a"); a.href = URL.createObjectURL(b);'
+    'a.download = "invoice.zip"; a.click();</script>'
+)
+
+
 def html(body: str) -> bytes:
     return eml(html=body)
+
+
+def attach(name: str, data: bytes, ctype: str) -> bytes:
+    return eml(attachments=[(name, data, ctype)])
 
 
 def from_domain(domain: str) -> bytes:
@@ -130,6 +142,70 @@ CASES: dict[str, tuple[bytes, bytes]] = {
             text="Your account is suspended. Please verify your account and enter your password.",
         ),
         eml(subject="Lunch", text="Lunch on Friday? Same place as last time."),
+    ),
+    # ---- inside attachments (each file is opened by the real guest scanners) ----
+    "email.archive_bomb": (
+        attach("big.zip", fh.zip_bomb(300), "application/zip"),
+        attach("ok.zip", fh.make_zip({"a.txt": b"hello" * 100}), "application/zip"),
+    ),
+    "email.archive_encrypted": (
+        attach(
+            "secret.zip", fh.mark_encrypted(fh.make_zip({"a.txt": b"hello"})), "application/zip"
+        ),
+        attach("plain.zip", fh.make_zip({"a.txt": b"hello"}), "application/zip"),
+    ),
+    "email.archive_traversal": (
+        attach("t.zip", fh.make_zip({"../../evil.txt": b"x"}), "application/zip"),
+        attach("t.zip", fh.make_zip({"docs/readme.txt": b"x"}), "application/zip"),
+    ),
+    "email.archive_contents_dangerous": (
+        attach("p.zip", fh.make_zip({"setup.scr": b"x"}), "application/zip"),
+        attach("p.zip", fh.make_zip({"photo.jpg": b"\xff\xd8\xff\xe0"}), "application/zip"),
+    ),
+    "email.archive_double_extension": (
+        attach("d.zip", fh.make_zip({"invoice.pdf.exe": b"x"}), "application/zip"),
+        attach("d.zip", fh.make_zip({"report.final.pdf": b"%PDF-1.7"}), "application/zip"),
+    ),
+    "email.archive_contains_macro": (
+        attach("m.zip", fh.make_zip({"budget.xlsm": b"x"}), "application/zip"),
+        attach("m.zip", fh.make_zip({"budget.xlsx": b"x"}), "application/zip"),
+    ),
+    "email.archive_nested": (
+        attach("n.zip", fh.nested_zip(3), "application/zip"),
+        attach("n.zip", fh.make_zip({"a.txt": b"x"}), "application/zip"),
+    ),
+    "email.pdf_javascript": (
+        attach("a.pdf", fh.PDF_JS, "application/pdf"),
+        attach("a.pdf", fh.PDF_PLAIN, "application/pdf"),
+    ),
+    "email.pdf_launch_action": (
+        attach("a.pdf", fh.PDF_LAUNCH, "application/pdf"),
+        attach("a.pdf", fh.PDF_PLAIN, "application/pdf"),
+    ),
+    "email.pdf_embedded_file": (
+        attach("a.pdf", fh.PDF_EMBEDDED, "application/pdf"),
+        attach("a.pdf", fh.PDF_PLAIN, "application/pdf"),
+    ),
+    "email.pdf_xfa": (
+        attach("a.pdf", fh.make_pdf("/AcroForm << /Fields [] /XFA (x) >>"), "application/pdf"),
+        attach("a.pdf", fh.make_pdf("/AcroForm << /Fields [] >>"), "application/pdf"),
+    ),
+    "email.pdf_encrypted": (
+        attach("a.pdf", fh.encrypted_pdf(), "application/pdf"),
+        attach("a.pdf", fh.PDF_PLAIN, "application/pdf"),
+    ),
+    "email.qr_code_link": (
+        attach("code.png", fh.qr_png("https://phish-site.test/x"), "image/png"),
+        attach("blank.png", fh.blank_png(), "image/png"),
+    ),
+    "email.image_bomb": (
+        attach("huge.png", fh.png_declaring(60000, 60000), "image/png"),
+        attach("blank.png", fh.blank_png(), "image/png"),
+    ),
+    "email.html_smuggling": (html(SMUGGLER), html("<script>console.log(1)</script><p>hi</p>")),
+    "email.file_inspection_incomplete": (
+        eml(attachments=[(f"i{n}.png", fh.blank_png(10 + n, 10), "image/png") for n in range(10)]),
+        attach("blank.png", fh.blank_png(), "image/png"),
     ),
 }
 

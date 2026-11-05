@@ -10,6 +10,7 @@ import hashlib
 import logging
 import re
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
 import ada_url
@@ -18,20 +19,38 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from core import sandbox
 from core.contracts import Confidence, Evidence, ResponseAction, Signal, Verdict, VerdictState
 from core.detection.engine import UrlAnalysis, analyze_url
-from core.email.models import MessageScan, WorkerReply
+from core.email.models import (
+    ArchiveScan,
+    FileReply,
+    ImageScan,
+    Link,
+    MessageScan,
+    Part,
+    PdfScan,
+    WorkerReply,
+)
 from core.risk.scoring import Scored, score
 from core.urls.parse import ParsedUrl, parse_url
-from rules.email import RULES, Ctx, LinkInfo
+from rules.email import RULES, Ctx, FileInfo, LinkInfo
 from rules.email.data import ruleset_version, scoring
 
-ENGINE_VERSION = "email-1.0.0"
+ENGINE_VERSION = "email-1.1.0"
 MAX_MESSAGE_BYTES = 10 * 1024 * 1024
 _NOT_SAFE = (
     "This is not evidence of safety: only the message structure and its links were examined."
 )
 _ABSOLUTE = re.compile(r"^\s*(?:[a-zA-Z][a-zA-Z0-9+.\-]*:|//|\\\\)")
+_BARE_DOMAIN = re.compile(r"^(?:[a-z0-9-]+\.)+[a-z]{2,24}(?:[/:?#]\S*)?$", re.I)
 SANDBOX_LIMITS = sandbox.Limits(memory_mb=512, cpu_seconds=10, wall_seconds=20)
+INSPECT_LIMITS = sandbox.Limits(memory_mb=1024, cpu_seconds=20, wall_seconds=40)
+INSPECT_CAP = 8  # attachments opened per message; the rest are reported as skipped
+INSPECT_WORKERS = 3  # sandboxes running at once for one message
+_INSPECTABLE = frozenset(
+    ["pdf", "zip", "gz", "bz2", "xz", "tar", "png", "jpeg", "gif", "bmp", "tiff", "webp"]
+)
+_UNSUPPORTED = frozenset(["7z", "rar", "iso"])  # named, not opened: no safe parser yet
 log = logging.getLogger(__name__)
+InspectRun = Callable[[bytes, str], sandbox.Result]
 
 
 class _Frozen(BaseModel):
@@ -60,12 +79,22 @@ class MessageSummary(_Frozen):
     defects: tuple[str, ...]
 
 
+class FileSummary(_Frozen):
+    """What was found in one attachment, in fixed words and numbers (never file content)."""
+
+    part: str
+    kind: str  # archive, pdf, image, none, or why it was not opened
+    status: str  # ok, or the failure: timeout, crashed, invalid, unsupported, skipped, ...
+    facts: tuple[str, ...]
+
+
 class EmailReport(_Frozen):
     verdict: Verdict
     evidence: tuple[Evidence, ...]
     reason: str | None  # why the message was not (fully) analysed
     summary: MessageSummary | None
     links: tuple[LinkSummary, ...]
+    files: tuple[FileSummary, ...] = ()
 
 
 class ExtractedRef(_Frozen):
@@ -118,9 +147,113 @@ def run_sandbox(raw: bytes) -> sandbox.Result:
     return sandbox.run("main.py", sandbox.frame({"op": "mime"}, raw), SANDBOX_LIMITS)
 
 
+def run_inspect(raw: bytes, path: str) -> sandbox.Result:
+    """Open one attachment of `raw`, addressed by part path, in its own sandbox process."""
+    header: dict[str, object] = {"op": "inspect", "path": path}
+    return sandbox.run("main.py", sandbox.frame(header, raw), INSPECT_LIMITS)
+
+
+def _inspect_one(raw: bytes, part: Part, run: InspectRun) -> tuple[FileInfo, str]:
+    def failed(why: str) -> tuple[FileInfo, str]:
+        return FileInfo(part.path, part.magic, None, why), part.sha256
+
+    try:
+        result = run(raw, part.path)
+    except sandbox.SandboxUnavailable:
+        return failed("sandbox_unavailable")
+    except Exception:  # noqa: BLE001  (one attachment failing must not end the analysis)
+        log.exception("attachment inspection failed to start")
+        return failed("sandbox_error")
+    if not result.ok:
+        return failed(result.reason)
+    try:
+        reply = FileReply.model_validate_json(result.output)
+    except ValidationError:
+        return failed("invalid")
+    if reply.file is None:
+        return failed(str(reply.error))
+    return FileInfo(part.path, part.magic, reply.file, None), part.sha256
+
+
+def _inspect_files(raw: bytes, scan: MessageScan, run: InspectRun) -> tuple[FileInfo, ...]:
+    """Each distinct inspectable attachment gets its own sandbox process (up to INSPECT_CAP)."""
+    infos: dict[str, FileInfo] = {}
+    jobs: list[Part] = []
+    for part in scan.parts:
+        if not part.attachment or part.magic is None:
+            continue
+        if part.magic in _UNSUPPORTED:
+            infos[part.path] = FileInfo(part.path, part.magic, None, "unsupported")
+        elif part.magic in _INSPECTABLE:
+            if len(jobs) < INSPECT_CAP:
+                jobs.append(part)
+            else:
+                infos[part.path] = FileInfo(part.path, part.magic, None, "skipped")
+    unique: dict[str, Part] = {}
+    for part in jobs:
+        unique.setdefault(part.sha256, part)  # identical bytes are inspected once
+    with ThreadPoolExecutor(max_workers=INSPECT_WORKERS) as pool:
+        outcomes = pool.map(lambda p: _inspect_one(raw, p, run), unique.values())
+        done = {digest: info for info, digest in outcomes}
+    for part in jobs:
+        base = done[part.sha256]
+        infos[part.path] = FileInfo(part.path, part.magic, base.scan, base.failure)
+    return tuple(infos[p.path] for p in scan.parts if p.path in infos)
+
+
+def _qr_url(payload: str) -> str | None:
+    text = payload.strip()
+    if _ABSOLUTE.match(text):
+        return text
+    return "https://" + text if _BARE_DOMAIN.match(text) else None
+
+
+def _file_links(files: tuple[FileInfo, ...]) -> list[Link]:
+    """URLs found inside attachments, so they go through the URL engine like any other link."""
+    out: list[Link] = []
+    for f in files:
+        if isinstance(f.scan, PdfScan):
+            out += [
+                Link(part=f.part, kind="pdf_uri", url=u, text="", flags=[]) for u in f.scan.uris
+            ]
+        elif isinstance(f.scan, ImageScan):
+            for payload in f.scan.qr:
+                if url := _qr_url(payload):
+                    out.append(Link(part=f.part, kind="qr", url=url, text="", flags=[]))
+    return out
+
+
+def _describe(f: FileInfo) -> FileSummary:
+    s = f.scan
+    if s is None:
+        return FileSummary(
+            part=f.part, kind=f.magic or "unknown", status=f.failure or "none", facts=()
+        )
+    facts: list[str] = []
+    if isinstance(s, ArchiveScan):
+        facts = [s.format, f"{s.entries} entries", f"{s.total_size} bytes declared"]
+        facts += [f"{n} {what}" for n, what in (
+            (s.encrypted, "encrypted"), (s.traversal, "path traversal"), (s.nested, "nested"),
+        ) if n]  # fmt: skip
+        facts += [f"stopped at {limit}" for limit in s.limits]
+    elif isinstance(s, PdfScan):
+        facts = [f"parse {s.parse}", f"{s.pages} pages", f"{len(s.uris)} links"]
+        facts += [f"{n} {what}" for n, what in (
+            (s.javascript, "javascript"), (s.launch, "launch"),
+            (s.embedded_files, "embedded files"), (s.submit_form, "form submit"),
+            (s.rich_media, "rich media"),
+        ) if n]  # fmt: skip
+        facts += [name for name, on in (("xfa", s.xfa), ("encrypted", s.encrypted)) if on]
+    elif isinstance(s, ImageScan):
+        facts = [f"{s.format or '?'} {s.width}x{s.height}", f"parse {s.parse}"]
+        if s.qr:
+            facts.append(f"{len(s.qr)} QR code(s)")
+    return FileSummary(part=f.part, kind=s.kind, status="ok", facts=tuple(facts))
+
+
 def _absolute(url: str, kind: str, base: str | None) -> str | None:
     """The URL a browser would load, or None for a relative link we cannot resolve."""
-    if kind == "text" or _ABSOLUTE.match(url):
+    if kind in ("text", "pdf_uri", "qr") or _ABSOLUTE.match(url):
         return url
     if base is None:
         return None
@@ -130,12 +263,12 @@ def _absolute(url: str, kind: str, base: str | None) -> str | None:
         return None
 
 
-def _links(scan: MessageScan, cap: int) -> tuple[list[LinkInfo], int]:
+def _links(scan: MessageScan, cap: int, extra: list[Link]) -> tuple[list[LinkInfo], int]:
     base = scan.base if scan.base and _ABSOLUTE.match(scan.base) else None
     analysed: dict[str, UrlAnalysis] = {}
     infos: list[LinkInfo] = []
     relative = 0
-    for link in scan.links:
+    for link in [*scan.links, *extra]:
         url = _absolute(link.url, link.kind, base)
         if url is None:
             relative += 1
@@ -227,7 +360,7 @@ def _summary(scan: MessageScan, links: list[LinkInfo], relative: int) -> Message
         size=scan.size,
         parts=len(scan.parts),
         attachments=sum(p.attachment for p in scan.parts),
-        links=len(scan.links),
+        links=len(links) + relative,  # message links plus URLs found inside attachments
         links_analyzed=sum(1 for link in links if link.analysis is not None),
         relative_links_skipped=relative,
         limits_hit=tuple(scan.limits_hit),
@@ -270,8 +403,10 @@ def analyze_message(
     raw: bytes,
     artifact_id: UUID | None = None,
     run: Callable[[bytes], sandbox.Result] | None = None,
+    inspect_run: InspectRun | None = None,
 ) -> EmailAnalysis:
     run = run or run_sandbox  # looked up at call time, so tests can substitute it
+    inspect_run = inspect_run or run_inspect
     aid = artifact_id or uuid4()
     raw_hash = hashlib.sha256(raw).hexdigest()
     if not raw.strip():
@@ -301,9 +436,11 @@ def analyze_message(
         return _unscored(aid, raw_hash, VerdictState.UNKNOWN, why, str(reply.error))
     try:
         scan = reply.scan
-        links, relative = _links(scan, int(scoring()["thresholds"]["link_cap"]))
+        files = _inspect_files(raw, scan, inspect_run)
+        links, relative = _links(scan, int(scoring()["thresholds"]["link_cap"]), _file_links(files))
         sender, from_domain = _sender(scan)
-        signals, evidence = _signals(Ctx(scan, tuple(links), sender, from_domain), raw_hash)
+        ctx = Ctx(scan, tuple(links), sender, from_domain, files)
+        signals, evidence = _signals(ctx, raw_hash)
         scored = score(signals, False, scoring())
         if scored.state is VerdictState.MALICIOUS:
             scored = scored._replace(recommended_response=ResponseAction.QUARANTINE)
@@ -311,6 +448,7 @@ def analyze_message(
         report = EmailReport(
             verdict=verdict, evidence=tuple(evidence), reason=None,
             summary=_summary(scan, links, relative), links=_link_report(links),
+            files=tuple(_describe(f) for f in files),
         )  # fmt: skip
         return EmailAnalysis(input_sha256=raw_hash, report=report, urls=_refs(links))
     except Exception:  # an engine bug is an explicit ERROR, never a silent pass

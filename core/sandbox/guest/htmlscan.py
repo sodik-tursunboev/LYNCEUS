@@ -16,8 +16,21 @@ from limits import (
     MAX_LINK_TEXT,
     MAX_LINK_URL,
     MAX_LINKS,
+    MAX_SCRIPT_CHARS,
     MAX_TAGS,
 )
+
+# HTML smuggling: a page that builds a file in the reader's browser from encoded data and saves it.
+# Only counts are reported; no one indicator is a verdict (rules decide).
+_BLOB = re.compile(
+    r"new\s+blob\s*\(|createobjecturl|mssaveorOpenblob|mssaveblob|new\s+file\s*\(", re.I
+)
+_BASE64 = re.compile(r"[A-Za-z0-9+/]{2000,}={0,2}")
+_DECODER = re.compile(
+    r"\batob\s*\(|fromcharcode|\bunescape\s*\(|\beval\s*\(|new\s+function\s*\(", re.I
+)
+_SAVE = re.compile(r"\.download\s*=|setattribute\(\s*['\"]download|\.click\s*\(\s*\)", re.I)
+_COUNT_CAP = 10_000
 
 _VOID = frozenset(
     [
@@ -90,6 +103,7 @@ class Budget:
         self.stats = {
             "forms": 0, "password_inputs": 0, "scripts": 0, "external_images": 0,
             "tracking_pixels": 0, "iframes": 0, "html_parts": 0,
+            "blob_apis": 0, "base64_blobs": 0, "decoders": 0, "auto_saves": 0, "data_downloads": 0,
         }  # fmt: skip
         self.excerpt: list[str] = []
         self.excerpt_len = 0
@@ -121,6 +135,9 @@ class Scanner(HTMLParser):
         self.anchors: list[dict[str, Any]] = []
         self.tags = 0
         self.skip = 0
+        self.in_script = 0
+        self.script: list[str] = []
+        self.script_len = 0
         self.stopped = False
 
     @property
@@ -143,6 +160,8 @@ class Scanner(HTMLParser):
             flags = ["hidden"] if hidden else []
             if href.strip().lower().startswith("javascript:"):
                 flags.append("javascript")
+            if "download" in a and href.strip().lower().startswith(("data:", "blob:")):
+                self.b.stats["data_downloads"] += 1
             rec = self.b.add_link(self.part, "a" if tag == "a" else "area", href, flags)
             if rec is not None:
                 anchor = {"rec": rec, "text": [], "has_image": False}
@@ -178,6 +197,8 @@ class Scanner(HTMLParser):
                 self.b.stats["tracking_pixels"] += 1
         if tag in ("script", "style"):
             self.skip += 1
+        if tag == "script":
+            self.in_script += 1
         if tag not in _VOID:
             if len(self.stack) < MAX_HTML_DEPTH:
                 self.stack.append((tag, hidden, anchor))
@@ -196,8 +217,14 @@ class Scanner(HTMLParser):
                 break
         if tag in ("script", "style") and self.skip:
             self.skip -= 1
+        if tag == "script" and self.in_script:
+            self.in_script -= 1
 
     def handle_data(self, data: str) -> None:
+        if self.in_script and not self.stopped and self.script_len < MAX_SCRIPT_CHARS:
+            room = data[: MAX_SCRIPT_CHARS - self.script_len]
+            self.script.append(room)
+            self.script_len += len(room)
         if self.stopped or self.skip or not data.strip():
             return
         for anchor in self.anchors:
@@ -222,6 +249,14 @@ class Scanner(HTMLParser):
     def finish(self) -> None:
         for anchor in list(self.anchors):
             self._finish(anchor)
+        if self.script:
+            text = "".join(self.script)
+            stats = self.b.stats
+            for key, pattern in (
+                ("blob_apis", _BLOB), ("base64_blobs", _BASE64),
+                ("decoders", _DECODER), ("auto_saves", _SAVE),
+            ):  # fmt: skip
+                stats[key] = min(stats[key] + len(pattern.findall(text)), _COUNT_CAP)
 
 
 def scan_html(html: str, part: str, budget: Budget) -> None:

@@ -3,7 +3,13 @@
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
 ## What the M2a message engine cannot do (MIME, headers, HTML, links, attachment inventory)
-- **Attachments are inventoried, not opened.** Type by file signature, name flags, size and hash only. PDFs, images (QR, OCR), archives and Office files are not looked inside until M2b, and Office documents are out of M2 entirely. A harmless-looking `.pdf` that is a real PDF with a malicious link is not caught yet.
+- **What is opened:** PDFs, zip/tar/gz/bz2/xz archives, and png/jpeg/gif/bmp/tiff/webp images (QR codes), each in its own sandbox process, up to 8 attachments per message (the rest are reported as `skipped`). **Not opened:** 7z, rar and iso (named only), Office documents (out of M2: macro-enabled files are flagged by name and type, never read), password-protected archives and PDFs (reported, contents unknown), and anything else.
+- **No OCR.** Text inside images is not read. Tesseract is not installed here and the sandbox allows one process, so the option set needs a decision (ADR-004). A phishing lure that is only a screenshot with a typed URL is invisible; a QR code is decoded.
+- **PDF triage is features, not behaviour.** It counts JavaScript, Launch, embedded files and link annotations through qpdf. It does not render, so a link hidden under an image, a form that posts elsewhere, or content in an XFA template are only as visible as the dictionary entries. Links in the page content stream (not annotations) are not extracted.
+- **QR decoding is OpenCV's detector, tuned on synthetic codes.** Real photographs, tilted, low-contrast or logo-overlaid codes will be missed; on a miss the image is simply a clean image. A QR code to a login-looking domain with no brand and no other signal is UNKNOWN (dev sample `m2b-025`), and a PDF whose only feature is an embedded file is UNKNOWN (`m2b-018`): both are counted as misses.
+- **Archive limits are declared, not measured.** A bomb is recognised from headers and a read budget (48 MiB); a malicious archive that stays under the thresholds (256 MiB declared and 100x expansion) is just an archive. Entry names and contents are never kept; only extensions, real types and counts reach the rules.
+- **HTML smuggling is pattern counting** (`new Blob`, `atob`, large base64, `download` on a data link) on the first 200,000 characters of script. Heavy obfuscation, string splitting or loading the payload from a remote file defeats it.
+- **Cost.** Each opened attachment starts a sandbox; importing the image libraries takes about 3 seconds cold. A message with several attachments takes seconds, not milliseconds, and the sandbox folder is about 208 MB.
 - **A message is never BENIGN** (ADR-014). The best a clean message gets is UNKNOWN. That is correct and also means there is no "this is fine" answer to show a user.
 - **CSS is read only where it is written on the element.** `style="display:none"` and the common tricks (zero size, off-screen, clipped, transparent) are caught; hiding through a `<style>` block, a class or a stylesheet is not. Text and link order are not rendered, so overlaid or reordered text can fool the link-text rules.
 - **Link text is compared to its target only for anchors,** and only when the text contains something that parses as a domain with a known suffix. "Click here" over a bad link is not a mismatch; it is still analysed as a link.
@@ -14,10 +20,12 @@ Written to be read before trusting anything in the repo. "Not verified" means co
 - **Storage keeps hosts in plaintext** (`domains`), so the database records which sites a user's mail linked to. No message text, URL, address or file name is stored (a test scans every table), and ADR-007 is still unsigned.
 
 ## What the sandbox does not cover
-- **Windows only.** The restricted process (AppContainer plus Job Object) is Windows-specific; on any other system analysis returns ERROR `sandbox_unavailable`, and the sandbox tests are skipped. A Linux container route is not built.
+- **Windows only.** The restricted process (AppContainer plus Job Object) is Windows-specific; on any other system analysis returns ERROR `sandbox_unavailable`, and the sandbox tests are skipped. A Linux container route is not built. The parser libraries are pinned to Windows x64 / CPython 3.14 wheels (`requirements-sandbox.txt`).
+- **Native parsers are the new attack surface:** qpdf, libxml2 (through lxml), Pillow's decoders, OpenCV and numpy now run on attacker bytes. They are inside the sandbox, on pinned versions, with the FFmpeg plugin removed, and fuzzed here only by random-bytes tests; they have not been audited or run under a fuzzer.
+- **Concurrency is up to 4 requests x 4 sandboxes** (one parse plus 3 attachment inspections each), 16 processes at most.
 - **Per-user setup.** Building registers an AppContainer profile (`python tasks.py sandbox`; `python -m core.sandbox.build --remove` undoes it). The sandbox is rebuilt from scratch each time, and a stale copy is caught by a test, not by the runtime.
 - **It is a mitigation, not a proof.** Kernel or interpreter escapes are out of scope; the limits are memory, CPU time, wall time, output size and one process. A hostile message can still burn those limits (and does, by design, end as UNKNOWN with a reason).
-- **Concurrency is capped at 4** (`MIRAGE_MAX_CONCURRENT_PARSERS`); a fifth request waits one second, then gets 503.
+- **Concurrency is capped at 4 requests** (`MIRAGE_MAX_CONCURRENT_PARSERS`); a fifth waits one second, then gets 503.
 
 ## What the M1 engine cannot catch
 - **It sees only the URL string.** No reputation, domain age, WHOIS, page content, meta-refresh or JavaScript redirects, QR codes, email or files. A freshly registered phishing domain with no brand name or keyword in it is UNKNOWN, never BENIGN.

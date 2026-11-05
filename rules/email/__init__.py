@@ -9,8 +9,18 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from core.detection.engine import UrlAnalysis
-from core.email.models import MessageScan
+from core.email.models import ArchiveScan, ImageScan, MessageScan, NoScan, PdfScan
 from core.urls.parse import ParsedUrl
+
+
+@dataclass(frozen=True)
+class FileInfo:
+    """One attachment as the sandbox inspected it, or why it was not."""
+
+    part: str
+    magic: str | None
+    scan: ArchiveScan | PdfScan | ImageScan | NoScan | None
+    failure: str | None  # timeout, crashed, invalid, unsupported, skipped, ...: scan is None then
 
 
 @dataclass(frozen=True)
@@ -29,6 +39,7 @@ class Ctx:
     links: tuple[LinkInfo, ...]
     sender: UrlAnalysis | None  # the URL engine's view of the From domain
     from_domain: str | None
+    files: tuple[FileInfo, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,4 +71,10 @@ def rule(
     return register
 
 
-from rules.email import attachments, content, links, sender  # noqa: E402, F401  (registers rules)
+from rules.email import (  # noqa: E402, F401  (importing registers the rules)
+    attachments,
+    content,
+    files,
+    links,
+    sender,
+)
