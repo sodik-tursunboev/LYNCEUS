@@ -68,8 +68,7 @@ public sealed record AgentConfig
     /// <summary>Where the spool and state live. Null means %LOCALAPPDATA%\Mirage.</summary>
     public string? DataDir { get; init; }
 
-    public static string DefaultDataDir =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mirage");
+    public static string DefaultDataDir => Mirage.Ipc.Endpoints.DataDir();
 
     public string ResolvedDataDir => string.IsNullOrWhiteSpace(DataDir) ? DefaultDataDir : DataDir;
 

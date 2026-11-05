@@ -64,7 +64,7 @@ switch (args.FirstOrDefault())
         return 2;
 }
 
-using var single = new Mutex(initiallyOwned: true, @"Local\Mirage.Agent", out var first);
+using var single = new Mutex(initiallyOwned: true, @"Local\Mirage.Agent" + Mirage.Ipc.Endpoints.InstanceTag(), out var first);
 if (!first)
 {
     return 0; // already running for this user

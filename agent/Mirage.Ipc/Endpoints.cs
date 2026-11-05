@@ -12,8 +12,23 @@ public static class Endpoints
 
     public static string ExtensionOrigin => "chrome-extension://" + ExtensionId + "/";
 
+    /// <summary>
+    /// Where the agent keeps its files. MIRAGE_AGENT_HOME moves it (used by the end-to-end tests so they never
+    /// touch a real installation); otherwise it is %LOCALAPPDATA%\Mirage.
+    /// </summary>
+    public static string DataDir() =>
+        Environment.GetEnvironmentVariable("MIRAGE_AGENT_HOME") is { Length: > 0 } home
+            ? home
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mirage");
+
+    /// <summary>"" normally; a short tag of the data folder when it was moved, so a test agent and a real one cannot be confused.</summary>
+    public static string InstanceTag() =>
+        Environment.GetEnvironmentVariable("MIRAGE_AGENT_HOME") is { Length: > 0 } home
+            ? "-" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(home).ToLowerInvariant())))[..8].ToLowerInvariant()
+            : string.Empty;
+
     /// <summary>Per-user, so two users on one machine do not collide; the pipe itself is current-user only.</summary>
-    public static string PipeName() => "mirage-agent-" + WindowsIdentity.GetCurrent().User!.Value;
+    public static string PipeName() => "mirage-agent-" + WindowsIdentity.GetCurrent().User!.Value + InstanceTag();
 
     public static string SecretPath(string dataDir) => Path.Combine(dataDir, "pipe.secret");
 

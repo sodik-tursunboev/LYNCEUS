@@ -49,6 +49,7 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
         try
         {
             sink.Show(t.Title, t.Body);
+            log.LogInformation("a notification was shown");
         }
         catch (Exception e)
         {

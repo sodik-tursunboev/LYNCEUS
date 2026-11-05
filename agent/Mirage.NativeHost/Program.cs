@@ -7,7 +7,7 @@ using Mirage.NativeHost;
 // Reporting would delay the exit, so every path ends in a clean return.
 try
 {
-    var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Mirage");
+    var dataDir = Endpoints.DataDir();
     var bridge = new Bridge([Endpoints.ExtensionOrigin], ct => Connector.ConnectFromDiskAsync(dataDir, ct));
     using var stdin = Console.OpenStandardInput();
     using var stdout = Console.OpenStandardOutput();
