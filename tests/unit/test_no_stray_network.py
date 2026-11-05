@@ -1,7 +1,9 @@
-"""SECURITY NOTE in M1.md and ADR-015: network code lives in two files only.
+"""SECURITY NOTE in M1.md, ADR-015 and ADR-017: network code lives in a few named files only.
 
 safe_fetch (the redirect resolver) is off and unwired; core/intel/http.py is the one place
-threat-intelligence providers open connections, and only for providers the operator enabled."""
+threat-intelligence providers open connections, and only for providers the operator enabled;
+core/mailbox/gmail.py and oauth.py are the only places the live mailbox talks to Google (three
+fixed hosts, GET-only to Gmail), and only when the operator connected an account (M5)."""
 
 import ast
 from pathlib import Path
@@ -11,7 +13,12 @@ from core.api.app import AnalyzeRequest
 ROOT = Path(__file__).parents[2]
 NETWORK_MODULES = {"socket", "ssl", "httpx", "httpcore", "requests", "aiohttp", "urllib3"}
 NETWORK_SUBMODULES = {"urllib.request", "http.client", "ftplib", "smtplib"}
-ALLOWED = {ROOT / "core" / "urls" / "safe_fetch.py", ROOT / "core" / "intel" / "http.py"}
+ALLOWED = {
+    ROOT / "core" / "urls" / "safe_fetch.py",
+    ROOT / "core" / "intel" / "http.py",
+    ROOT / "core" / "mailbox" / "gmail.py",
+    ROOT / "core" / "mailbox" / "oauth.py",
+}
 
 
 def imports(path: Path) -> set[str]:
@@ -24,7 +31,7 @@ def imports(path: Path) -> set[str]:
     return names
 
 
-def test_only_the_two_network_modules_open_connections() -> None:
+def test_only_the_named_network_modules_open_connections() -> None:
     for package in ("core", "rules", "eval"):
         for path in (ROOT / package).rglob("*.py"):
             if path in ALLOWED:
@@ -62,3 +69,25 @@ def test_the_analysis_engines_do_not_import_intelligence() -> None:
     """The URL and message engines stay offline: intelligence is added around them, never inside."""
     for engine in ("core/detection/engine.py", "core/email/engine.py"):
         assert not any(n.startswith("core.intel") for n in imports(ROOT / engine)), engine
+
+
+def test_the_mailbox_reaches_the_network_only_through_its_two_guarded_modules() -> None:
+    """Sync, service and storage code never open connections: they use the guarded client."""
+    mailbox = ROOT / "core" / "mailbox"
+    for path in mailbox.glob("*.py"):
+        if path.name in ("gmail.py", "oauth.py"):
+            continue
+        bad = {n for n in imports(path) if n.split(".")[0] in NETWORK_MODULES} - set()
+        assert not bad, f"{path}: {bad}"
+    users = {
+        path.relative_to(ROOT).as_posix()
+        for package in ("core", "rules", "eval")
+        for path in (ROOT / package).rglob("*.py")
+        if imports(path) & {"core.mailbox.gmail", "core.mailbox.oauth"}
+    }
+    assert all(u.startswith("core/mailbox/") for u in users), users
+
+
+def test_the_analysis_engines_do_not_import_the_mailbox() -> None:
+    for engine in ("core/detection/engine.py", "core/email/engine.py", "core/files/engine.py"):
+        assert not any(n.startswith("core.mailbox") for n in imports(ROOT / engine)), engine

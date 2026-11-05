@@ -22,8 +22,13 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
         var handler = new RequestHandler(core, () => pipeline.Stats, (host, state) => Notify(toasts, ToastText.ForBlock(host, state)));
         var server = new PipeServer(Endpoints.PipeName(), secret, handler, log);
         var supervisor = new CoreSupervisor(config, token, log, new RollingLog(Path.Combine(dataDir, "core.log")));
+        var mail = new MailboxWatcher(core, text => Notify(toasts, text), log);
         log.LogInformation("watching {Count} folder(s)", folders.Count);
-        await Task.WhenAll(pipeline.RunAsync(stoppingToken), server.RunAsync(stoppingToken), supervisor.RunAsync(stoppingToken)).ConfigureAwait(false);
+        await Task.WhenAll(
+            pipeline.RunAsync(stoppingToken),
+            server.RunAsync(stoppingToken),
+            supervisor.RunAsync(stoppingToken),
+            mail.RunAsync(TimeSpan.FromSeconds(30), stoppingToken)).ConfigureAwait(false);
     }
 
     private static WindowsToasts? TryToasts(ILogger log)

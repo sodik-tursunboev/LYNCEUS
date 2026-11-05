@@ -36,6 +36,11 @@ public sealed record FileVerdict(
 
 public sealed record CoreResult(CoreStatus Status, FileVerdict? Verdict = null, string Detail = "");
 
+public sealed record FlaggedMail(double At, string State, int? Score, IReadOnlyList<string> Rules);
+
+/// <summary>What the core says about the live mailbox: a state and the recent flagged mail (rule ids only, never content).</summary>
+public sealed record MailboxStatus(string State, IReadOnlyList<FlaggedMail> Flagged);
+
 public sealed record OverrideResult(CoreStatus Status, DateTimeOffset? ExpiresAt = null, string Detail = "");
 
 /// <summary>The agent's side of POST /v1/files/analyze and /v1/files/check.</summary>
@@ -109,6 +114,62 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
 
         request.Headers.Add("X-Mirage-Source", "BROWSER");
         return await SendAsync(request, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>GET /v1/mailbox/status. A failure is a status, never "nothing flagged".</summary>
+    public async Task<(CoreStatus Status, MailboxStatus? Value)> MailboxStatusAsync(CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/mailbox/status");
+        var (status, body, _) = await SendRawAsync(request, ct).ConfigureAwait(false);
+        if (status != CoreStatus.Ok)
+        {
+            return (status, null);
+        }
+
+        var parsed = ParseMailbox(body!);
+        return parsed is null ? (CoreStatus.Rejected, null) : (CoreStatus.Ok, parsed);
+    }
+
+    internal static MailboxStatus? ParseMailbox(byte[] body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+            var state = Text(root, "state", 32);
+            if (state is null)
+            {
+                return null;
+            }
+
+            var flagged = new List<FlaggedMail>();
+            if (root.TryGetProperty("flagged", out var list) && list.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in list.EnumerateArray().Take(50))
+                {
+                    var itemState = Text(item, "state", 16);
+                    if (itemState is null || !item.TryGetProperty("at", out var at) || at.ValueKind != JsonValueKind.Number)
+                    {
+                        continue;
+                    }
+
+                    var rules = new List<string>();
+                    if (item.TryGetProperty("rules", out var ruleList) && ruleList.ValueKind == JsonValueKind.Array)
+                    {
+                        rules.AddRange(ruleList.EnumerateArray().Take(5).Where(r => r.ValueKind == JsonValueKind.String).Select(r => r.GetString()!).Where(r => r.Length <= 100));
+                    }
+
+                    int? score = item.TryGetProperty("score", out var s) && s.ValueKind == JsonValueKind.Number && s.TryGetInt32(out var n) ? n : null;
+                    flagged.Add(new FlaggedMail(at.GetDouble(), itemState, score, rules));
+                }
+            }
+
+            return new MailboxStatus(state, flagged);
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException or FormatException)
+        {
+            return null;
+        }
     }
 
     /// <summary>The user chose to continue to a warned page; the core writes the audit record.</summary>

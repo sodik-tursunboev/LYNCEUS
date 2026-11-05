@@ -648,3 +648,52 @@ def test_an_enabled_mailbox_that_was_never_connected_is_disconnected_and_reads_n
     with _api(tmp_path, gmail_enabled=True, gmail_client_id="cid.apps.test") as c:
         status = c.get("/v1/mailbox/status", headers=AUTH).json()
     assert status["state"] == "disconnected" and status["analysed"] == 0
+
+
+# ---- gaps the mutation checks found -----------------------------------------------------------
+
+
+def test_the_loopback_listener_refuses_a_request_addressed_to_another_host_name() -> None:
+    import http.client
+
+    listener, thread, out = _listener("s")
+    port = listener.server_address[1]
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    conn.request("GET", "/?code=C&state=s", headers={"Host": "evil.test"})
+    assert conn.getresponse().status == 400
+    conn.close()
+    assert _get(f"{listener.redirect_uri}/?code=REAL&state=s") == 200
+    thread.join(timeout=10)
+    listener.server_close()
+    assert out == ["REAL"]
+
+
+def test_a_message_that_failed_once_is_tried_again_and_not_lost_by_the_history_moving_on(
+    tmp_path: Path,
+) -> None:
+    calls = {"n": 0}
+
+    def flaky(raw: bytes) -> EmailAnalysis:
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return unscored(uuid4(), "0" * 64, VerdictState.ERROR, "Analysis failed.", "error")
+        return analyze(raw)
+
+    rig = Rig(tmp_path, analyze=flaky, lookback_days=0)
+    rig.box.poll()  # connected
+    rig.fake.add("m1", PHISH)
+    rig.box.poll()  # first try fails: nothing stored, position must stay put
+    assert rig.stored == []
+    rig.box.poll()
+    assert len(rig.stored) == 1 and calls["n"] == 2
+    rig.box.poll()
+    assert len(rig.stored) == 1
+
+
+def test_a_vanished_message_is_remembered_so_it_is_not_asked_for_again(rig: Rig) -> None:
+    rig.fake.add("m1", OK_MAIL)
+    rig.box.poll()
+    rig.fake.add("gone", PHISH)
+    rig.fake.messages.pop("gone")
+    rig.box.poll()
+    assert rig.box.state.has(message_key("gone"))

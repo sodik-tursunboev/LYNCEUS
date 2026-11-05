@@ -1,4 +1,4 @@
-# Known limitations (v0.1: M0 to M3; M4 added below)
+# Known limitations (v0.1: M0 to M3; M4 and M5 added below)
 
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
@@ -15,6 +15,16 @@ Written to be read before trusting anything in the repo. "Not verified" means co
 - **Local IPC.** The pipe is current-user only with a per-install secret; a process running as **you** can read that secret and talk to the agent (same trust level as any program you run). Remote pipe clients being refused is **not verified**. The service worker staying alive while a native port is open is **documented but not observed** here (the test harness keeps it alive itself): the worker reconnects every time it starts, so the design does not depend on it.
 - **Notifications:** the call succeeds from an unpackaged program (tested); whether a banner is **visible** depends on Focus Assist and Windows settings and is yours to confirm. An elevated agent could not show them.
 - **Not tested:** another security product running alongside, a machine with several users, roaming profiles, a non-default Downloads location on a network drive, and the first-run permission prompt a real user sees (headless/headful automation grants it without the prompt).
+## The live mailbox (M5): what it is and is not
+
+- **Never run against real Google.** Everything is tested against a fake Gmail that follows the documented request and response shapes. That proves our logic (de-duplication, recovery, failure handling, read-only enforcement, privacy), not that Google accepts this client, that consent works for your account, or that real raw messages parse. The live checklist is in `docs/milestones/M5.md`.
+- **Tokens last 7 days while the Google project is in "Testing" status,** and die on a password change. The status shows `reauth_needed` and the agent notifies once; you reconnect with `python -m core.mailbox connect`. `gmail.readonly` is a restricted scope: making this permanent for others would need Google's verification and a security assessment, which this project does not pursue.
+- **Gmail only.** Outlook (Microsoft Graph) is M5b and not started. No IMAP.
+- **Read-only means read-only:** nothing is labelled, moved, deleted or marked read. A flagged email stays in the inbox; you get a notification (rule names, a score, no sender or subject because the engine never reports them).
+- **Mail that is missed.** The poller looks back N days (default 2) on first connect and after an expired history position, polls every 60 s, and handles about 100 messages a minute (quota). A larger burst is queued over several polls; a message that arrives and is deleted inside one poll interval can be gone before it is fetched (counted as vanished, not analysed). Whether `messageAdded` also covers mail that arrives already read is not stated in Google's pages that were read; the re-list covers it at a quota cost.
+- **One parser at a time.** The poller analyses messages one by one in its own thread; it does not share the API's parser slots.
+- **A message over 10 MiB** is stored as UNKNOWN (`too_large`), not opened.
+- **Local trust:** a process running as you can decrypt the stored refresh token with DPAPI. `python -m core.mailbox disconnect` deletes it and asks Google to revoke it; revoking in your Google account does the same.
 ## Threat intelligence (M3): what it is and is not
 - **No adapter has been run against its live service.** They are built from the providers' documentation and tested against synthetic fixtures and a mock transport. Unverified: the URLhaus export path and CSV layout, PhishTank registration and rate limits, VirusTotal's domain-object field names and Terms of Service, RDAP registries' rate limits and query logging. A wrong assumption about a reply shape shows up as a stated provider ERROR, never as a wrong verdict, but the first real run will probably need fixes. You must register for the keys (VirusTotal, PhishTank, URLhaus) yourself.
 - **The real-world value of the providers is unmeasured.** The corpus is synthetic and its hosts are unregisterable, so no listed URL or young domain can be in it; the eval is unchanged by M3. Whether list feeds, domain age or VirusTotal add detection, and how many false positives they add, is unknown until they run on real traffic. Decision D8 (measuring the URL rules on a downloaded PhishTank snapshot kept outside git) is still open for you to run.
