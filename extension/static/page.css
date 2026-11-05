@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; --bg: #fafafa; --fg: #1a1a1a; --muted: #555; --bad: #b3261e; --warn: #8a5a00; --line: #d6d6d6; }
+@media (prefers-color-scheme: dark) { :root { --bg: #181818; --fg: #ececec; --muted: #aaa; --bad: #ff8a80; --warn: #ffcc80; --line: #3a3a3a; } }
+body { margin: 0; padding: 32px 16px; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+main { max-width: 640px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin: 0 0 8px; }
+body[data-state="MALICIOUS"] h1 { color: var(--bad); }
+body[data-state="SUSPICIOUS"] h1 { color: var(--warn); }
+.url { font-family: ui-monospace, monospace; word-break: break-all; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; }
+.muted { color: var(--muted); }
+button { font: inherit; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+button.primary { background: var(--fg); color: var(--bg); }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }

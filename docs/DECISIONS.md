@@ -80,6 +80,18 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   | xunit 2.9.3 (Apache-2.0), Microsoft.NET.Test.Sdk 18.10.1 (MIT) | agent tests |
   | xunit.runner.visualstudio 3.1.5 (Apache-2.0) | lets `dotnet test` run xunit. **Not named in the D7 list**; it cannot be left out |
   | System.Security.Cryptography.ProtectedData (added in M4 step 5) | DPAPI for the stored API token |
+
+- **M4 adds npm dev dependencies for the extension (approved with the M4 plan, D7; versions checked on the npm registry on 2026-11-05; each is at least two weeks old).** Exact versions in `extension/package.json`, `package-lock.json` with integrity hashes, installed with `--ignore-scripts`, `npm audit`: 0 vulnerabilities. None ships in the extension: esbuild bundles only the project's own TypeScript.
+
+  | Package | Licence | Used for |
+  |---|---|---|
+  | typescript 5.9.3 | Apache-2.0 | type check (strict). **7.x was not chosen**: a new major rewrite, not needed |
+  | esbuild 0.28.2 | MIT | bundle the four entry points for the browser |
+  | @types/chrome 0.3.6 | MIT | types for the extension APIs (type-only) |
+  | vitest 5.0.5 | MIT | unit tests with a fake `chrome` |
+  | puppeteer-core 25.16.0 | Apache-2.0 | drive the installed Edge for the end-to-end test (M4 step 6). It downloads no browser |
+
+  No `@types/node` was added: the one test that reads files declares the three Node calls it needs in `extension/test/node-shim.d.ts`.
 - **Open:** pytest prints a Starlette deprecation warning saying `TestClient` over `httpx` is deprecated in favour of a package named `httpx2`. Not acted on (a dependency change needs approval); revisit when it stops being a warning.
 
 ## ADR-005: Eval scoring rule

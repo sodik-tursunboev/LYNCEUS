@@ -13,3 +13,5 @@ obj/
 
 # downloaded threat-intel feeds (third-party data, licensed for personal use)
 .data/
+
+extension/dist/
