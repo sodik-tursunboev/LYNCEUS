@@ -94,11 +94,12 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `lint` | ruff check + format check + mypy |
 | `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
 | `sandbox` | build `.sandbox/` (interpreter copy, worker code, the hash-pinned parser libraries from `requirements-sandbox.txt`) and register its per-user AppContainer profile (Windows). `python -m core.sandbox.build --remove` undoes it |
+| `deps` | install everything a fresh clone needs: dev tools, then the hash-pinned parser libraries |
 | `serve` | run the API on `127.0.0.1:8765`, no access log (needs `MIRAGE_API_TOKEN`) |
 | `fmt` | `ruff format` + `ruff check --fix` |
 | `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |
 | `hooks` | enable `.githooks` for this clone (run once) |
 
-Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`. Analyze one message (parsed in the sandbox, so run `sandbox` once first): `python -m core.cli analyze-eml <path> [--json]`. After changing anything in `core/sandbox/guest/`, run `python tasks.py sandbox` again: the sandbox holds a copy, and a test fails if it is stale.
+Threat intelligence is off until `MIRAGE_INTEL_PROVIDERS` names providers (see `.env.example`, ADR-015): `python -m core.intel sync|status|lookup <url>` downloads and queries the list feeds; `python -m core.export [--since ISO] [--out FILE]` writes verdicts as JSON lines. Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`. Analyze one message (parsed in the sandbox, so run `sandbox` once first): `python -m core.cli analyze-eml <path> [--json]`. After changing anything in `core/sandbox/guest/`, run `python tasks.py sandbox` again: the sandbox holds a copy, and a test fails if it is stale.
 
 Setup on a fresh clone: `python -m venv .venv`, `python tasks.py deps` (dev tools, then the hash-pinned parser libraries), `python tasks.py sandbox` (Windows), `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.
