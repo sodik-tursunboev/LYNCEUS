@@ -86,6 +86,20 @@ def _write(
                     sha256=e.sha256,
                 )
             )
+        for r in v.provider_results:
+            c.execute(
+                insert(db.ProviderResult).values(
+                    id=uuid.uuid4(),
+                    artifact_id=v.artifact_id,
+                    provider=r.provider,
+                    status=r.status.value,
+                    state=r.state.value if r.state else None,
+                    queried_at=r.queried_at,
+                    latency_ms=r.latency_ms,
+                    provenance=r.provenance,
+                    detail=r.detail,
+                )
+            )
         for s in v.signals:
             detection_id = uuid.uuid4()
             c.execute(

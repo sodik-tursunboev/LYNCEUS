@@ -182,6 +182,14 @@ class Intel:
                 )
         return IntelOutcome(tuple(results), tuple(skipped))
 
+    def query_sync(self, subject: Subject, source: str = "url") -> IntelOutcome:
+        """For a worker thread with no event loop (message links are analysed in one)."""
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self.query(subject, source))
+        raise RuntimeError("query_sync was called inside an event loop: use query()")
+
     async def settle(self) -> None:
         """Wait for answers that missed their deadline (tests and shutdown)."""
         if self._late:

@@ -32,6 +32,13 @@
             "title": "Flags",
             "type": "array"
           },
+          "intel_skipped": {
+            "items": {
+              "$ref": "#/components/schemas/Skipped"
+            },
+            "title": "Intel Skipped",
+            "type": "array"
+          },
           "normalized_url": {
             "anyOf": [
               {
@@ -68,7 +75,8 @@
           "normalized_url",
           "flags",
           "reason",
-          "persisted"
+          "persisted",
+          "intel_skipped"
         ],
         "title": "AnalyzeResponse",
         "type": "object"
@@ -197,6 +205,46 @@
         "title": "Evidence",
         "type": "object"
       },
+      "FeedHealth": {
+        "properties": {
+          "age_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Hours"
+          },
+          "downloaded": {
+            "title": "Downloaded",
+            "type": "boolean"
+          },
+          "entries": {
+            "title": "Entries",
+            "type": "integer"
+          },
+          "feed": {
+            "title": "Feed",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "feed",
+          "downloaded",
+          "entries",
+          "age_hours",
+          "stale"
+        ],
+        "title": "FeedHealth",
+        "type": "object"
+      },
       "FileSummary": {
         "additionalProperties": false,
         "description": "What was found in one attachment, in fixed words and numbers (never file content).",
@@ -241,6 +289,30 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IntelHealth": {
+        "properties": {
+          "feeds": {
+            "items": {
+              "$ref": "#/components/schemas/FeedHealth"
+            },
+            "title": "Feeds",
+            "type": "array"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderHealth"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "providers",
+          "feeds"
+        ],
+        "title": "IntelHealth",
         "type": "object"
       },
       "LinkSummary": {
@@ -380,6 +452,34 @@
         "title": "MessageSummary",
         "type": "object"
       },
+      "ProviderHealth": {
+        "properties": {
+          "breaker": {
+            "title": "Breaker",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "sends": {
+            "title": "Sends",
+            "type": "string"
+          },
+          "usable": {
+            "title": "Usable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "provider",
+          "sends",
+          "breaker",
+          "usable"
+        ],
+        "title": "ProviderHealth",
+        "type": "object"
+      },
       "ProviderResult": {
         "additionalProperties": false,
         "properties": {
@@ -512,6 +612,24 @@
           "description"
         ],
         "title": "Signal",
+        "type": "object"
+      },
+      "Skipped": {
+        "properties": {
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "reason"
+        ],
+        "title": "Skipped",
         "type": "object"
       },
       "UrlFlag": {
@@ -756,6 +874,29 @@
           }
         ],
         "summary": "Analyze Email"
+      }
+    },
+    "/v1/intel/health": {
+      "get": {
+        "operationId": "intel_health_v1_intel_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntelHealth"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Intel Health"
       }
     },
     "/v1/urls/analyze": {

@@ -51,6 +51,7 @@ _INSPECTABLE = frozenset(
 _UNSUPPORTED = frozenset(["7z", "rar", "iso"])  # named, not opened: no safe parser yet
 log = logging.getLogger(__name__)
 InspectRun = Callable[[bytes, str], sandbox.Result]
+LinkAnalyzer = Callable[[str], UrlAnalysis]
 
 
 class _Frozen(BaseModel):
@@ -263,7 +264,9 @@ def _absolute(url: str, kind: str, base: str | None) -> str | None:
         return None
 
 
-def _links(scan: MessageScan, cap: int, extra: list[Link]) -> tuple[list[LinkInfo], int]:
+def _links(
+    scan: MessageScan, cap: int, extra: list[Link], analyze: LinkAnalyzer
+) -> tuple[list[LinkInfo], int]:
     base = scan.base if scan.base and _ABSOLUTE.match(scan.base) else None
     analysed: dict[str, UrlAnalysis] = {}
     infos: list[LinkInfo] = []
@@ -275,7 +278,7 @@ def _links(scan: MessageScan, cap: int, extra: list[Link]) -> tuple[list[LinkInf
             continue
         analysis = analysed.get(url)
         if analysis is None and len(analysed) < cap:
-            analysis = analysed[url] = analyze_url(url)
+            analysis = analysed[url] = analyze(url)
         parsed = analysis.url if analysis is not None else None
         if parsed is None and analysis is None:
             parsed_or_failure = parse_url(url)
@@ -404,9 +407,11 @@ def analyze_message(
     artifact_id: UUID | None = None,
     run: Callable[[bytes], sandbox.Result] | None = None,
     inspect_run: InspectRun | None = None,
+    link_analyzer: LinkAnalyzer | None = None,
 ) -> EmailAnalysis:
     run = run or run_sandbox  # looked up at call time, so tests can substitute it
     inspect_run = inspect_run or run_inspect
+    analyze_link = link_analyzer or analyze_url  # with intelligence when the caller supplies it
     aid = artifact_id or uuid4()
     raw_hash = hashlib.sha256(raw).hexdigest()
     if not raw.strip():
@@ -437,7 +442,8 @@ def analyze_message(
     try:
         scan = reply.scan
         files = _inspect_files(raw, scan, inspect_run)
-        links, relative = _links(scan, int(scoring()["thresholds"]["link_cap"]), _file_links(files))
+        cap = int(scoring()["thresholds"]["link_cap"])
+        links, relative = _links(scan, cap, _file_links(files), analyze_link)
         sender, from_domain = _sender(scan)
         ctx = Ctx(scan, tuple(links), sender, from_domain, files)
         signals, evidence = _signals(ctx, raw_hash)

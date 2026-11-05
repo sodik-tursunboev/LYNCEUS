@@ -12,6 +12,8 @@ import math
 import secrets
 import threading
 import time
+from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from typing import Annotated
 
@@ -25,10 +27,14 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from core.config import Settings
 from core.contracts import EventSource
+from core.db import audit
 from core.db.store import save_analysis, save_email_analysis
-from core.detection.engine import ENGINE_VERSION, UrlReport, analyze_url
+from core.detection.engine import ENGINE_VERSION, UrlReport
 from core.email import engine as email_engine
 from core.email.engine import EmailReport
+from core.intel.analyze import analyze_with_intel, link_analyzer
+from core.intel.feeds import FEEDS, FeedStore, feed_status
+from core.intel.registry import build_intel
 from core.log import configure
 
 log = logging.getLogger(__name__)
@@ -42,8 +48,34 @@ class AnalyzeRequest(BaseModel):
     url: str
 
 
+class Skipped(BaseModel):
+    provider: str
+    reason: str
+
+
 class AnalyzeResponse(UrlReport):
     persisted: bool  # False when storage is off or failed; the verdict still stands
+    intel_skipped: list[Skipped]  # providers that were enabled but not asked, and why
+
+
+class ProviderHealth(BaseModel):
+    provider: str
+    sends: str
+    breaker: str
+    usable: bool
+
+
+class FeedHealth(BaseModel):
+    feed: str
+    downloaded: bool
+    entries: int
+    age_hours: float | None
+    stale: bool
+
+
+class IntelHealth(BaseModel):
+    providers: list[ProviderHealth]
+    feeds: list[FeedHealth]
 
 
 class EmailResponse(EmailReport):
@@ -115,6 +147,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.database_url
         else None
     )
+    intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
+    feed_store = FeedStore(settings.data_dir / "feeds")
+    if intel is not None and db is not None:
+        for p in intel.providers:
+            try:
+                audit.record(
+                    db,
+                    "operator",
+                    "intel.enable",
+                    "provider",
+                    {"provider": p.name, "sends": p.sends.value},
+                )
+            except Exception:  # noqa: BLE001  (the audit table may not exist yet; the log line remains)
+                log.warning("could not write the intelligence audit record")
     bearer = HTTPBearer(auto_error=False)
     limiter = RateLimit(settings.rate_limit_per_minute)
     parser_slots = asyncio.Semaphore(settings.max_concurrent_parsers)
@@ -137,16 +183,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(limiter)])
-    def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
-        analysis = analyze_url(request.url)
+    async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+        analysis, outcome = await analyze_with_intel(request.url, intel)
         persisted = False
         if db is not None:
             try:
-                save_analysis(db, analysis, EventSource.API)
+                await run_in_threadpool(save_analysis, db, analysis, EventSource.API)
                 persisted = True
             except Exception:  # a storage failure must not cost the caller the verdict
                 log.exception("could not persist analysis")
-        return AnalyzeResponse(**analysis.report().model_dump(), persisted=persisted)
+        skipped = [Skipped(provider=n, reason=why) for n, why in outcome.skipped]
+        report = analysis.report().model_dump()
+        return AnalyzeResponse(**report, persisted=persisted, intel_skipped=skipped)
+
+    @app.get("/v1/intel/health", dependencies=[Depends(require_token)])
+    def intel_health() -> IntelHealth:
+        enabled = settings.intel_enabled() & FEEDS.keys()
+        feeds = feed_status(feed_store, enabled, datetime.now(UTC))
+        return IntelHealth(
+            providers=[ProviderHealth(**h) for h in (intel.health() if intel else [])],
+            feeds=[FeedHealth(**f) for f in feeds],
+        )
 
     @app.post(
         EMAIL_PATH,
@@ -172,7 +229,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 headers={"Retry-After": "2"},
             ) from None
         try:
-            analysis = await run_in_threadpool(email_engine.analyze_message, raw)
+            links = link_analyzer(intel) if intel is not None else None
+            analyze = partial(email_engine.analyze_message, raw, link_analyzer=links)
+            analysis = await run_in_threadpool(analyze)
             persisted = False
             if db is not None:
                 try:

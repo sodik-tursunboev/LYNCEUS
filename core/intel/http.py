@@ -15,6 +15,7 @@ import httpx
 
 from core.intel.base import ProviderError, ProviderRateLimited
 
+Client = httpx.AsyncClient  # providers import this name, so httpx is imported in this file only
 USER_AGENT = "mirage-local/0.1"
 # httpx logs every request URL at INFO, and some providers carry the API key in the URL path.
 for _noisy in ("httpx", "httpcore"):
@@ -33,10 +34,8 @@ class Fetched:
     body: bytes
 
 
-def make_client(
-    transport: httpx.AsyncBaseTransport | None = None, timeout: float = 10.0
-) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
+def make_client(transport: httpx.AsyncBaseTransport | None = None, timeout: float = 10.0) -> Client:
+    return Client(
         transport=transport,
         follow_redirects=False,
         timeout=httpx.Timeout(timeout),
@@ -46,7 +45,7 @@ def make_client(
 
 
 async def fetch(
-    client: httpx.AsyncClient,
+    client: Client,
     method: str,
     url: str,
     *,

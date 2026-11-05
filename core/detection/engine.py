@@ -2,6 +2,8 @@
 
 import hashlib
 import logging
+from collections.abc import Mapping
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict
@@ -10,6 +12,7 @@ from core.contracts import (
     Artifact,
     Confidence,
     Evidence,
+    ProviderResult,
     ResponseAction,
     Signal,
     Verdict,
@@ -148,6 +151,52 @@ def analyze_url(raw: str, artifact_id: UUID | None = None) -> UrlAnalysis:
         log.exception("url analysis failed")
         why = f"Analysis failed. {_NOT_SAFE}"
         return _unscored(aid, digest, VerdictState.ERROR, why, "error")
+
+
+_CONFIDENCE_ORDER = (Confidence.LOW, Confidence.MEDIUM, Confidence.HIGH)
+
+
+def rescore(
+    a: UrlAnalysis,
+    signals: list[Signal],
+    evidence: list[Evidence],
+    provider_results: list[ProviderResult],
+    *,
+    cfg: Mapping[str, Any],
+    note: str,
+    version_suffix: str,
+    confidence_floor: Confidence | None = None,
+) -> UrlAnalysis:
+    """The same analysis with intelligence added: more signals, the providers' results, and a
+    verdict scored again over all of them. Local signals are kept exactly as they were."""
+    if a.url is None:
+        return a
+    all_signals = [*a.verdict.signals, *signals]
+    all_evidence = [*a.evidence, *evidence]
+    allow = _allowlisted(a.url)
+    scored = score(all_signals, allow, cfg)
+    if (
+        confidence_floor is not None
+        and scored.state in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS)
+        and _CONFIDENCE_ORDER.index(scored.confidence) < _CONFIDENCE_ORDER.index(confidence_floor)
+    ):
+        scored = scored._replace(confidence=confidence_floor)
+    old = a.verdict
+    verdict = Verdict(
+        artifact_id=old.artifact_id,
+        state=scored.state,
+        risk_score=scored.risk_score,
+        confidence=scored.confidence,
+        signals=all_signals,
+        evidence_ids=[e.id for e in all_evidence],
+        provider_results=provider_results,
+        recommended_response=scored.recommended_response,
+        applied_response=ResponseAction.NONE,
+        explanation=_explain(scored, all_signals, allow) + note,
+        engine_version=f"{old.engine_version}+intel",
+        ruleset_version=f"{old.ruleset_version}+{version_suffix}",
+    )
+    return a.model_copy(update={"verdict": verdict, "evidence": tuple(all_evidence)})
 
 
 def analyze(artifact: Artifact) -> Verdict:

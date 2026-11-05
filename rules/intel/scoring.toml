@@ -1,0 +1,37 @@
+# Scoring config for threat-intelligence signals (M3, ADR-015). The same model as the URL pack
+# (ADR-013): a finding becomes a signal in category "intel.<provider>", is combined by noisy-OR
+# inside its category (capped) and across categories, and MALICIOUS still needs two independent
+# categories with a strong signal. A provider that did not answer contributes nothing, either way.
+# Tune against the dev split only. Any change here changes the ruleset version.
+
+[ruleset]
+version = "1.0.0"
+
+[thresholds]
+vt_many = 3        # engines flagging a domain at or above which VirusTotal counts as "many"
+age_week = 7       # days; a registration this recent is the strongest age signal
+age_month = 30
+age_quarter = 90
+
+# Most a provider's category can contribute.
+[category_caps]
+"intel.phishtank" = 0.9
+"intel.openphish" = 0.9
+"intel.urlhaus" = 0.9
+"intel.virustotal" = 0.8
+"intel.domain_age" = 0.6
+
+# rule id = intel.<provider>.<what was found>. "url": the exact URL is listed; "host": the host has
+# other listed URLs (weaker, and skipped for official, multi-tenant and shared-platform hosts).
+[weights]
+"intel.phishtank.url" = 0.85
+"intel.phishtank.host" = 0.35
+"intel.openphish.url" = 0.8
+"intel.openphish.host" = 0.3
+"intel.urlhaus.url" = 0.8
+"intel.urlhaus.host" = 0.3
+"intel.virustotal.detections_many" = 0.7
+"intel.virustotal.detections_few" = 0.4
+"intel.domain_age.week" = 0.55
+"intel.domain_age.month" = 0.4
+"intel.domain_age.quarter" = 0.15

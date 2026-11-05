@@ -12,14 +12,12 @@ import logging
 import os
 import re
 import tempfile
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from urllib.parse import urljoin, urlsplit
-
-import httpx
 
 from core.contracts import VerdictState
 from core.intel import feedparse
@@ -33,7 +31,7 @@ from core.intel.base import (
     Sends,
     match_hash,
 )
-from core.intel.http import Fetched, FetchError, check_status, fetch
+from core.intel.http import Client, Fetched, FetchError, check_status, fetch
 from core.urls import psl
 from core.urls.parse import ParsedUrl, parse_url
 from rules.url.data import lists, official_domains
@@ -288,9 +286,7 @@ def _allowed(spec: FeedSpec, url: str) -> bool:
     )
 
 
-async def _download(
-    client: httpx.AsyncClient, spec: FeedSpec, url: str, headers: dict[str, str]
-) -> Fetched:
+async def _download(client: Client, spec: FeedSpec, url: str, headers: dict[str, str]) -> Fetched:
     for _ in range(MAX_HOPS + 1):
         got = await fetch(client, "GET", url, max_bytes=spec.max_download, headers=headers)
         if got.status not in (301, 302, 303, 307, 308):
@@ -317,7 +313,7 @@ def _index(spec: FeedSpec, expanded: bytes) -> tuple[set[str], set[str]]:
 async def sync(
     spec: FeedSpec,
     store: FeedStore,
-    client: httpx.AsyncClient,
+    client: Client,
     *,
     key: str | None = None,
     now: datetime | None = None,
@@ -370,3 +366,20 @@ async def sync(
     )
     store.write(spec.name, urls, hosts, meta)
     return SyncOutcome(spec.name, "updated", len(urls), "ok")
+
+
+def feed_status(store: FeedStore, names: Iterable[str], now: datetime) -> list[dict[str, Any]]:
+    """For the health endpoint and `status`: what is downloaded, how old, whether it is stale."""
+    out: list[dict[str, Any]] = []
+    for name in sorted(names):
+        spec, index = FEEDS[name], store.load(name)
+        if index is None:
+            out.append({"feed": name, "downloaded": False, "entries": 0, "age_hours": None,
+                        "stale": True})  # fmt: skip
+            continue
+        age = (now - index.meta.fetched_at).total_seconds()
+        out.append(
+            {"feed": name, "downloaded": True, "entries": index.meta.entries,
+             "age_hours": round(age / HOUR, 1), "stale": age > spec.stale_after}
+        )  # fmt: skip
+    return out
