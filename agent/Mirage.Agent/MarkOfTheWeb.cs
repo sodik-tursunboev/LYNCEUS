@@ -32,6 +32,23 @@ public static partial class MarkOfTheWeb
         }
     }
 
+    /// <summary>The whole mark as text (at most 16 KiB), or null. Used only to put it back after a restore: never logged or sent.</summary>
+    public static string? RawStream(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(
+                path + ":Zone.Identifier", FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            var buffer = new byte[MaxBytes];
+            var read = stream.Read(buffer, 0, buffer.Length);
+            return read == 0 ? null : Encoding.UTF8.GetString(buffer, 0, read);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>HostUrl (where the file was fetched) first, then ReferrerUrl (the page that linked to it).</summary>
     public static string? HostFrom(string content)
     {

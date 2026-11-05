@@ -186,7 +186,7 @@ public sealed class Spool
 
             switch (line.T)
             {
-                case "add" when line.P is not null && DecodePath(line.P) is { } decoded:
+                case "add" when line.P is not null && PathCodec.Decode(line.P) is { } decoded:
                     if (known.Contains(line.Id!))
                     {
                         break;
@@ -257,24 +257,11 @@ public sealed class Spool
     {
         T = "add",
         Id = e.Id,
-        P = Convert.ToBase64String(System.Runtime.InteropServices.MemoryMarshal.AsBytes(e.Path.AsSpan())),
+        P = PathCodec.Encode(e.Path),
         Size = e.Size,
         Mtime = e.ModifiedTicks,
         At = e.Seen,
     };
-
-    private static string? DecodePath(string encoded)
-    {
-        try
-        {
-            var bytes = Convert.FromBase64String(encoded);
-            return bytes.Length % 2 == 0 ? new string(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, char>(bytes)) : null;
-        }
-        catch (FormatException)
-        {
-            return null;
-        }
-    }
 
     private sealed class Line
     {
