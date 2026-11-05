@@ -4,7 +4,7 @@ using Mirage.Ipc;
 namespace Mirage.Agent;
 
 /// <summary>Answers the extension's validated requests. A core failure is reported as such, never as a verdict.</summary>
-public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats)
+public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats, Action<string, string>? onBadPage = null)
 {
     internal const string CoreUnavailable = "core_unavailable";
     internal const string Rejected = "rejected";
@@ -47,6 +47,7 @@ public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats)
         }
 
         var v = result.Verdict!;
+        Announce(request.Url!, v.State);
         return Protocol.Build(
             w =>
             {
@@ -72,6 +73,22 @@ public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats)
             },
             "verdict",
             request.Id);
+    }
+
+    /// <summary>Tell the user (host and state only) that a page was stopped. A failure here never costs the reply.</summary>
+    private void Announce(string url, string state)
+    {
+        try
+        {
+            if (state is "MALICIOUS" or "SUSPICIOUS" && Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                onBadPage?.Invoke(uri.IdnHost, state);
+            }
+        }
+        catch (Exception)
+        {
+            // a notification problem is not a protection problem
+        }
     }
 
     private async Task<byte[]> OverrideAsync(Request request, CancellationToken ct)

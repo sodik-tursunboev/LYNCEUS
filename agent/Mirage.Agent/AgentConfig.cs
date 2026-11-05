@@ -50,6 +50,21 @@ public sealed record AgentConfig
     /// <summary>On the very first run, also look at files this recent. 0 means only files from now on.</summary>
     public int InitialLookbackHours { get; init; }
 
+    /// <summary>
+    /// The program that serves the core (for example the project's python.exe). When set, the agent
+    /// starts it, restarts it if it dies, and stops it on exit. Null means someone else runs the core.
+    /// </summary>
+    public string? CoreCommand { get; init; }
+
+    public string[] CoreArgs { get; init; } =
+        ["-m", "uvicorn", "core.api.app:create_app", "--factory", "--host", "127.0.0.1", "--port", "8765", "--no-access-log", "--no-server-header"];
+
+    /// <summary>The core's working directory (the project folder, where its .env lives).</summary>
+    public string? CoreWorkingDir { get; init; }
+
+    /// <summary>How long a URL check waits for threat-intel providers when the agent runs the core.</summary>
+    public double CoreIntelDeadlineSeconds { get; init; } = 0.5;
+
     /// <summary>Where the spool and state live. Null means %LOCALAPPDATA%\Mirage.</summary>
     public string? DataDir { get; init; }
 
@@ -112,6 +127,16 @@ public sealed record AgentConfig
         Range(RetryBaseMillis, 1, 600_000, nameof(RetryBaseMillis));
         Range(RetryMaxMillis, RetryBaseMillis, 3_600_000, nameof(RetryMaxMillis));
         Range(InitialLookbackHours, 0, 24 * 365, nameof(InitialLookbackHours));
+        if (CoreCommand is not null && (!Path.IsPathRooted(CoreCommand) || CoreWorkingDir is null || !Path.IsPathRooted(CoreWorkingDir)))
+        {
+            throw new ConfigException("CoreCommand and CoreWorkingDir must be full paths");
+        }
+
+        if (CoreIntelDeadlineSeconds is < 0.05 or > 30)
+        {
+            throw new ConfigException("CoreIntelDeadlineSeconds must be between 0.05 and 30");
+        }
+
         foreach (var folder in WatchFolders)
         {
             if (string.IsNullOrWhiteSpace(folder) || !Path.IsPathRooted(folder))

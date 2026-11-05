@@ -13,3 +13,4 @@ csharp_style_var_for_built_in_types = true:suggestion
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CA1859.severity = none

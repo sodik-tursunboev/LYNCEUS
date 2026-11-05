@@ -32,6 +32,12 @@
           "Microsoft.Extensions.Options": "10.0.14"
         }
       },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "Direct",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "UuaBUHgmtc9h6CMxaQqFDDJxkS5JVy7XEB+DbtCvD68GFcVM9/AccuNwFpARx8nwCnvjaxzoOBjG3gPz32P1Eg=="
+      },
       "Microsoft.Extensions.Configuration": {
         "type": "Transitive",
         "resolved": "10.0.14",
@@ -289,6 +295,12 @@
       },
       "mirage.ipc": {
         "type": "Project"
+      },
+      "mirage.nativehost": {
+        "type": "Project",
+        "dependencies": {
+          "Mirage.Ipc": "[1.0.0, )"
+        }
       }
     }
   }

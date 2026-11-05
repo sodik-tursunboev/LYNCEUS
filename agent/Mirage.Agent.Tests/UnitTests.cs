@@ -92,7 +92,9 @@ public class ConfigTests
     {
         new AgentConfig().Validate();
         using var dir = new TestDir();
-        Assert.Equal(new AgentConfig(), AgentConfig.Load(Path.Combine(dir.Path, "none.json")));
+        var loaded = AgentConfig.Load(Path.Combine(dir.Path, "none.json"));
+        Assert.Equal(("http://127.0.0.1:8765", 1000, null), (loaded.CoreUrl, loaded.StableMillis, loaded.CoreCommand));
+        Assert.Equal(new AgentConfig().CoreArgs, loaded.CoreArgs);
     }
 
     [Theory]

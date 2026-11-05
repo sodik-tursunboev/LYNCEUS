@@ -346,7 +346,9 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.Hosting": "[10.0.14, )",
-          "Mirage.Ipc": "[1.0.0, )"
+          "Mirage.Ipc": "[1.0.0, )",
+          "Mirage.NativeHost": "[1.0.0, )",
+          "System.Security.Cryptography.ProtectedData": "[10.0.14, )"
         }
       },
       "mirage.ipc": {
@@ -387,6 +389,12 @@
           "Microsoft.Extensions.Logging.EventSource": "10.0.14",
           "Microsoft.Extensions.Options": "10.0.14"
         }
+      },
+      "System.Security.Cryptography.ProtectedData": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "UuaBUHgmtc9h6CMxaQqFDDJxkS5JVy7XEB+DbtCvD68GFcVM9/AccuNwFpARx8nwCnvjaxzoOBjG3gPz32P1Eg=="
       }
     }
   }
