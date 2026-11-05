@@ -4,7 +4,7 @@ Local-first phishing detection and threat-intelligence system for Windows.
 **Mission:** detect phishing before the user interacts, investigate the evidence, protect the user, explain every decision.
 
 Read this file at the start of every session. Full spec: `docs/SPEC.md` (read only the sections the current milestone needs).
-**Current milestone: M3 complete, pending review (v0.1)**: threat-intel providers, correlation, JSON-lines export → `docs/milestones/M3.md`. M2 (messages and files in the sandbox; OCR deferred) is `docs/milestones/M2.md`. **M4 (Windows agent + MV3 extension) is complete and verified, pending review** → `docs/milestones/M4.md`. **M5 (live email, Gmail read-only) is in progress**: built and tested against a fake Gmail, never run against real Google → `docs/milestones/M5.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
+**Current milestone: M3 complete, pending review (v0.1)**: threat-intel providers, correlation, JSON-lines export → `docs/milestones/M3.md`. M2 (messages and files in the sandbox; OCR deferred) is `docs/milestones/M2.md`. **M4 (Windows agent + MV3 extension) is complete and verified, pending review** → `docs/milestones/M4.md`. **M5 (live email, Gmail read-only) is built and tested against a fake Gmail, never run against real Google** → `docs/milestones/M5.md`. **Next: M6 (response engine + console), proposed, not approved** → `docs/milestones/M6.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
 
 ## What it is
 - A continuous endpoint anti-phishing system: Windows agent + Chrome/Edge extension + local analysis engine + desktop console for investigation.
