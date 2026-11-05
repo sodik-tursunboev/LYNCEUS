@@ -1,9 +1,10 @@
-"""Run the engine over one corpus split and write docs/eval/<split>.{json,md}.
+"""Run an engine over one corpus split and write docs/eval/<split>.{json,md}.
 
-    python -m eval [--split dev|holdout] [--manifest corpus/manifest.jsonl] [--out docs/eval]
+    python -m eval [--kind url|mail] [--split dev|holdout] [--manifest PATH] [--out docs/eval]
 
 Dev is the default. Holdout must be asked for, and every holdout run is logged in
 holdout_runs.md so repeated peeking shows. Reserve is sealed: it cannot be selected here.
+Message reports are written as mail-<split>.* and logged in mail_holdout_runs.md.
 """
 
 import argparse
@@ -13,13 +14,17 @@ from collections import defaultdict
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from pydantic import AwareDatetime, BaseModel
 
 from core.contracts import Artifact, ArtifactKind, Verdict, VerdictState
 from core.detection.engine import analyze as engine_analyze
+from core.email.engine import analyze_message
 from eval.corpus import CorpusEntry, Label, load_manifest
+from eval.mailcorpus import MailEntry, load_mail_manifest, read_message
 from eval.metrics import Counts, Interval, Rates, percentile, rates, tally, wilson
+from rules.email import RULES as MAIL_RULES
 from rules.url import RULES
 
 Analyze = Callable[[Artifact], Verdict]
@@ -57,8 +62,9 @@ class EvalReport(BaseModel):
     generated_at: AwareDatetime
     engine_version: str
     ruleset_version: str
+    kind: str = "url"
     split: str
-    samples_sha256: str  # of the evaluated ids and URLs
+    samples_sha256: str  # of the evaluated ids and their content hashes
     counts: Counts
     rates: Rates
     latency: Latency
@@ -91,14 +97,36 @@ def _artifact(e: CorpusEntry) -> Artifact:
 
 def run(entries: list[CorpusEntry], analyze: Analyze, split: str = "all") -> EvalReport:
     chosen = [e for e in entries if split == "all" or e.split.value == split]
-    pairs = [(e, _artifact(e)) for e in chosen]
-    if pairs:
-        analyze(pairs[0][1])  # warm up: data files load once and would dominate the first sample
+    return _run(
+        chosen, lambda e: analyze(_artifact(e)), lambda e: f"{e.id} {e.value}", split, "url"
+    )
+
+
+def run_mail(entries: list[MailEntry], manifest: Path, split: str = "all") -> EvalReport:
+    chosen = [e for e in entries if split == "all" or e.split.value == split]
+    return _run(
+        chosen,
+        lambda e: analyze_message(read_message(manifest, e)).report.verdict,
+        lambda e: f"{e.id} {e.file_sha256}",
+        split,
+        "mail",
+    )
+
+
+def _run(
+    chosen: Sequence[Any],
+    verdict_of: Callable[[Any], Verdict],
+    key: Callable[[Any], str],
+    split: str,
+    kind: str,
+) -> EvalReport:
+    if chosen:
+        verdict_of(chosen[0])  # warm up: data files load once and would dominate the first sample
     results: list[Result] = []
     engine = ruleset = ""
-    for e, art in pairs:
+    for e in chosen:
         t0 = time.perf_counter()
-        v = analyze(art)
+        v = verdict_of(e)
         ms = (time.perf_counter() - t0) * 1000
         engine, ruleset = v.engine_version, v.ruleset_version
         names = [s.rule_id for s in v.signals]
@@ -118,9 +146,10 @@ def run(entries: list[CorpusEntry], analyze: Analyze, split: str = "all") -> Eva
         generated_at=datetime.now(UTC),
         engine_version=engine,
         ruleset_version=ruleset,
+        kind=kind,
         split=split,
         samples_sha256=hashlib.sha256(
-            "\n".join(f"{e.id} {e.value}" for e in chosen).encode("utf-8", "surrogatepass")
+            "\n".join(key(e) for e in chosen).encode("utf-8", "surrogatepass")
         ).hexdigest(),
         counts=counts,
         rates=rates(counts),
@@ -143,7 +172,7 @@ def _ci(i: Interval | None) -> str:
 def render_md(r: EvalReport) -> str:
     c, q = r.counts, r.rates
     lines = [
-        "# Eval report",
+        f"# Eval report ({r.kind})",
         "",
         f"Split `{r.split}`, n={c.n}. Engine `{r.engine_version}`, "
         f"ruleset `{r.ruleset_version}`. {r.generated_at:%Y-%m-%d %H:%M}Z.",
@@ -166,7 +195,8 @@ def render_md(r: EvalReport) -> str:
         f"| Abstain rate | {_num(q.abstain_rate)} | {_ci(q.abstain_ci)} |",
         f"| Error rate | {_num(q.error_rate)} | |",
         "",
-        f"Latency per URL: p50 {r.latency.p50_ms:.3f} ms, p95 {r.latency.p95_ms:.3f} ms, "
+        f"Latency per {'message (includes starting the sandbox)' if r.kind == 'mail' else 'URL'}: "
+        f"p50 {r.latency.p50_ms:.3f} ms, p95 {r.latency.p95_ms:.3f} ms, "
         f"max {r.latency.max_ms:.3f} ms. Wall time on a shared development machine: the same code "
         "measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.",
         "",
@@ -183,7 +213,10 @@ def render_md(r: EvalReport) -> str:
             f"| `{s.rule_id}` | {s.hits} | {s.on_malicious} | {s.on_benign} "
             f"| {s.precision:.3f} | {_ci(s.precision_ci)} |"
         )
-    silent = sorted({rule.id for rule in RULES} - {s.rule_id for s in r.rules})
+    known = {rule.id for rule in RULES} | (
+        {rule.id for rule in MAIL_RULES} if r.kind == "mail" else set()
+    )
+    silent = sorted(known - {s.rule_id for s in r.rules})
     lines += [
         "",
         f"Rules with no hits on this split: {', '.join(f'`{s}`' for s in silent) or 'none'}.",
@@ -196,7 +229,7 @@ def render_md(r: EvalReport) -> str:
 
 
 def log_holdout(r: EvalReport, out: Path) -> None:
-    path = out / "holdout_runs.md"
+    path = out / ("mail_holdout_runs.md" if r.kind == "mail" else "holdout_runs.md")
     if not path.exists():
         path.write_text(
             "# Holdout runs\n\nEvery holdout run is recorded here. Never tune against these.\n\n"
@@ -216,19 +249,29 @@ def log_holdout(r: EvalReport, out: Path) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="eval")
-    ap.add_argument("--manifest", type=Path, default=Path("corpus/manifest.jsonl"))
+    ap.add_argument("--kind", choices=("url", "mail"), default="url")
+    ap.add_argument("--manifest", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=Path("docs/eval"))
     # No "all", no "reserve": dev by default, holdout only on request, reserve stays sealed.
     ap.add_argument("--split", choices=("dev", "holdout"), default="dev")
     args = ap.parse_args(argv)
 
-    report = run(load_manifest(args.manifest), engine_analyze, args.split)
+    if args.kind == "mail":
+        manifest = args.manifest or Path("corpus/mail/manifest.jsonl")
+        report = run_mail(load_mail_manifest(manifest), manifest, args.split)
+    else:
+        report = run(
+            load_manifest(args.manifest or Path("corpus/manifest.jsonl")),
+            engine_analyze,
+            args.split,
+        )
+    stem = ("mail-" if report.kind == "mail" else "") + args.split
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / f"{args.split}.json").write_text(
+    (args.out / f"{stem}.json").write_text(
         report.model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n"
     )
     md = render_md(report)
-    (args.out / f"{args.split}.md").write_text(md, encoding="utf-8", newline="\n")
+    (args.out / f"{stem}.md").write_text(md, encoding="utf-8", newline="\n")
     if args.split == "holdout":
         log_holdout(report, args.out)
     print(md)

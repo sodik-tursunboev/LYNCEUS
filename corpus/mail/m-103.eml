@@ -1,0 +1,27 @@
+From: Colleague <colleague@examplecorp.test>
+To: me@example.test
+Subject: Fwd: Original request
+Date: Thu, 05 Nov 2026 11:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0795540621831393893=="
+
+--===============0795540621831393893==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Forwarding this.
+
+--===============0795540621831393893==
+Content-Type: message/rfc822
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
+Content-Disposition: attachment
+
+RnJvbTogIkJvc3MiIDxib3NzQGV4YW1wbGVjb3JwLnRlc3Q+DQpUbzogdmljdGltQGV4YW1wbGUu
+dGVzdA0KU3ViamVjdDogT3JpZ2luYWwgcmVxdWVzdA0KRGF0ZTogVGh1LCAwNSBOb3YgMjAyNiAx
+MDowMDowMCArMDAwMA0KTWVzc2FnZS1JRDogPDM5MDgwNTg3NDNAZXhhbXBsZWNvcnAudGVzdD4N
+CkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD0idXRmLTgiDQpDb250ZW50LVRyYW5z
+ZmVyLUVuY29kaW5nOiA3Yml0DQpNSU1FLVZlcnNpb246IDEuMA0KDQpDYW4geW91IHNlbmQgdGhl
+IG51bWJlcnM/IGh0dHBzOi8vd2lraS5leGFtcGxlY29ycC50ZXN0L251bWJlcnMNCg==
+
+--===============0795540621831393893==--

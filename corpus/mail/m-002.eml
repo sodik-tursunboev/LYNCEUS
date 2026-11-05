@@ -1,0 +1,25 @@
+From: "Netflix Support" <service@netflix-paczka.test>
+To: victim@example.test
+Subject: Your account has been suspended
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1792120332@netflix-paczka.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7742505741328171367=="
+
+--===============7742505741328171367==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============7742505741328171367==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Your account was suspended. Verify your account immediately.</=
+p><a href=3D"https://netflix-paczka.test/secure/update?email=3Djane.doe%40exa=
+mple.test">Verify now</a></body></html>
+
+--===============7742505741328171367==--

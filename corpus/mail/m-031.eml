@@ -1,0 +1,24 @@
+From: "Accounts" <billing@portal-id97.test>
+To: victim@example.test
+Subject: Documents
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5154900396@portal-id97.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5757871336577542667=="
+
+--===============5757871336577542667==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============5757871336577542667==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.pdf.exe"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============5757871336577542667==--

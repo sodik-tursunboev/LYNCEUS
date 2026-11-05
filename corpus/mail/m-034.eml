@@ -1,0 +1,24 @@
+From: "Accounts" <billing@login-check95.test>
+To: victim@example.test
+Subject: Documents
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <2143047903@login-check95.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1005773576442811347=="
+
+--===============1005773576442811347==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============1005773576442811347==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="photo.jpg.js"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============1005773576442811347==--

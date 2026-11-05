@@ -1,0 +1,23 @@
+From: "Colleague" <colleague@examplecorp.test>
+To: victim@example.test
+Subject: Attached as discussed
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1959018140@examplecorp.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7685195763580011107=="
+
+--===============7685195763580011107==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please find the file attached.
+
+--===============7685195763580011107==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="report.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjQKMSAwIG9iajw8Pj5lbmRvYmoKdHJhaWxlcjw8Pj4KJSVFT0YK
+
+--===============7685195763580011107==--

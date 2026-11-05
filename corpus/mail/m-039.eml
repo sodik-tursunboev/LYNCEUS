@@ -1,0 +1,25 @@
+From: "Netflix" <info@secure-verify63.test>
+To: victim@example.test
+Subject: Netflix secure document
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <7179778780@secure-verify63.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7269527497951253099=="
+
+--===============7269527497951253099==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============7269527497951253099==
+Content-Type: text/html
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="secure.html"
+MIME-Version: 1.0
+
+PGh0bWw+PGJvZHk+PGZvcm0gYWN0aW9uPSJodHRwczovL2FjY291bnQtdXBkYXRlNjEudGVzdC9j
+IiBtZXRob2Q9InBvc3QiPk5ldGZsaXg8aW5wdXQgdHlwZT0icGFzc3dvcmQiIG5hbWU9InAiPjwv
+Zm9ybT48c2NyaXB0PmRvY3VtZW50LnRpdGxlPSJ4Ijwvc2NyaXB0PjwvYm9keT48L2h0bWw+
+
+--===============7269527497951253099==--

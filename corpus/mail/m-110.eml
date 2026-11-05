@@ -1,0 +1,5 @@
+From: a@example.test
+To: b@example.test
+Subject: bare lf
+
+Plain body with bare newlines.

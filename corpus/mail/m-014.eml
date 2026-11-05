@@ -1,0 +1,24 @@
+From: "Notice" <noreply@login-check86.test>
+To: victim@example.test
+Subject: Message from PayPal
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <8785470453@login-check86.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7675683358462574907=="
+
+--===============7675683358462574907==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============7675683358462574907==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Check your PayPal account:</p><a href=3D"https://login-check74=
+.test/r?id=3D714">https://www.paypal.com/login</a></body></html>
+
+--===============7675683358462574907==--

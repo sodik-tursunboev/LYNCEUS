@@ -1,0 +1,26 @@
+From: "mBank" <powiadomienia@mbank.pl>
+To: victim@example.test
+Subject: Twoja przesylka
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <9003855860@mbank.pl>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=mbank.pl; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============5370273246143129325=="
+
+--===============5370273246143129325==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============5370273246143129325==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Dzien dobry, Twoja przesylka jest w drodze. Szczegoly: <a href=
+=3D"https://www.mbank.pl/sledzenie">sledz przesylke</a>.</p></body></html>
+
+--===============5370273246143129325==--

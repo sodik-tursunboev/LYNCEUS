@@ -1,12 +1,16 @@
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
+from mailhelp import eml, in_process
 
 from core.contracts import VerdictState as V
 from core.detection import stub
+from core.email import engine as email_engine
 from eval.__main__ import EvalReport, Result, main, rule_stats, run
 from eval.corpus import Label, load_manifest
+from eval.mailcorpus import load_mail_manifest
 from eval.metrics import percentile, rates, tally, wilson
 
 MANIFEST = Path(__file__).parents[2] / "corpus" / "manifest.jsonl"
@@ -81,6 +85,52 @@ def test_cli_end_to_end_writes_schema_valid_report(
     assert md.startswith("# Eval report") and "Wilson" in md
     assert "not the real-world detection rate" in md
     assert "Precision" in capsys.readouterr().out
+
+
+MAIL_MANIFEST = Path(__file__).parents[2] / "corpus" / "mail" / "manifest.jsonl"
+
+
+def test_mail_eval_end_to_end(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(email_engine, "run_sandbox", in_process)
+    assert main(["--kind", "mail", "--manifest", str(MAIL_MANIFEST), "--out", str(tmp_path)]) == 0
+    report = EvalReport.model_validate_json(
+        (tmp_path / "mail-dev.json").read_text(encoding="utf-8")
+    )
+    assert (report.kind, report.split) == ("mail", "dev")
+    assert report.engine_version.startswith("email-") and "+" in report.ruleset_version
+    dev = [e for e in load_mail_manifest(MAIL_MANIFEST) if e.split.value == "dev"]
+    assert report.counts.n == len(dev)
+    assert (tmp_path / "mail-dev.md").read_text(encoding="utf-8").startswith("# Eval report (mail)")
+    assert not (tmp_path / "dev.json").exists()  # the URL report is a separate file
+
+
+def test_mail_holdout_runs_are_logged_in_their_own_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(email_engine, "run_sandbox", in_process)
+    raw = eml()
+    (tmp_path / "h1.eml").write_bytes(raw)
+    line = {
+        "id": "h1", "file": "h1.eml", "file_sha256": hashlib.sha256(raw).hexdigest(),
+        "label": "benign", "category": "c", "origin": "synthetic", "source": "s", "notes": "",
+        "split": "holdout",
+    }  # fmt: skip
+    manifest = tmp_path / "m.jsonl"
+    manifest.write_text(json.dumps(line) + "\n", encoding="utf-8")
+    args = [
+        "--kind",
+        "mail",
+        "--manifest",
+        str(manifest),
+        "--out",
+        str(tmp_path),
+        "--split",
+        "holdout",
+    ]
+    assert main(args) == 0 and main(args) == 0
+    rows = (tmp_path / "mail_holdout_runs.md").read_text(encoding="utf-8").splitlines()
+    assert sum(r.startswith("| 20") for r in rows) == 2
+    assert not (tmp_path / "holdout_runs.md").exists()
 
 
 def test_wilson_interval() -> None:

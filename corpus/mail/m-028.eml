@@ -1,0 +1,23 @@
+From: "Accounts" <billing@pay-confirm33.test>
+To: victim@example.test
+Subject: Invoice attached
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <7110826482@pay-confirm33.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8135635353273205632=="
+
+--===============8135635353273205632==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8135635353273205632==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="scan.vbs"
+MIME-Version: 1.0
+
+TXNnQm94IDE=
+
+--===============8135635353273205632==--

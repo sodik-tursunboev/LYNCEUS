@@ -1,0 +1,26 @@
+From: "Poczta Polska" <no-reply@poczta-polska.pl>
+To: victim@example.test
+Subject: Your Poczta Polska statement
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <4389646919@poczta-polska.pl>
+Authentication-Results: mx.example.test; spf=pass
+ smtp.mailfrom=poczta-polska.pl; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6803853731575383748=="
+
+--===============6803853731575383748==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6803853731575383748==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hello,</p><p>Your Poczta Polska statement is ready.</p><a href=
+=3D"https://www.poczta-polska.pl/account">Open your account</a></body></html>
+
+--===============6803853731575383748==--

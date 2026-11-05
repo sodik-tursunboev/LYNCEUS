@@ -1,0 +1,23 @@
+From: "Accounts" <billing@login-check40.test>
+To: victim@example.test
+Subject: Invoice attached
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6428397425@login-check40.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2604945953768967926=="
+
+--===============2604945953768967926==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2604945953768967926==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="update.hta"
+MIME-Version: 1.0
+
+PGh0bWw+PC9odG1sPg==
+
+--===============2604945953768967926==--

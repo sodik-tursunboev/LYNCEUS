@@ -1,0 +1,24 @@
+From: "Accounts" <billing@id-center53.test>
+To: victim@example.test
+Subject: Invoice attached
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6023335249@id-center53.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4480355936845308697=="
+
+--===============4480355936845308697==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============4480355936845308697==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="document.scr"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============4480355936845308697==--

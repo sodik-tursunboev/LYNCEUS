@@ -1,0 +1,24 @@
+From: "Notice" <noreply@docs-share39.test>
+To: victim@example.test
+Subject: Message from DHL
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <8605034028@docs-share39.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============5608591804689670222=="
+
+--===============5608591804689670222==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============5608591804689670222==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Check your DHL account:</p><a href=3D"https://secure-verify91.=
+test/r?id=3D334">https://www.dhl.com/login</a></body></html>
+
+--===============5608591804689670222==--

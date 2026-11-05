@@ -1,0 +1,26 @@
+From: "InPost" <powiadomienia@inpost.pl>
+To: victim@example.test
+Subject: Twoja przesylka
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1532410652@inpost.pl>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=inpost.pl; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============3491439098824603765=="
+
+--===============3491439098824603765==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============3491439098824603765==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Dzien dobry, Twoja przesylka jest w drodze. Szczegoly: <a href=
+=3D"https://www.inpost.pl/sledzenie">sledz przesylke</a>.</p></body></html>
+
+--===============3491439098824603765==--

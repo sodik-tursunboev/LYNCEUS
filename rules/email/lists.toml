@@ -1,0 +1,51 @@
+# Lists for the message rules. Provenance: drafted by hand 2026-11-05 from general knowledge,
+# unverified. Data, not code: changing them changes the ruleset hash.
+# Plain lists come first: in TOML, every key after a [table] header belongs to that table.
+
+# Extensions that run code or open a shell when double-clicked on Windows.
+dangerous_extensions = [
+  "exe", "scr", "com", "pif", "bat", "cmd", "ps1", "psm1", "vbs", "vbe", "js", "jse", "wsf", "wsh",
+  "hta", "lnk", "jar", "msi", "msp", "reg", "cpl", "dll", "chm", "iso", "img", "vhd", "vhdx", "appx",
+  "msix", "url", "scf", "inf", "gadget", "application",
+]
+
+# Office files that can carry macros (the "m" variants, and the legacy formats that always can).
+macro_extensions = ["docm", "xlsm", "pptm", "dotm", "xltm", "xlam", "ppam", "sldm", "xlsb"]
+
+archive_extensions = ["zip", "rar", "7z", "gz", "tgz", "bz2", "tar", "cab", "ace", "arj", "iso", "img"]
+html_extensions = ["html", "htm", "xhtml", "shtml", "svg", "mht", "mhtml"]
+
+# Words that push a reader to act before thinking, and words that ask for credentials or money.
+# English and Polish, lowercase, matched as phrases in the visible text.
+urgency = [
+  "urgent", "immediately", "within 24 hours", "final notice", "last warning", "act now",
+  "suspended", "will be closed", "expires today", "unauthorized", "unusual activity",
+  "pilne", "natychmiast", "w ciagu 24 godzin", "ostatnie ostrzezenie", "konto zostanie zablokowane",
+  "zawieszone", "wygasa dzisiaj", "nieautoryzowan", "nietypowa aktywnosc",
+]
+credential_asks = [
+  "verify your account", "confirm your password", "update your payment", "log in to", "sign in to",
+  "enter your", "your password", "security code", "one-time code", "card number",
+  "zweryfikuj konto", "potwierdz haslo", "zaloguj sie", "podaj", "twoje haslo", "kod bezpieczenstwa",
+  "kod blik", "numer karty", "dokonaj doplaty", "oplac",
+]
+
+# Extensions that look harmless, and the file types they should really be. A pdf that is really an
+# executable is the point. Unlisted extensions are not checked.
+[expected_magic]
+pdf = ["pdf"]
+png = ["png"]
+jpg = ["jpeg"]
+jpeg = ["jpeg"]
+gif = ["gif"]
+bmp = ["bmp"]
+docx = ["zip"]
+xlsx = ["zip"]
+pptx = ["zip"]
+zip = ["zip"]
+doc = ["ole", "rtf"]
+xls = ["ole"]
+ppt = ["ole"]
+rtf = ["rtf"]
+txt = []
+csv = []

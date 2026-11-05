@@ -1,0 +1,6 @@
+From: a@example.test
+To: b@example.test
+Subject: charset
+Content-Type: text/plain; charset=x-unknown-charset
+
+Hello, café.

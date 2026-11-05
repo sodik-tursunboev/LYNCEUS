@@ -3,3 +3,4 @@ core/urls/data/*.dat -text
 docs/SPEC.md -text
 tests/data/wpt/* -text
 rules/url/data/*.txt -text
+corpus/mail/*.eml -text

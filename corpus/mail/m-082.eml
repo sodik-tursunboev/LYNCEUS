@@ -1,0 +1,26 @@
+From: "Amazon" <no-reply@amazon.com>
+To: victim@example.test
+Subject: Your Amazon statement
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <4312774000@amazon.com>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=amazon.com; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8570962862229789901=="
+
+--===============8570962862229789901==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8570962862229789901==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hello,</p><p>Your Amazon statement is ready.</p><a href=3D"htt=
+ps://www.amazon.com/account">Open your account</a></body></html>
+
+--===============8570962862229789901==--

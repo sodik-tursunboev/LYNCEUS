@@ -1,0 +1,24 @@
+From: "Notice" <noreply@track-parcel34.test>
+To: victim@example.test
+Subject: Message from DPD
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <7249072114@track-parcel34.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8941835683914145918=="
+
+--===============8941835683914145918==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8941835683914145918==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Check your DPD account:</p><a href=3D"https://service-help70.t=
+est/r?id=3D825">https://www.dpd.pl/login</a></body></html>
+
+--===============8941835683914145918==--

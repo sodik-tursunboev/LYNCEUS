@@ -1,0 +1,24 @@
+From: "Notice" <noreply@id-center81.test>
+To: victim@example.test
+Subject: Message from InPost
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <7634166391@id-center81.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============2227834676663785266=="
+
+--===============2227834676663785266==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2227834676663785266==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Check your InPost account:</p><a href=3D"https://docs-share73.=
+test/r?id=3D650">https://www.inpost.pl/login</a></body></html>
+
+--===============2227834676663785266==--

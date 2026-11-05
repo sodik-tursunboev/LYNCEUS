@@ -1,0 +1,27 @@
+From: "Colleague" <colleague@examplecorp.test>
+To: victim@example.test
+Subject: Attached as discussed
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5479988694@examplecorp.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7809302558577147446=="
+
+--===============7809302558577147446==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please find the file attached.
+
+--===============7809302558577147446==
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="minutes.docx"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAKgYZV2DFtyMAQAAAAEAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbHhQSwMEFAAA
+AAAAqBhlXYMW3IwBAAAAAQAAABEAAAB3b3JkL2RvY3VtZW50LnhtbHhQSwECFAAUAAAAAACoGGVd
+gxbcjAEAAAABAAAAEwAAAAAAAAAAAAAAgAEAAAAAW0NvbnRlbnRfVHlwZXNdLnhtbFBLAQIUABQA
+AAAAAKgYZV2DFtyMAQAAAAEAAAARAAAAAAAAAAAAAACAATIAAAB3b3JkL2RvY3VtZW50LnhtbFBL
+BQYAAAAAAgACAIAAAABiAAAAAAA=
+
+--===============7809302558577147446==--

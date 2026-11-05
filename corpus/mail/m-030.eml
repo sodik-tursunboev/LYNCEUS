@@ -1,0 +1,23 @@
+From: "Accounts" <billing@portal-id40.test>
+To: victim@example.test
+Subject: Invoice attached
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <3356730646@portal-id40.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6081875708127551344=="
+
+--===============6081875708127551344==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6081875708127551344==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="tool.lnk"
+MIME-Version: 1.0
+
+TAAAAAEUAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+--===============6081875708127551344==--

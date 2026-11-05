@@ -1,0 +1,42 @@
+From: "ExampleCorp News" <news@news47.examplecorp.test>
+To: victim@example.test
+Subject: Our monthly update
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6178398887@news47.examplecorp.test>
+Authentication-Results: mx.example.test; spf=pass; dkim=pass; dmarc=pass
+List-Unsubscribe: <https://news47.examplecorp.test/u>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6723097057133364368=="
+
+--===============6723097057133364368==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6723097057133364368==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"display:none">Preview text for the inbox</p><p>This m=
+onth at ExampleCorp</p><a href=3D"https://click.mailer7.test/t/3417">Read mor=
+e 0</a> <a href=3D"https://click.mailer8.test/i/0"><img src=3D"https://img.ex=
+amplecorp.test/0.png"></a> <a href=3D"https://click.mailer7.test/t/8905">Read=
+ more 1</a> <a href=3D"https://click.mailer8.test/i/1"><img src=3D"https://im=
+g.examplecorp.test/1.png"></a> <a href=3D"https://click.mailer8.test/t/5098">=
+Read more 2</a> <a href=3D"https://click.mailer4.test/i/2"><img src=3D"https:=
+//img.examplecorp.test/2.png"></a> <a href=3D"https://click.mailer3.test/t/74=
+77">Read more 3</a> <a href=3D"https://click.mailer2.test/i/3"><img src=3D"ht=
+tps://img.examplecorp.test/3.png"></a> <a href=3D"https://click.mailer5.test/=
+t/3753">Read more 4</a> <a href=3D"https://click.mailer5.test/i/4"><img src=
+=3D"https://img.examplecorp.test/4.png"></a> <a href=3D"https://click.mailer1=
+.test/t/8653">Read more 5</a> <a href=3D"https://click.mailer5.test/i/5"><img=
+ src=3D"https://img.examplecorp.test/5.png"></a> <a href=3D"https://click.mai=
+ler4.test/t/8446">Read more 6</a> <a href=3D"https://click.mailer2.test/i/6">=
+<img src=3D"https://img.examplecorp.test/6.png"></a> <img src=3D"https://trac=
+k.mailer1.test/p.gif" width=3D"1" height=3D"1"><a href=3D"https://news47.exam=
+plecorp.test/unsubscribe">Unsubscribe</a></body></html>
+
+--===============6723097057133364368==--

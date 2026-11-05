@@ -1,0 +1,26 @@
+From: "PayPal" <no-reply@paypal.com>
+To: victim@example.test
+Subject: Your PayPal statement
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5571305263@paypal.com>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=paypal.com; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============1659369155690870950=="
+
+--===============1659369155690870950==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============1659369155690870950==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hello,</p><p>Your PayPal statement is ready.</p><a href=3D"htt=
+ps://www.paypal.com/account">Open your account</a></body></html>
+
+--===============1659369155690870950==--

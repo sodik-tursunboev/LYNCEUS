@@ -1,0 +1,26 @@
+From: "Apple" <service@apple-konto.test>
+To: victim@example.test
+Subject: Your account has been suspended
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6024421698@apple-konto.test>
+Authentication-Results: mx.example.test; spf=fail; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============0291587900033656382=="
+
+--===============0291587900033656382==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============0291587900033656382==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Your account was suspended. Verify your account immediately.</=
+p><a href=3D"https://apple-konto.test/login.php?email=3Djane.doe%40example.te=
+st">Verify now</a></body></html>
+
+--===============0291587900033656382==--

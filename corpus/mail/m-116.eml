@@ -1,0 +1,27 @@
+From: Calendar <cal@examplecorp.test>
+To: me@example.test
+Subject: Invitation: planning
+Date: Thu, 05 Nov 2026 12:00:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============4117070932644657334=="
+
+--===============4117070932644657334==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+You are invited.
+
+--===============4117070932644657334==
+Content-Type: text/calendar; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Planning
+END:VEVENT
+END:VCALENDAR
+
+--===============4117070932644657334==--

@@ -1,0 +1,6 @@
+From: a@example.test
+To: b@example.test
+Subject: no boundary
+Content-Type: multipart/alternative
+
+body without any parts

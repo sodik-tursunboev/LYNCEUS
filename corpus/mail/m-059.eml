@@ -1,0 +1,26 @@
+From: "InPost" <alert@login-check14.test>
+To: victim@example.test
+Subject: InPost alert
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <4621363366@login-check14.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8494357999464472528=="
+
+--===============8494357999464472528==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8494357999464472528==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"font-size:0;display:none"><a href=3D"https://login-ch=
+eck83.test/track">x</a></p><a href=3D"https://pay-confirm17.test/go" style=3D=
+"opacity:0">tiny</a><p>Your InPost account needs attention. Verify your accou=
+nt now.</p></body></html>
+
+--===============8494357999464472528==--

@@ -1,0 +1,26 @@
+From: "PKO BP" <alert@pkobp-weryfikacja86.test>
+To: victim@example.test
+Subject: Weryfikacja konta
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6912549219@pkobp-weryfikacja86.test>
+Authentication-Results: mx.example.test; spf=fail; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============3821119091216461273=="
+
+--===============3821119091216461273==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============3821119091216461273==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Wykryto nietypowa aktywnosc. Zweryfikuj konto i zaloguj sie, i=
+naczej konto zostanie zablokowane.</p><a href=3D"https://pkobp-weryfikacja86.=
+test/logowanie?email=3Djane.doe%40example.test">Zaloguj sie</a></body></html>
+
+--===============3821119091216461273==--

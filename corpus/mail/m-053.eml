@@ -1,0 +1,26 @@
+From: "Allegro" <billing@allegro-pl.test>
+To: victim@example.test
+Subject: Allegro payment
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5251842146@allegro-pl.test>
+Reply-To: collect@portal-id52.test
+Authentication-Results: mx.example.test; spf=fail; dkim=fail; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6911145096945327799=="
+
+--===============6911145096945327799==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6911145096945327799==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Confirm your payment details.</p><a href=3D"https://docs-share=
+65.test/pay?x=3D16">Confirm</a></body></html>
+
+--===============6911145096945327799==--

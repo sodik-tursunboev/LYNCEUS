@@ -1,0 +1,26 @@
+From: "Poczta Polska" <alert@pay-confirm66.test>
+To: victim@example.test
+Subject: Poczta Polska alert
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <4982304960@pay-confirm66.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6414620963242597926=="
+
+--===============6414620963242597926==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6414620963242597926==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"font-size:0;display:none"><a href=3D"https://login-ch=
+eck11.test/track">x</a></p><a href=3D"https://portal-id93.test/go" style=3D"o=
+pacity:0">tiny</a><p>Your Poczta Polska account needs attention. Verify your =
+account now.</p></body></html>
+
+--===============6414620963242597926==--

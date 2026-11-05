@@ -1,0 +1,24 @@
+From: "Notice" <noreply@service-help6.test>
+To: victim@example.test
+Subject: Message from Netflix
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1326030095@service-help6.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8471530621398116838=="
+
+--===============8471530621398116838==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8471530621398116838==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Check your Netflix account:</p><a href=3D"https://pay-confirm4=
+2.test/r?id=3D229">https://www.netflix.com/login</a></body></html>
+
+--===============8471530621398116838==--

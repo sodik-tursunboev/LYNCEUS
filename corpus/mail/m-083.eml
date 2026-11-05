@@ -1,0 +1,26 @@
+From: "Netflix" <no-reply@netflix.com>
+To: victim@example.test
+Subject: Your Netflix statement
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <3936771905@netflix.com>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=netflix.com; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8259382748698964454=="
+
+--===============8259382748698964454==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8259382748698964454==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hello,</p><p>Your Netflix statement is ready.</p><a href=3D"ht=
+tps://www.netflix.com/account">Open your account</a></body></html>
+
+--===============8259382748698964454==--

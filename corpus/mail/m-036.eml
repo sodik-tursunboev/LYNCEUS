@@ -1,0 +1,24 @@
+From: "Accounts" <billing@pay-confirm45.test>
+To: victim@example.test
+Subject: Photos
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5132429485@pay-confirm45.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4338253313917133797=="
+
+--===============4338253313917133797==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============4338253313917133797==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename*=utf-8''invoice%E2%80%AEgpj.exe
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============4338253313917133797==--

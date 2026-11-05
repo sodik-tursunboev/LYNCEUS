@@ -1,0 +1,10 @@
+From: a@example.test
+To: b@example.test
+Subject: broken
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="X"
+
+--X
+Content-Type: text/plain
+
+no closing boundary

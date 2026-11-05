@@ -1,0 +1,26 @@
+From: "Poczta Polska" <billing@poczta-polska-pl.test>
+To: victim@example.test
+Subject: Poczta Polska payment
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <2603509754@poczta-polska-pl.test>
+Reply-To: collect@docs-share20.test
+Authentication-Results: mx.example.test; spf=fail; dkim=fail; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============2132642347974509872=="
+
+--===============2132642347974509872==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2132642347974509872==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Confirm your payment details.</p><a href=3D"https://login-chec=
+k65.test/pay?x=3D10">Confirm</a></body></html>
+
+--===============2132642347974509872==--

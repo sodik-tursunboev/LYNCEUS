@@ -1,0 +1,63 @@
+# Scoring config for the message rule pack. Same model as the URL pack (ADR-013, ADR-014).
+# Tune against the dev split only. Any change here changes ruleset_version.
+
+[ruleset]
+version = "1.0.0"
+
+[thresholds]
+suspicious = 45
+malicious = 80
+high_weight = 0.5   # a category counts as independent evidence with a signal this strong
+min_categories = 2  # one feature alone never makes a message malicious (SPEC section 6)
+many_links = 40     # distinct links before email.link_flood fires
+link_cap = 100      # distinct links sent through the URL engine; the rest are only counted
+
+# Most a category can contribute, however many of its signals fire. "link.*" categories carry what
+# the URL engine found in the message's links.
+[category_caps]
+sender = 0.8
+authentication = 0.6
+deception = 0.8
+credential = 0.75
+attachment = 0.85
+active_content = 0.6
+structure = 0.4
+content = 0.3
+"link.host" = 0.6
+"link.deception" = 0.75
+"link.impersonation" = 0.85
+"link.redirect" = 0.7
+"link.credential" = 0.75
+"link.scheme" = 0.8
+"link.structure" = 0.4
+"link.obfuscation" = 0.4
+
+[weights]
+"email.multiple_from" = 0.6
+"email.display_name_brand" = 0.7
+"email.reply_to_mismatch" = 0.35
+"email.sender.homograph_brand" = 0.8
+"email.sender.mixed_script" = 0.55
+"email.sender.typosquat" = 0.7
+"email.sender.combosquat" = 0.7
+"email.sender.brand_in_subdomain" = 0.7
+"email.sender.brand_in_domain" = 0.3
+"email.auth_failure" = 0.45
+"email.link_text_brand_mismatch" = 0.8
+"email.link_text_mismatch" = 0.45
+"email.hidden_link" = 0.5
+"email.image_only_link" = 0.15
+"email.password_form" = 0.7
+"email.script_content" = 0.4
+"email.meta_refresh" = 0.5
+"email.link_flood" = 0.2
+"email.dangerous_attachment" = 0.75
+"email.double_extension" = 0.75
+"email.rtl_filename" = 0.75
+"email.attachment_type_mismatch" = 0.55
+"email.macro_attachment" = 0.5
+"email.html_attachment" = 0.5
+"email.archive_attachment" = 0.15
+"email.malformed_mime" = 0.3
+"email.parser_limits" = 0.4
+"email.social_engineering" = 0.3

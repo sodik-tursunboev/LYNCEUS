@@ -1,0 +1,26 @@
+From: "InPost" <no-reply@inpost.pl>
+To: victim@example.test
+Subject: Your InPost statement
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6897874411@inpost.pl>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=inpost.pl; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============7823104517842793505=="
+
+--===============7823104517842793505==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============7823104517842793505==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Hello,</p><p>Your InPost statement is ready.</p><a href=3D"htt=
+ps://www.inpost.pl/account">Open your account</a></body></html>
+
+--===============7823104517842793505==--

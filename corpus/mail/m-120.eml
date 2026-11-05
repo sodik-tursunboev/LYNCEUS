@@ -1,0 +1,26 @@
+From: "DPD" <powiadomienia@dpd.pl>
+To: victim@example.test
+Subject: Twoja przesylka
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <2853902230@dpd.pl>
+Authentication-Results:
+ mx.example.test; spf=pass smtp.mailfrom=dpd.pl; dkim=pass; dmarc=pass
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============6215336397855107084=="
+
+--===============6215336397855107084==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============6215336397855107084==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Dzien dobry, Twoja przesylka jest w drodze. Szczegoly: <a href=
+=3D"https://www.dpd.pl/sledzenie">sledz przesylke</a>.</p></body></html>
+
+--===============6215336397855107084==--

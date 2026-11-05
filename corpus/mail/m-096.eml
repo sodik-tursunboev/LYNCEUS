@@ -1,0 +1,23 @@
+From: "Colleague" <colleague@examplecorp.test>
+To: victim@example.test
+Subject: Attached as discussed
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6795259791@examplecorp.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3036170545973613241=="
+
+--===============3036170545973613241==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please find the file attached.
+
+--===============3036170545973613241==
+Content-Type: image/jpeg
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="photo.jpg"
+MIME-Version: 1.0
+
+/9j/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+--===============3036170545973613241==--

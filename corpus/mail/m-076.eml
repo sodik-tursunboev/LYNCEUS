@@ -1,0 +1,40 @@
+From: "ExampleCorp News" <news@news18.examplecorp.test>
+To: victim@example.test
+Subject: Our monthly update
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <6391296895@news18.examplecorp.test>
+Authentication-Results: mx.example.test; spf=pass; dkim=pass; dmarc=pass
+List-Unsubscribe: <https://news18.examplecorp.test/u>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============2795679284570019708=="
+
+--===============2795679284570019708==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2795679284570019708==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"display:none">Preview text for the inbox</p><p>This m=
+onth at ExampleCorp</p><a href=3D"https://click.mailer3.test/t/4112">Read mor=
+e 0</a> <a href=3D"https://click.mailer3.test/i/0"><img src=3D"https://img.ex=
+amplecorp.test/0.png"></a> <a href=3D"https://click.mailer3.test/t/4920">Read=
+ more 1</a> <a href=3D"https://click.mailer4.test/i/1"><img src=3D"https://im=
+g.examplecorp.test/1.png"></a> <a href=3D"https://click.mailer2.test/t/7687">=
+Read more 2</a> <a href=3D"https://click.mailer6.test/i/2"><img src=3D"https:=
+//img.examplecorp.test/2.png"></a> <a href=3D"https://click.mailer8.test/t/53=
+96">Read more 3</a> <a href=3D"https://click.mailer7.test/i/3"><img src=3D"ht=
+tps://img.examplecorp.test/3.png"></a> <a href=3D"https://click.mailer3.test/=
+t/1588">Read more 4</a> <a href=3D"https://click.mailer3.test/i/4"><img src=
+=3D"https://img.examplecorp.test/4.png"></a> <a href=3D"https://click.mailer9=
+.test/t/9080">Read more 5</a> <a href=3D"https://click.mailer6.test/i/5"><img=
+ src=3D"https://img.examplecorp.test/5.png"></a> <img src=3D"https://track.ma=
+iler1.test/p.gif" width=3D"1" height=3D"1"><a href=3D"https://news18.examplec=
+orp.test/unsubscribe">Unsubscribe</a></body></html>
+
+--===============2795679284570019708==--

@@ -1,0 +1,26 @@
+From: "OLX" <service@o1x.test>
+To: victim@example.test
+Subject: Pilne: zweryfikuj konto
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <8944550770@o1x.test>
+Authentication-Results: mx.example.test; spf=fail; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============3530620209801059599=="
+
+--===============3530620209801059599==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============3530620209801059599==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Twoje konto zostalo zawieszone. Zaloguj sie natychmiast.</p><a=
+ href=3D"https://o1x.test/signin.html?email=3Djane.doe%40example.test">Zalogu=
+j sie</a></body></html>
+
+--===============3530620209801059599==--

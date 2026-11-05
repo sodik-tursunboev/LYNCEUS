@@ -1,0 +1,26 @@
+From: "mBank Support" <service@mbank-account.test>
+To: victim@example.test
+Subject: Twoje konto zostanie zablokowane
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <5769921510@mbank-account.test>
+Authentication-Results: mx.example.test; spf=fail; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8005468750052427519=="
+
+--===============8005468750052427519==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8005468750052427519==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Twoje konto zostalo zawieszone. Zaloguj sie natychmiast.</p><a=
+ href=3D"https://mbank-account.test/signin.html?email=3Djane.doe%40example.te=
+st">Zaloguj sie</a></body></html>
+
+--===============8005468750052427519==--

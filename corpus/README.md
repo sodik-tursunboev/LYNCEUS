@@ -27,3 +27,16 @@
 - Synthetic positives measure rule correctness, not the real-world detection rate.
 - Shorteners are labelled by assumption (the destination is hypothetical) and are indistinguishable without resolving; expect abstains.
 - Brand-adjacent benign samples (`benign_brand_adjacent`) are author-labelled and deliberately hard.
+
+---
+
+## mail/ (M2)
+`mail/manifest.jsonl` lists 120 raw messages (`*.eml`, CRLF, never converted: `.gitattributes` marks them `-text`). Fields: `id`, `file`, `file_sha256` (checked on load), `label`, `category`, `origin`, `source`, `notes`, `split`. Splits: dev 79 (46 malicious, 33 benign), holdout 23, reserve 18; `mail/pins.txt` pins holdout and reserve (`python -m eval.corpus corpus/mail/manifest.jsonl`). Categories include brand-link phish, credential forms, hidden links, link-text mismatch, executable / double-extension / RTL / macro / HTML attachments, type mismatch, spoofed sender with failed authentication, and Polish bank and parcel lures; benign ones include newsletters, threads, calendar invites, official brand mail, lists, a malformed message and Polish mail.
+
+Messages are inert text: nothing is sent, opened or fetched. Rules enforced when the manifest loads:
+- A message may be at most 1 MiB and must match its recorded hash.
+- In a synthetic message every **destination** (an `href`, `src` or `action`, a URL in a plain-text part or a header, an address domain) is an unregisterable name (`.test`, `.invalid`, `.example`, reserved ranges). A real brand domain may only be **shown** as HTML text (`<a href="https://evil.test/">https://www.paypal.com/login</a>` is the attack being modelled), never be a destination.
+- `public_real` messages are benign only, documented, and the only ones that may name real hosts.
+- Attachments are small inert byte strings with the right magic number (`MZ`, `%PDF-`, `PK`); none is executable.
+
+Run: `python -m eval --kind mail` (dev), `--split holdout` (explicit, logged in `docs/eval/mail_holdout_runs.md`). The same caveats as the URL corpus apply, stronger: the same author wrote the messages and the rules, so results measure rule correctness, not detection of real phishing.

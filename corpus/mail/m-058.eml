@@ -1,0 +1,26 @@
+From: "Apple" <alert@track-parcel88.test>
+To: victim@example.test
+Subject: Apple alert
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <1656430673@track-parcel88.test>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============5271610842975934276=="
+
+--===============5271610842975934276==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============5271610842975934276==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p style=3D"font-size:0;display:none"><a href=3D"https://service-=
+help31.test/track">x</a></p><a href=3D"https://login-check6.test/go" style=3D=
+"opacity:0">tiny</a><p>Your Apple account needs attention. Verify your accoun=
+t now.</p></body></html>
+
+--===============5271610842975934276==--

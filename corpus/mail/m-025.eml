@@ -1,0 +1,24 @@
+From: "Accounts" <billing@login-check52.test>
+To: victim@example.test
+Subject: Invoice attached
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <3557478618@login-check52.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1840884093508612101=="
+
+--===============1840884093508612101==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============1840884093508612101==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.exe"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============1840884093508612101==--

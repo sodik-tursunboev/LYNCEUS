@@ -1,0 +1,26 @@
+From: "PayPal" <billing@paypal-com.test>
+To: victim@example.test
+Subject: PayPal payment
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <2396254759@paypal-com.test>
+Reply-To: collect@track-parcel30.test
+Authentication-Results: mx.example.test; spf=fail; dkim=fail; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============2974583617509458921=="
+
+--===============2974583617509458921==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============2974583617509458921==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Confirm your payment details.</p><a href=3D"https://mail-notic=
+e72.test/pay?x=3D5">Confirm</a></body></html>
+
+--===============2974583617509458921==--

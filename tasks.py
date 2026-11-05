@@ -48,7 +48,13 @@ TASKS: dict[str, list[list[str]]] = {
     ],
     "hooks": [["git", "config", "core.hooksPath", ".githooks"]],  # once per clone
 }
-_SCAN_SKIP = ("docs/schemas/", "docs/eval/", "tests/data/")  # generated; third-party test vectors
+_SCAN_SKIP = (  # generated; third-party test vectors; file hashes that look like high-entropy keys
+    "docs/schemas/",
+    "docs/eval/",
+    "tests/data/",
+    "corpus/mail/manifest.jsonl",  # the .eml files themselves stay scanned
+    "corpus/mail/pins.txt",
+)
 
 
 def run(task: str, extra: list[str]) -> int:

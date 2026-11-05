@@ -1,0 +1,26 @@
+From: "Microsoft Support" <service@microsoft.verify.test>
+To: victim@example.test
+Subject: Urgent: verify your account
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <9889789452@microsoft.verify.test>
+Authentication-Results: mx.example.test; spf=fail; dkim=none; dmarc=fail
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="===============8112625919625455330=="
+
+--===============8112625919625455330==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8112625919625455330==
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+<html><body><p>Your account was suspended. Verify your account immediately.</=
+p><a href=3D"https://microsoft.verify.test/signin.html?email=3Djane.doe%40exa=
+mple.test">Verify now</a></body></html>
+
+--===============8112625919625455330==--

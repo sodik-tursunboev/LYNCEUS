@@ -135,6 +135,9 @@ def split_hash(path: Path, split: Split) -> str:
     return h.hexdigest()
 
 
-if __name__ == "__main__":  # python -m eval.corpus: the lines for corpus/pins.txt
+if __name__ == "__main__":  # python -m eval.corpus [manifest]: the lines for that corpus's pins.txt
+    import sys
+
+    manifest = Path(sys.argv[1] if len(sys.argv) > 1 else "corpus/manifest.jsonl")
     for s in (Split.HOLDOUT, Split.RESERVE):
-        print(s.value, split_hash(Path("corpus/manifest.jsonl"), s))
+        print(s.value, split_hash(manifest, s))

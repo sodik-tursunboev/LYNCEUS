@@ -1,0 +1,25 @@
+From: "Colleague" <colleague@examplecorp.test>
+To: victim@example.test
+Subject: Attached as discussed
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <2171944332@examplecorp.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3690389038576244940=="
+
+--===============3690389038576244940==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please find the file attached.
+
+--===============3690389038576244940==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="files.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAAAKgYZV2DFtyMAQAAAAEAAAAJAAAAbm90ZXMudHh0eFBLAQIUABQAAAAAAKgYZV2D
+FtyMAQAAAAEAAAAJAAAAAAAAAAAAAACAAQAAAABub3Rlcy50eHRQSwUGAAAAAAEAAQA3AAAAKAAA
+AAAA
+
+--===============3690389038576244940==--

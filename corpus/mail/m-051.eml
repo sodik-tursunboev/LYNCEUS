@@ -1,0 +1,24 @@
+From: "Accounts" <billing@docs-share25.test>
+To: victim@example.test
+Subject: Your document
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <3100583313@docs-share25.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4966938805670055261=="
+
+--===============4966938805670055261==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============4966938805670055261==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="logo.png"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============4966938805670055261==--

@@ -1,0 +1,24 @@
+From: "Accounts" <billing@portal-id71.test>
+To: victim@example.test
+Subject: Your document
+Date: Thu, 05 Nov 2026 10:00:00 +0000
+Message-ID: <3860107095@portal-id71.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8821775582307487652=="
+
+--===============8821775582307487652==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please view this message in an HTML-capable client.
+
+--===============8821775582307487652==
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="report.pdf"
+MIME-Version: 1.0
+
+TVoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAGZha2UgZXhlY3V0YWJsZSBoZWFkZXIgZm9yIGEgdGVzdCwgbm90IGNvZGU=
+
+--===============8821775582307487652==--
