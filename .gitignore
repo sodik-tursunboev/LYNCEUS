@@ -10,3 +10,6 @@ __pycache__/
 node_modules/
 bin/
 obj/
+
+# downloaded threat-intel feeds (third-party data, licensed for personal use)
+.data/

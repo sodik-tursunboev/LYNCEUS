@@ -6,6 +6,7 @@ of the normalized URL. No type here can carry a path, query string, fragment, us
 so a provider cannot send what it was never given (tests check the real requests as well).
 """
 
+import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -39,12 +40,18 @@ class Query:
     url_sha256: str = ""  # hash of the normalized URL, for local list matching only
 
 
+def match_hash(u: ParsedUrl) -> str:
+    """The key a list is matched on: sha256 of the normalized URL without its fragment, which a
+    server never receives and which list entries often carry or lack."""
+    return hashlib.sha256(u.normalized.split("#", 1)[0].encode("utf-8")).hexdigest()
+
+
 @dataclass(frozen=True)
 class Subject:
     """What the engine knows about one URL. Providers never see this, only a `Query`."""
 
     host: str
-    url_sha256: str
+    url_sha256: str  # match_hash(): see above
     name: str | None  # the public registered domain, or None when the host is not a public name
     registered_domain: str | None
 
@@ -52,7 +59,7 @@ class Subject:
     def from_parsed(cls, u: ParsedUrl) -> "Subject":
         from core.intel.egress import public_name
 
-        return cls(u.host or "", u.url_sha256, public_name(u), u.registered_domain)
+        return cls(u.host or "", match_hash(u), public_name(u), u.registered_domain)
 
 
 @dataclass(frozen=True)
@@ -66,6 +73,15 @@ class Answer:
 
 class ProviderError(Exception):
     """A provider failed in a way worth recording. `reason` must not contain URLs or keys."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
+class ProviderUnavailable(Exception):
+    """The provider cannot answer for a local reason (no feed downloaded, feed stale). It is not
+    a fault of the provider, so it never counts against its circuit breaker."""
 
     def __init__(self, reason: str) -> None:
         super().__init__(reason)

@@ -1,5 +1,7 @@
 """Env-based settings (MIRAGE_ prefix, optional .env). No secrets in code; see .env.example."""
 
+from pathlib import Path
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -16,3 +18,15 @@ class Settings(BaseSettings):
     max_concurrent_parsers: int = 4  # sandboxes running at once; more get HTTP 503
     rate_limit_per_minute: int = 120
     resolve_redirects: bool = False  # operator opt-in only; needs ADR-011 signed off
+
+    # Threat intelligence (M3, ADR-015). Everything is off until the operator names a provider.
+    data_dir: Path = Path(".data")  # downloaded feeds live here
+    intel_providers: str = ""  # comma-separated: phishtank,openphish,urlhaus,rdap,virustotal
+    intel_deadline: float = 2.0  # seconds a caller waits for providers before moving on
+    intel_email_links: bool = False  # let links found in messages reach outside services
+    phishtank_key: SecretStr | None = None
+    urlhaus_auth_key: SecretStr | None = None
+    virustotal_api_key: SecretStr | None = None
+
+    def intel_enabled(self) -> frozenset[str]:
+        return frozenset(n.strip().lower() for n in self.intel_providers.split(",") if n.strip())

@@ -24,6 +24,7 @@ from core.intel.base import (
     Provider,
     ProviderError,
     ProviderRateLimited,
+    ProviderUnavailable,
     Query,
     Sends,
     Subject,
@@ -121,6 +122,9 @@ class Intel:
                 if limiter is not None:
                     limiter.pause(e.retry_after or 60.0)
                 return self._result(p, ProviderStatus.RATE_LIMITED, started, detail="told to wait")
+            except ProviderUnavailable as e:
+                breaker.cancel_trial()
+                return self._result(p, ProviderStatus.UNAVAILABLE, started, detail=e.reason)
             except ProviderError as e:
                 breaker.failure()
                 return self._result(p, ProviderStatus.ERROR, started, detail=e.reason)

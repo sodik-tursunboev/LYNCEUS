@@ -5,6 +5,7 @@ provider URL is fixed, and a redirect is a surprise); and a failure carries a cl
 fixed reason, never the URL or the exception text, because some providers put an API key in the URL.
 """
 
+import logging
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -15,6 +16,9 @@ import httpx
 from core.intel.base import ProviderError, ProviderRateLimited
 
 USER_AGENT = "mirage-local/0.1"
+# httpx logs every request URL at INFO, and some providers carry the API key in the URL path.
+for _noisy in ("httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 _RETRY_AFTER = re.compile(r"^\d{1,6}$")
 
 
