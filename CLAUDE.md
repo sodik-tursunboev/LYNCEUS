@@ -4,7 +4,7 @@ Local-first phishing detection and threat-intelligence system for Windows.
 **Mission:** detect phishing before the user interacts, investigate the evidence, protect the user, explain every decision.
 
 Read this file at the start of every session. Full spec: `docs/SPEC.md` (read only the sections the current milestone needs).
-**Current milestone: M2 in progress** (approved 2026-11-05; M2a messages built, M2b PDF/images/archives next) → `docs/milestones/M2.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
+**Current milestone: M2 complete, pending review** (messages, PDF, archives, QR images, HTML smuggling, all in the sandbox; OCR not built) → `docs/milestones/M2.md`. **Next: M3 (not yet planned).** M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
 
 ## What it is
 - A continuous endpoint anti-phishing system: Windows agent + Chrome/Edge extension + local analysis engine + desktop console for investigation.
@@ -93,7 +93,7 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `eval` | run the engine over the dev split, write `docs/eval/dev.{json,md}`. `--split holdout` is explicit and logged; reserve cannot be selected. `python -m eval --kind mail` does the same for the message corpus (`mail-dev.*`) |
 | `lint` | ruff check + format check + mypy |
 | `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
-| `sandbox` | build `.sandbox/` and register its per-user AppContainer profile (Windows). `python -m core.sandbox.build --remove` undoes it |
+| `sandbox` | build `.sandbox/` (interpreter copy, worker code, the hash-pinned parser libraries from `requirements-sandbox.txt`) and register its per-user AppContainer profile (Windows). `python -m core.sandbox.build --remove` undoes it |
 | `serve` | run the API on `127.0.0.1:8765`, no access log (needs `MIRAGE_API_TOKEN`) |
 | `fmt` | `ruff format` + `ruff check --fix` |
 | `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |

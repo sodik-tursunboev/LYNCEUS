@@ -1,0 +1,1784 @@
+{
+  "generated_at": "2026-11-05T02:56:58.390106Z",
+  "engine_version": "email-1.1.0",
+  "ruleset_version": "1.1.0+9790be320fdd",
+  "kind": "mail",
+  "split": "dev",
+  "samples_sha256": "d025714a59d4c3001b6058cf900982813db67e2d19742a1138293f246d72c3f9",
+  "counts": {
+    "n": 119,
+    "tp": 72,
+    "fp": 0,
+    "tn": 0,
+    "fn_benign": 0,
+    "abstain_pos": 2,
+    "abstain_neg": 45,
+    "error_pos": 0,
+    "error_neg": 0
+  },
+  "rates": {
+    "precision": 1.0,
+    "recall": 0.972972972972973,
+    "recall_answered": 1.0,
+    "f1": 0.9863013698630136,
+    "flag_rate": 0.0,
+    "abstain_rate": 0.3949579831932773,
+    "error_rate": 0.0,
+    "precision_ci": {
+      "low": 0.9493488266449553,
+      "high": 1.0
+    },
+    "recall_ci": {
+      "low": 0.9067070740637738,
+      "high": 0.9925566474287307
+    },
+    "flag_rate_ci": {
+      "low": 0.0,
+      "high": 0.07865159987608598
+    },
+    "abstain_ci": {
+      "low": 0.31173465003308,
+      "high": 0.4847509971769717
+    }
+  },
+  "latency": {
+    "p50_ms": 367.1372999997402,
+    "p95_ms": 1077.130099999522,
+    "max_ms": 1160.1637000003393
+  },
+  "rules": [
+    {
+      "rule_id": "email.archive_attachment",
+      "hits": 17,
+      "on_malicious": 13,
+      "on_benign": 4,
+      "precision": 0.7647058823529411,
+      "precision_ci": {
+        "low": 0.5273820168822574,
+        "high": 0.9044495574456308
+      }
+    },
+    {
+      "rule_id": "email.archive_bomb",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.archive_contains_macro",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.archive_contents_dangerous",
+      "hits": 8,
+      "on_malicious": 8,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6755924316585924,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.archive_double_extension",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.archive_encrypted",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.archive_nested",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.attachment_type_mismatch",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.auth_failure",
+      "hits": 9,
+      "on_malicious": 9,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.700854948272956,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.dangerous_attachment",
+      "hits": 11,
+      "on_malicious": 11,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7411670300055737,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.display_name_brand",
+      "hits": 33,
+      "on_malicious": 33,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.8957300009841286,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.double_extension",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.hidden_link",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.html_attachment",
+      "hits": 7,
+      "on_malicious": 7,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6456695613241317,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.html_smuggling",
+      "hits": 4,
+      "on_malicious": 4,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.5101091596030786,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.image_only_link",
+      "hits": 5,
+      "on_malicious": 0,
+      "on_benign": 5,
+      "precision": 0.0,
+      "precision_ci": {
+        "low": 0.0,
+        "high": 0.43448246865939283
+      }
+    },
+    {
+      "rule_id": "email.link_text_brand_mismatch",
+      "hits": 5,
+      "on_malicious": 5,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.5655175313406071,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.macro_attachment",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.malformed_mime",
+      "hits": 5,
+      "on_malicious": 0,
+      "on_benign": 5,
+      "precision": 0.0,
+      "precision_ci": {
+        "low": 0.0,
+        "high": 0.43448246865939283
+      }
+    },
+    {
+      "rule_id": "email.password_form",
+      "hits": 7,
+      "on_malicious": 7,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6456695613241317,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.pdf_embedded_file",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.pdf_encrypted",
+      "hits": 1,
+      "on_malicious": 0,
+      "on_benign": 1,
+      "precision": 0.0,
+      "precision_ci": {
+        "low": 0.0,
+        "high": 0.7934506882081973
+      }
+    },
+    {
+      "rule_id": "email.pdf_javascript",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.pdf_launch_action",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.qr_code_link",
+      "hits": 7,
+      "on_malicious": 5,
+      "on_benign": 2,
+      "precision": 0.7142857142857143,
+      "precision_ci": {
+        "low": 0.3589344495310541,
+        "high": 0.9177810767507166
+      }
+    },
+    {
+      "rule_id": "email.reply_to_mismatch",
+      "hits": 3,
+      "on_malicious": 3,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.43850296436068037,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.rtl_filename",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.script_content",
+      "hits": 6,
+      "on_malicious": 6,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6096657083436265,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.sender.brand_in_domain",
+      "hits": 6,
+      "on_malicious": 6,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.6096657083436265,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.sender.brand_in_subdomain",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.sender.combosquat",
+      "hits": 16,
+      "on_malicious": 16,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.8063923170025951,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "email.social_engineering",
+      "hits": 21,
+      "on_malicious": 21,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.8453609790128563,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.brand_in_domain",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.brand_in_subdomain",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.combosquat",
+      "hits": 16,
+      "on_malicious": 16,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.8063923170025951,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.credential_bait",
+      "hits": 2,
+      "on_malicious": 2,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.3423802239546494,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.dangerous_scheme",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.ip_literal",
+      "hits": 1,
+      "on_malicious": 1,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.2065493117918027,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.login_path",
+      "hits": 14,
+      "on_malicious": 14,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7846891945970195,
+        "high": 1.0
+      }
+    },
+    {
+      "rule_id": "url.prefilled_identity",
+      "hits": 11,
+      "on_malicious": 11,
+      "on_benign": 0,
+      "precision": 1.0,
+      "precision_ci": {
+        "low": 0.7411670300055737,
+        "high": 1.0
+      }
+    }
+  ],
+  "results": [
+    {
+      "id": "m-001",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 389.6414000000732
+    },
+    {
+      "id": "m-002",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 345.1340000001437
+    },
+    {
+      "id": "m-004",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 323.7654999993538
+    },
+    {
+      "id": "m-006",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 341.9604000000618
+    },
+    {
+      "id": "m-008",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.brand_in_subdomain",
+        "email.social_engineering",
+        "url.brand_in_subdomain",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 324.1941999995106
+    },
+    {
+      "id": "m-010",
+      "category": "brand_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.brand_in_subdomain",
+        "email.social_engineering",
+        "url.brand_in_subdomain",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 326.7126000000644
+    },
+    {
+      "id": "m-011",
+      "category": "link_text_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.link_text_brand_mismatch"
+      ],
+      "latency_ms": 332.72480000050564
+    },
+    {
+      "id": "m-012",
+      "category": "link_text_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.link_text_brand_mismatch"
+      ],
+      "latency_ms": 334.51530000002094
+    },
+    {
+      "id": "m-014",
+      "category": "link_text_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.link_text_brand_mismatch"
+      ],
+      "latency_ms": 333.96040000025096
+    },
+    {
+      "id": "m-016",
+      "category": "link_text_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.link_text_brand_mismatch"
+      ],
+      "latency_ms": 383.6044999998194
+    },
+    {
+      "id": "m-018",
+      "category": "link_text_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.link_text_brand_mismatch"
+      ],
+      "latency_ms": 344.43089999967924
+    },
+    {
+      "id": "m-019",
+      "category": "credential_form",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.password_form"
+      ],
+      "latency_ms": 342.22890000000916
+    },
+    {
+      "id": "m-020",
+      "category": "credential_form",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.password_form"
+      ],
+      "latency_ms": 338.36169999995036
+    },
+    {
+      "id": "m-022",
+      "category": "credential_form",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.password_form"
+      ],
+      "latency_ms": 315.917900000386
+    },
+    {
+      "id": "m-024",
+      "category": "credential_form",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.password_form"
+      ],
+      "latency_ms": 314.4487999998091
+    },
+    {
+      "id": "m-025",
+      "category": "attachment_exe",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 321.61599999926693
+    },
+    {
+      "id": "m-026",
+      "category": "attachment_exe",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 372.9180999998789
+    },
+    {
+      "id": "m-028",
+      "category": "attachment_exe",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 340.26429999994434
+    },
+    {
+      "id": "m-030",
+      "category": "attachment_exe",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 353.05109999990236
+    },
+    {
+      "id": "m-031",
+      "category": "double_extension",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment",
+        "email.double_extension"
+      ],
+      "latency_ms": 329.5544999991762
+    },
+    {
+      "id": "m-032",
+      "category": "double_extension",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment",
+        "email.double_extension"
+      ],
+      "latency_ms": 343.49850000035076
+    },
+    {
+      "id": "m-034",
+      "category": "double_extension",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment",
+        "email.double_extension"
+      ],
+      "latency_ms": 332.31400000022404
+    },
+    {
+      "id": "m-036",
+      "category": "rtl_filename",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment",
+        "email.rtl_filename"
+      ],
+      "latency_ms": 340.0296999998318
+    },
+    {
+      "id": "m-037",
+      "category": "rtl_filename",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.dangerous_attachment",
+        "email.rtl_filename"
+      ],
+      "latency_ms": 317.966499999784
+    },
+    {
+      "id": "m-039",
+      "category": "html_attachment",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.html_attachment",
+        "email.password_form",
+        "email.script_content"
+      ],
+      "latency_ms": 367.79759999990347
+    },
+    {
+      "id": "m-040",
+      "category": "html_attachment",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.html_attachment",
+        "email.password_form",
+        "email.script_content"
+      ],
+      "latency_ms": 342.01260000008915
+    },
+    {
+      "id": "m-042",
+      "category": "html_attachment",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.html_attachment",
+        "email.password_form",
+        "email.script_content"
+      ],
+      "latency_ms": 351.39059999983147
+    },
+    {
+      "id": "m-044",
+      "category": "macro_doc",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.macro_attachment"
+      ],
+      "latency_ms": 811.0349999997197
+    },
+    {
+      "id": "m-045",
+      "category": "macro_doc",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.macro_attachment"
+      ],
+      "latency_ms": 793.4464999998454
+    },
+    {
+      "id": "m-046",
+      "category": "macro_doc",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.macro_attachment"
+      ],
+      "latency_ms": 762.5948000004428
+    },
+    {
+      "id": "m-048",
+      "category": "type_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.attachment_type_mismatch",
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 343.6250000004293
+    },
+    {
+      "id": "m-049",
+      "category": "type_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.attachment_type_mismatch"
+      ],
+      "latency_ms": 792.026000000078
+    },
+    {
+      "id": "m-050",
+      "category": "type_mismatch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.attachment_type_mismatch",
+        "email.dangerous_attachment"
+      ],
+      "latency_ms": 328.6928999996235
+    },
+    {
+      "id": "m-052",
+      "category": "spoof_auth_fail",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.reply_to_mismatch",
+        "email.sender.brand_in_domain"
+      ],
+      "latency_ms": 366.02910000056
+    },
+    {
+      "id": "m-053",
+      "category": "spoof_auth_fail",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.reply_to_mismatch",
+        "email.sender.brand_in_domain"
+      ],
+      "latency_ms": 337.87149999989197
+    },
+    {
+      "id": "m-054",
+      "category": "spoof_auth_fail",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.reply_to_mismatch",
+        "email.sender.brand_in_domain"
+      ],
+      "latency_ms": 370.8211000002848
+    },
+    {
+      "id": "m-056",
+      "category": "hidden_link",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.hidden_link"
+      ],
+      "latency_ms": 388.2978000001458
+    },
+    {
+      "id": "m-057",
+      "category": "hidden_link",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.hidden_link"
+      ],
+      "latency_ms": 366.7669000005844
+    },
+    {
+      "id": "m-058",
+      "category": "hidden_link",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.hidden_link"
+      ],
+      "latency_ms": 368.5235000002649
+    },
+    {
+      "id": "m-060",
+      "category": "polish_parcel",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat"
+      ],
+      "latency_ms": 383.2254999997531
+    },
+    {
+      "id": "m-061",
+      "category": "polish_parcel",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat"
+      ],
+      "latency_ms": 360.558299999866
+    },
+    {
+      "id": "m-063",
+      "category": "polish_parcel",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat"
+      ],
+      "latency_ms": 362.7693000007639
+    },
+    {
+      "id": "m-065",
+      "category": "polish_parcel",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat"
+      ],
+      "latency_ms": 335.1934000002075
+    },
+    {
+      "id": "m-067",
+      "category": "polish_bank",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 348.4435999998823
+    },
+    {
+      "id": "m-068",
+      "category": "polish_bank",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 397.41030000004685
+    },
+    {
+      "id": "m-069",
+      "category": "polish_bank",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.auth_failure",
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 342.85799999997835
+    },
+    {
+      "id": "m-071",
+      "category": "benign_newsletter",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.image_only_link"
+      ],
+      "latency_ms": 365.9603000005518
+    },
+    {
+      "id": "m-072",
+      "category": "benign_newsletter",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.image_only_link"
+      ],
+      "latency_ms": 395.7743999999366
+    },
+    {
+      "id": "m-074",
+      "category": "benign_newsletter",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.image_only_link"
+      ],
+      "latency_ms": 392.6677999997992
+    },
+    {
+      "id": "m-076",
+      "category": "benign_newsletter",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.image_only_link"
+      ],
+      "latency_ms": 378.66940000003524
+    },
+    {
+      "id": "m-078",
+      "category": "benign_newsletter",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.image_only_link"
+      ],
+      "latency_ms": 349.1289000003235
+    },
+    {
+      "id": "m-079",
+      "category": "benign_brand_official",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 318.13469999997324
+    },
+    {
+      "id": "m-080",
+      "category": "benign_brand_official",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 338.4174000002531
+    },
+    {
+      "id": "m-082",
+      "category": "benign_brand_official",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 347.16000000025815
+    },
+    {
+      "id": "m-084",
+      "category": "benign_brand_official",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 341.09429999989516
+    },
+    {
+      "id": "m-086",
+      "category": "benign_brand_official",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 344.4814000004044
+    },
+    {
+      "id": "m-087",
+      "category": "benign_personal",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 356.59450000002835
+    },
+    {
+      "id": "m-088",
+      "category": "benign_personal",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 336.9926999994277
+    },
+    {
+      "id": "m-090",
+      "category": "benign_personal",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 345.5008999999336
+    },
+    {
+      "id": "m-092",
+      "category": "benign_personal",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 336.7219000001569
+    },
+    {
+      "id": "m-094",
+      "category": "benign_personal",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 333.589299999403
+    },
+    {
+      "id": "m-095",
+      "category": "benign_attachment",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1009.4836999996915
+    },
+    {
+      "id": "m-096",
+      "category": "benign_attachment",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1130.8034000003317
+    },
+    {
+      "id": "m-098",
+      "category": "benign_attachment",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 831.5800000000309
+    },
+    {
+      "id": "m-100",
+      "category": "benign_attachment",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.archive_attachment"
+      ],
+      "latency_ms": 828.4188999996331
+    },
+    {
+      "id": "m-102",
+      "category": "benign_attachment",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 355.5921999995917
+    },
+    {
+      "id": "m-103",
+      "category": "benign_thread",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.malformed_mime"
+      ],
+      "latency_ms": 381.1095999999452
+    },
+    {
+      "id": "m-104",
+      "category": "benign_thread",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.malformed_mime"
+      ],
+      "latency_ms": 382.48420000036276
+    },
+    {
+      "id": "m-105",
+      "category": "benign_thread",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.malformed_mime"
+      ],
+      "latency_ms": 358.9640000000145
+    },
+    {
+      "id": "m-107",
+      "category": "benign_malformed",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.malformed_mime"
+      ],
+      "latency_ms": 341.6813000003458
+    },
+    {
+      "id": "m-108",
+      "category": "benign_malformed",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 324.8599999997168
+    },
+    {
+      "id": "m-109",
+      "category": "benign_malformed",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.malformed_mime"
+      ],
+      "latency_ms": 344.3755999996938
+    },
+    {
+      "id": "m-111",
+      "category": "benign_list",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 336.98530000037863
+    },
+    {
+      "id": "m-112",
+      "category": "benign_list",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 326.26840000011725
+    },
+    {
+      "id": "m-113",
+      "category": "benign_list",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 367.1372999997402
+    },
+    {
+      "id": "m-115",
+      "category": "benign_calendar",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 331.1972000001333
+    },
+    {
+      "id": "m-117",
+      "category": "benign_polish",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 346.0127999996985
+    },
+    {
+      "id": "m-118",
+      "category": "benign_polish",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 328.4664000002522
+    },
+    {
+      "id": "m-119",
+      "category": "benign_polish",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 323.08459999967454
+    },
+    {
+      "id": "m2b-001",
+      "category": "zip_executable",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.social_engineering"
+      ],
+      "latency_ms": 746.2571999994907
+    },
+    {
+      "id": "m2b-002",
+      "category": "zip_executable",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.display_name_brand",
+        "email.sender.brand_in_domain",
+        "email.social_engineering"
+      ],
+      "latency_ms": 745.5801999994947
+    },
+    {
+      "id": "m2b-003",
+      "category": "zip_executable",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contains_macro",
+        "email.archive_contents_dangerous"
+      ],
+      "latency_ms": 773.6516000004485
+    },
+    {
+      "id": "m2b-004",
+      "category": "zip_double_extension",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.archive_double_extension"
+      ],
+      "latency_ms": 801.1434000000008
+    },
+    {
+      "id": "m2b-005",
+      "category": "zip_encrypted",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_encrypted",
+        "email.social_engineering"
+      ],
+      "latency_ms": 761.8792999992365
+    },
+    {
+      "id": "m2b-006",
+      "category": "archive_bomb",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_bomb"
+      ],
+      "latency_ms": 868.7084999992294
+    },
+    {
+      "id": "m2b-007",
+      "category": "nested_archive",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.archive_nested"
+      ],
+      "latency_ms": 795.2636999998504
+    },
+    {
+      "id": "m2b-008",
+      "category": "zip_executable",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.social_engineering"
+      ],
+      "latency_ms": 746.5627000001405
+    },
+    {
+      "id": "m2b-009",
+      "category": "zip_encrypted",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.archive_encrypted",
+        "email.social_engineering"
+      ],
+      "latency_ms": 801.9761000005019
+    },
+    {
+      "id": "m2b-010",
+      "category": "zip_double_extension",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.archive_attachment",
+        "email.archive_contents_dangerous",
+        "email.archive_double_extension"
+      ],
+      "latency_ms": 840.8454999998867
+    },
+    {
+      "id": "m2b-011",
+      "category": "pdf_javascript",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.pdf_javascript"
+      ],
+      "latency_ms": 945.1065000002927
+    },
+    {
+      "id": "m2b-012",
+      "category": "pdf_launch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.pdf_launch_action"
+      ],
+      "latency_ms": 975.1594999997906
+    },
+    {
+      "id": "m2b-013",
+      "category": "pdf_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 934.3506000004709
+    },
+    {
+      "id": "m2b-014",
+      "category": "pdf_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.credential_bait"
+      ],
+      "latency_ms": 986.9843999995283
+    },
+    {
+      "id": "m2b-015",
+      "category": "pdf_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.brand_in_domain",
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 957.3544000004404
+    },
+    {
+      "id": "m2b-016",
+      "category": "pdf_javascript",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.pdf_javascript"
+      ],
+      "latency_ms": 930.7551000001695
+    },
+    {
+      "id": "m2b-017",
+      "category": "pdf_link_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.sender.combosquat",
+        "email.social_engineering",
+        "url.combosquat",
+        "url.login_path"
+      ],
+      "latency_ms": 990.3682000003755
+    },
+    {
+      "id": "m2b-018",
+      "category": "pdf_embedded",
+      "label": "malicious",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.pdf_embedded_file"
+      ],
+      "latency_ms": 936.7955000006987
+    },
+    {
+      "id": "m2b-019",
+      "category": "pdf_launch",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.pdf_launch_action"
+      ],
+      "latency_ms": 1004.9220999999307
+    },
+    {
+      "id": "m2b-020",
+      "category": "qr_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.qr_code_link",
+        "email.sender.brand_in_domain",
+        "url.brand_in_domain",
+        "url.login_path",
+        "url.prefilled_identity"
+      ],
+      "latency_ms": 1160.1637000003393
+    },
+    {
+      "id": "m2b-021",
+      "category": "qr_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.qr_code_link",
+        "email.sender.combosquat",
+        "url.brand_in_domain",
+        "url.credential_bait"
+      ],
+      "latency_ms": 1050.1722000008158
+    },
+    {
+      "id": "m2b-022",
+      "category": "qr_phish",
+      "label": "malicious",
+      "state": "SUSPICIOUS",
+      "rules": [
+        "email.qr_code_link",
+        "url.ip_literal",
+        "url.login_path"
+      ],
+      "latency_ms": 1077.130099999522
+    },
+    {
+      "id": "m2b-023",
+      "category": "html_smuggling",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.html_attachment",
+        "email.html_smuggling",
+        "email.script_content"
+      ],
+      "latency_ms": 330.7334000000992
+    },
+    {
+      "id": "m2b-024",
+      "category": "html_smuggling",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.html_attachment",
+        "email.html_smuggling",
+        "url.dangerous_scheme"
+      ],
+      "latency_ms": 339.5957000002454
+    },
+    {
+      "id": "m2b-025",
+      "category": "qr_phish",
+      "label": "malicious",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.qr_code_link"
+      ],
+      "latency_ms": 1016.6834999999992
+    },
+    {
+      "id": "m2b-026",
+      "category": "html_smuggling",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.html_attachment",
+        "email.html_smuggling",
+        "email.script_content"
+      ],
+      "latency_ms": 373.4524000001329
+    },
+    {
+      "id": "m2b-027",
+      "category": "qr_phish",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.display_name_brand",
+        "email.qr_code_link",
+        "email.sender.combosquat",
+        "url.combosquat"
+      ],
+      "latency_ms": 1134.3360999999277
+    },
+    {
+      "id": "m2b-028",
+      "category": "html_smuggling",
+      "label": "malicious",
+      "state": "MALICIOUS",
+      "rules": [
+        "email.html_attachment",
+        "email.html_smuggling",
+        "email.script_content"
+      ],
+      "latency_ms": 324.19149999986985
+    },
+    {
+      "id": "m2b-029",
+      "category": "benign_pdf_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 955.23730000059
+    },
+    {
+      "id": "m2b-030",
+      "category": "benign_pdf_link",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 971.2880999995832
+    },
+    {
+      "id": "m2b-031",
+      "category": "benign_zip_docs",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.archive_attachment"
+      ],
+      "latency_ms": 754.4641000004049
+    },
+    {
+      "id": "m2b-032",
+      "category": "benign_zip_docs",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.archive_attachment"
+      ],
+      "latency_ms": 772.0797000001767
+    },
+    {
+      "id": "m2b-033",
+      "category": "benign_image",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1096.4371000000028
+    },
+    {
+      "id": "m2b-034",
+      "category": "benign_qr",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.qr_code_link"
+      ],
+      "latency_ms": 1081.190300000344
+    },
+    {
+      "id": "m2b-035",
+      "category": "benign_pdf_encrypted",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.pdf_encrypted"
+      ],
+      "latency_ms": 941.4212000001498
+    },
+    {
+      "id": "m2b-036",
+      "category": "benign_zip_docs",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.archive_attachment"
+      ],
+      "latency_ms": 733.6663999994926
+    },
+    {
+      "id": "m2b-037",
+      "category": "benign_pdf_link",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 995.5151000003752
+    },
+    {
+      "id": "m2b-038",
+      "category": "benign_image",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 1072.4663999999393
+    },
+    {
+      "id": "m2b-039",
+      "category": "benign_qr",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [
+        "email.qr_code_link"
+      ],
+      "latency_ms": 1068.0684999997538
+    },
+    {
+      "id": "m2b-040",
+      "category": "benign_pdf_plain",
+      "label": "benign",
+      "state": "UNKNOWN",
+      "rules": [],
+      "latency_ms": 987.0129000000816
+    }
+  ]
+}
