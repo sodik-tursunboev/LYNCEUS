@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Mirage.NativeHost</RootNamespace>
+    <AssemblyName>Mirage.NativeHost</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mirage.Ipc\Mirage.Ipc.csproj" />
+    <InternalsVisibleTo Include="Mirage.Agent.Tests" />
+  </ItemGroup>
+</Project>

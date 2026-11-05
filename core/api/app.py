@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Annotated
 from urllib.parse import unquote
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
@@ -236,12 +236,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(limiter)])
-    async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+    async def analyze(
+        request: AnalyzeRequest,
+        x_mirage_source: Annotated[str | None, Header()] = None,
+    ) -> AnalyzeResponse:
         analysis, outcome = await analyze_with_intel(request.url, intel)
         persisted = False
+        # the browser extension says so; anything else is recorded as a plain API call
+        source = EventSource.BROWSER if x_mirage_source == "BROWSER" else EventSource.API
         if db is not None:
             try:
-                await run_in_threadpool(save_analysis, db, analysis, EventSource.API)
+                await run_in_threadpool(save_analysis, db, analysis, source)
                 persisted = True
             except Exception:  # a storage failure must not cost the caller the verdict
                 log.exception("could not persist analysis")

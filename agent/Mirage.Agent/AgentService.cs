@@ -13,7 +13,9 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
         using var http = CoreHttp.Create(new Uri(config.CoreUrl), TimeSpan.FromSeconds(90));
         var core = new CoreClient(http, () => Environment.GetEnvironmentVariable("MIRAGE_API_TOKEN"));
         using var pipeline = new FilePipeline(config, folders, spool, core, log);
+        var secret = Mirage.Ipc.Endpoints.LoadOrCreateSecret(config.ResolvedDataDir);
+        var server = new PipeServer(Mirage.Ipc.Endpoints.PipeName(), secret, new RequestHandler(core, () => pipeline.Stats), log);
         log.LogInformation("watching {Count} folder(s)", folders.Count);
-        await pipeline.RunAsync(stoppingToken).ConfigureAwait(false);
+        await Task.WhenAll(pipeline.RunAsync(stoppingToken), server.RunAsync(stoppingToken)).ConfigureAwait(false);
     }
 }

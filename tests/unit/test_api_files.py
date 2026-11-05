@@ -240,3 +240,24 @@ def test_overrides_and_file_routes_need_the_token(tmp_path: Path) -> None:
         c.post("/v1/files/check", json={"name": "a", "size": 1, "sha256": "ab" * 32}).status_code
         == 401
     )
+
+
+def test_the_browser_header_marks_the_stored_event_source(tmp_path: Path) -> None:
+    url = sqlite_url(tmp_path)
+    c = client(tmp_path, database_url=url)
+    body = {"url": "https://paypal-login.test/login.php"}
+    assert (
+        c.post(
+            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Mirage-Source": "BROWSER"}
+        ).status_code
+        == 200
+    )
+    assert (
+        c.post(
+            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Mirage-Source": "whatever"}
+        ).status_code
+        == 200
+    )
+    with create_engine(url).connect() as conn:
+        sources = sorted(e.source for e in conn.execute(select(db.Event)))
+    assert sources == ["API", "BROWSER"]

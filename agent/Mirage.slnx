@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Mirage.Agent.Tests/Mirage.Agent.Tests.csproj" />
   <Project Path="Mirage.Agent/Mirage.Agent.csproj" />
+  <Project Path="Mirage.Ipc/Mirage.Ipc.csproj" />
+  <Project Path="Mirage.NativeHost/Mirage.NativeHost.csproj" />
 </Solution>

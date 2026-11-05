@@ -142,8 +142,9 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **Not proved, to be honest about:** the Job Object's UI restrictions are untested; the boundary is only as strong as Windows' AppContainer and the Win32 calls (no separate review); the worker is still CPython plus whatever parsers run in it, so a memory-safety bug there is contained, not prevented; start-up costs about 0.7 s per run; the interpreter copy goes stale when Python is upgraded and needs `python tasks.py sandbox` again; Windows only, and the tests skip elsewhere, so a Linux CI would not exercise this.
 
 ## ADR-009: Local IPC
-**Status:** Draft: needs human sign-off. Decide before M4.
+**Status:** Accepted (M4 plan D2, approved 2026-11-05; built in M4 step 3).
 
+- **Decision:** option A between host and agent, option B between agent and core. Spike results (M4.md): `PipeOptions.CurrentUserOnly` leaves one ACL entry, the current user; a same-user client connects; the browser refuses a wrong extension ID itself; a host round trip takes under a millisecond. Built: a per-user pipe name, a per-install secret in `%LOCALAPPDATA%\Mirage\pipe.secret` (created once, compared in constant time), a 2 s handshake deadline, at most 4 clients, 64 KiB frames, strictly validated versioned messages (unknown type, unknown field, wrong type, repeated key and odd sizes are all refused), and a host that checks the browser-supplied origin, forwards only validated messages, answers `agent_unavailable` at once when the agent is down, and exits when the browser closes its end. **Not verified:** that remote pipe clients are refused (no way to test here); that another user's process cannot connect (single-user machine).
 - **Context:** the chain is extension, Native Messaging host, agent, core. Nothing may expose an unauthenticated port, and a malicious web page or same-user process must not be able to inject events or read verdicts.
 - **Known:** Chrome Native Messaging talks to the host over stdin/stdout and the host manifest lists `allowed_origins`, so the browser authenticates the extension to the host.
 - **Options for host to agent to core:**

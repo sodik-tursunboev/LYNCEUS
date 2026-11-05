@@ -30,9 +30,13 @@ public sealed record FileVerdict(
     string? Reason,
     bool Inspected,
     bool Persisted,
-    string? Recommended);
+    string? Recommended,
+    string? Explanation = null,
+    IReadOnlyList<string>? Reasons = null);
 
 public sealed record CoreResult(CoreStatus Status, FileVerdict? Verdict = null, string Detail = "");
+
+public sealed record OverrideResult(CoreStatus Status, DateTimeOffset? ExpiresAt = null, string Detail = "");
 
 /// <summary>The agent's side of POST /v1/files/analyze and /v1/files/check.</summary>
 public sealed class CoreClient(HttpClient http, Func<string?> token)
@@ -94,12 +98,83 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
         return clean.Length <= 1000 ? clean : clean[^1000..];
     }
 
+    /// <summary>A URL the browser is about to open, judged by the same engine as everything else.</summary>
+    public async Task<CoreResult> CheckUrlAsync(string url, CancellationToken ct)
+    {
+        using var request = JsonRequest("/v1/urls/analyze", new Dictionary<string, object?> { ["url"] = url });
+        if (request is null)
+        {
+            return new CoreResult(CoreStatus.Rejected, Detail: "the URL cannot be encoded");
+        }
+
+        request.Headers.Add("X-Mirage-Source", "BROWSER");
+        return await SendAsync(request, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>The user chose to continue to a warned page; the core writes the audit record.</summary>
+    public async Task<OverrideResult> OverrideAsync(string url, string? state, int minutes, CancellationToken ct)
+    {
+        using var request = JsonRequest("/v1/overrides", new Dictionary<string, object?> { ["url"] = url, ["minutes"] = minutes, ["state"] = state });
+        if (request is null)
+        {
+            return new OverrideResult(CoreStatus.Rejected, Detail: "the URL cannot be encoded");
+        }
+
+        var (status, body, detail) = await SendRawAsync(request, ct).ConfigureAwait(false);
+        if (status != CoreStatus.Ok)
+        {
+            return new OverrideResult(status, Detail: detail);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body!);
+            var root = document.RootElement;
+            return root.GetProperty("recorded").ValueKind == JsonValueKind.True && root.GetProperty("expires_at").TryGetDateTimeOffset(out var expires)
+                ? new OverrideResult(CoreStatus.Ok, expires)
+                : new OverrideResult(CoreStatus.Rejected, Detail: "not recorded");
+        }
+        catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException)
+        {
+            return new OverrideResult(CoreStatus.Rejected, Detail: "unreadable answer");
+        }
+    }
+
+    private static HttpRequestMessage? JsonRequest(string path, Dictionary<string, object?> fields)
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(fields)) };
+            request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            return request;
+        }
+        catch (ArgumentException)
+        {
+            return null; // text JSON cannot hold, such as an unpaired surrogate
+        }
+    }
+
     private async Task<CoreResult> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var (status, body, detail) = await SendRawAsync(request, ct).ConfigureAwait(false);
+        if (status != CoreStatus.Ok)
+        {
+            return new CoreResult(status, Detail: detail);
+        }
+
+        var verdict = Parse(body!);
+        return verdict is null
+            ? new CoreResult(CoreStatus.Rejected, Detail: "unreadable answer")
+            : new CoreResult(CoreStatus.Ok, verdict);
+    }
+
+    /// <summary>Status, and the body only when the core answered 200. A failure is never turned into a verdict here.</summary>
+    private async Task<(CoreStatus Status, byte[]? Body, string Detail)> SendRawAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var secret = token();
         if (string.IsNullOrEmpty(secret))
         {
-            return new CoreResult(CoreStatus.Unauthorized, Detail: "no API token is configured");
+            return (CoreStatus.Unauthorized, null, "no API token is configured");
         }
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secret);
@@ -110,42 +185,39 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
         }
         catch (HttpRequestException e)
         {
-            return new CoreResult(CoreStatus.Unavailable, Detail: e.GetType().Name + (e.InnerException is { } inner ? "/" + inner.GetType().Name + ": " + inner.Message : ": " + e.Message));
+            return (CoreStatus.Unavailable, null, e.GetType().Name + (e.InnerException is { } inner ? "/" + inner.GetType().Name : string.Empty));
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            return new CoreResult(CoreStatus.Unavailable, Detail: "timeout");
+            return (CoreStatus.Unavailable, null, "timeout");
         }
     }
 
-    private static async Task<CoreResult> ReadAsync(HttpResponseMessage response, CancellationToken ct)
+    private static async Task<(CoreStatus Status, byte[]? Body, string Detail)> ReadAsync(HttpResponseMessage response, CancellationToken ct)
     {
         var code = (int)response.StatusCode;
         if (code == 401 || code == 403)
         {
-            return new CoreResult(CoreStatus.Unauthorized, Detail: "the core refused the token");
+            return (CoreStatus.Unauthorized, null, "the core refused the token");
         }
 
         if (response.StatusCode == HttpStatusCode.RequestEntityTooLarge)
         {
-            return new CoreResult(CoreStatus.TooLarge);
+            return (CoreStatus.TooLarge, null, string.Empty);
         }
 
         if (code == 408 || code == 429 || code >= 500)
         {
-            return new CoreResult(CoreStatus.Unavailable, Detail: $"HTTP {code}");
+            return (CoreStatus.Unavailable, null, $"HTTP {code}");
         }
 
         if (code != 200)
         {
-            return new CoreResult(CoreStatus.Rejected, Detail: $"HTTP {code}");
+            return (CoreStatus.Rejected, null, $"HTTP {code}");
         }
 
         var body = await ReadLimitedAsync(response.Content, ct).ConfigureAwait(false);
-        var verdict = body is null ? null : Parse(body);
-        return verdict is null
-            ? new CoreResult(CoreStatus.Rejected, Detail: "unreadable answer")
-            : new CoreResult(CoreStatus.Ok, verdict);
+        return body is null ? (CoreStatus.Rejected, null, "unreadable answer") : (CoreStatus.Ok, body, string.Empty);
     }
 
     private static async Task<byte[]?> ReadLimitedAsync(HttpContent content, CancellationToken ct)
@@ -187,13 +259,18 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
 
             int? score = verdict.TryGetProperty("risk_score", out var s) && s.ValueKind == JsonValueKind.Number ? s.GetInt32() : null;
             var rules = new List<string>();
+            var reasons = new List<string>();
             if (verdict.TryGetProperty("signals", out var signals) && signals.ValueKind == JsonValueKind.Array)
             {
                 foreach (var signal in signals.EnumerateArray().Take(64))
                 {
-                    if (signal.TryGetProperty("rule_id", out var id) && id.GetString() is { Length: <= 100 } rule)
+                    if (signal.TryGetProperty("rule_id", out var id) && id.ValueKind == JsonValueKind.String && id.GetString() is { Length: <= 100 } rule)
                     {
                         rules.Add(rule);
+                        if (reasons.Count < 8 && Text(signal, "description", 300) is { } description)
+                        {
+                            reasons.Add(description);
+                        }
                     }
                 }
             }
@@ -202,10 +279,12 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
                 state,
                 score,
                 rules,
-                Text(root, "reason"),
+                Text(root, "reason", 200),
                 root.TryGetProperty("inspected", out var inspected) && inspected.ValueKind == JsonValueKind.True,
                 root.TryGetProperty("persisted", out var persisted) && persisted.ValueKind == JsonValueKind.True,
-                Text(verdict, "recommended_response"));
+                Text(verdict, "recommended_response", 200),
+                Text(verdict, "explanation", 600),
+                reasons);
         }
         catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
         {
@@ -213,8 +292,8 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
         }
     }
 
-    private static string? Text(JsonElement parent, string name) =>
-        parent.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { Length: <= 200 } text
+    private static string? Text(JsonElement parent, string name, int max) =>
+        parent.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { } text && text.Length <= max
             ? text
             : null;
 }

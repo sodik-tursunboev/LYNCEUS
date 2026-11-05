@@ -1194,6 +1194,24 @@
     "/v1/urls/analyze": {
       "post": {
         "operationId": "analyze_v1_urls_analyze_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-mirage-source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Mirage-Source"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
