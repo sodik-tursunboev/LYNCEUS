@@ -4,7 +4,7 @@ Local-first phishing detection and threat-intelligence system for Windows.
 **Mission:** detect phishing before the user interacts, investigate the evidence, protect the user, explain every decision.
 
 Read this file at the start of every session. Full spec: `docs/SPEC.md` (read only the sections the current milestone needs).
-**Current milestone: M2 complete, pending review** (messages, PDF, archives, QR images, HTML smuggling, all in the sandbox; OCR deferred) → `docs/milestones/M2.md`. **Next: M3 (proposed, not approved; eight decisions pending)** → `docs/milestones/M3.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
+**Current milestone: M3 complete, pending review (v0.1)**: threat-intel providers, correlation, JSON-lines export → `docs/milestones/M3.md`. M2 (messages and files in the sandbox; OCR deferred) is `docs/milestones/M2.md`. **Next: M4 (proposed, not approved; eight decisions and five spikes pending)** → `docs/milestones/M4.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
 
 ## What it is
 - A continuous endpoint anti-phishing system: Windows agent + Chrome/Edge extension + local analysis engine + desktop console for investigation.
