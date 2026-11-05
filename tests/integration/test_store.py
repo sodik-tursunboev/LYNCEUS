@@ -1,14 +1,19 @@
 """What reaches the database, and above all what does not (M1 decision D2)."""
 
+from datetime import UTC, datetime
+
 import pytest
 from mailhelp import analyze, eml
 from sqlalchemy import Engine, func, select
 
-from core.contracts import EventSource, VerdictState
+from core.contracts import EventSource, ProviderResult, ProviderStatus, VerdictState
 from core.db import models as db
+from core.db.audit import record
 from core.db.models import Base
 from core.db.store import save_analysis, save_email_analysis
 from core.detection.engine import analyze_url
+from core.intel.base import IntelOutcome, IntelResult
+from core.risk.correlate import correlate
 
 
 def count(engine: Engine, model: type[Base]) -> int:
@@ -131,6 +136,34 @@ def test_an_unscored_message_verdict_is_stored_without_a_score(migrated: Engine)
     with migrated.connect() as c:
         ver = c.execute(select(db.Verdict)).one()
     assert (ver.state, ver.risk_score) == ("UNKNOWN", None)
+
+
+def test_provider_results_and_audit_records_satisfy_the_database_constraints(
+    migrated: Engine,
+) -> None:
+    now = datetime(2026, 11, 5, 12, 0, tzinfo=UTC)
+    listed = ProviderResult(
+        provider="phishtank", status=ProviderStatus.OK, state=VerdictState.MALICIOUS,
+        queried_at=now, latency_ms=3, provenance="PhishTank, 1 entries", detail="on the list",
+    )  # fmt: skip
+    slow = ProviderResult(
+        provider="virustotal", status=ProviderStatus.TIMEOUT, queried_at=now, latency_ms=2000,
+        provenance="VirusTotal domain report", detail="no answer in time",
+    )  # fmt: skip
+    outcome = IntelOutcome(
+        (IntelResult(listed, {"listed": "url", "feed": "phishtank"}), IntelResult(slow, {})), ()
+    )
+    a = correlate(analyze_url("https://www.example.com/page"), outcome)
+    save_analysis(migrated, a, EventSource.API)
+    record(migrated, "operator", "intel.enable", "provider", {"provider": "phishtank"})
+    with migrated.connect() as c:
+        rows = c.execute(select(db.ProviderResult).order_by(db.ProviderResult.provider)).all()
+        audit = c.execute(select(db.AuditLog)).one()
+    assert [(r.provider, r.status, r.state) for r in rows] == [
+        ("phishtank", "OK", "MALICIOUS"),
+        ("virustotal", "TIMEOUT", None),
+    ]
+    assert audit.detail == {"provider": "phishtank"} and audit.action == "intel.enable"
 
 
 def test_a_failed_save_leaves_nothing_behind(migrated: Engine) -> None:
