@@ -1,4 +1,4 @@
-# Known limitations (v0.1: M0 to M3; M4 and M5 added below)
+# Known limitations (v0.1: M0 to M3; M4 to M6 added below)
 
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
@@ -15,6 +15,17 @@ Written to be read before trusting anything in the repo. "Not verified" means co
 - **Local IPC.** The pipe is current-user only with a per-install secret; a process running as **you** can read that secret and talk to the agent (same trust level as any program you run). Remote pipe clients being refused is **not verified**. The service worker staying alive while a native port is open is **documented but not observed** here (the test harness keeps it alive itself): the worker reconnects every time it starts, so the design does not depend on it.
 - **Notifications:** the call succeeds from an unpackaged program (tested); whether a banner is **visible** depends on Focus Assist and Windows settings and is yours to confirm. An elevated agent could not show them.
 - **Not tested:** another security product running alongside, a machine with several users, roaming profiles, a non-default Downloads location on a network drive, and the first-run permission prompt a real user sees (headless/headful automation grants it without the prompt).
+## Responses and the console (M6): what they are and are not
+
+- **Only files, only MALICIOUS.** Suspicious files, URLs and email are never moved, blocked by this engine or quarantined (the browser warning page is M4; email quarantine needs Google's broader `gmail.modify` scope and is deferred to M6b). A mis-judged file is therefore at most *proposed* for quarantine, and by default only when you press the button.
+- **Needs the database.** Responses and the console's lists come from the database; without `MIRAGE_DATABASE_URL` the verdicts still work but no action is proposed.
+- **`auto` mode moves files without asking** (MALICIOUS only, off by default). The verification before the move (same SHA-256 as judged) is strong, but a wrong verdict would still move a harmless file; it is restorable, not lost.
+- **The quarantine folder is not encrypted or defanged.** Files keep their bytes under a neutral name (`payload.quar`) in `%LOCALAPPDATA%\Mirage\quarantine\<id>\`; a program running as you can read them, and an antivirus may react to them. There is no purge: disk use only grows until you delete the folder yourself.
+- **Another security product can get there first.** If it quarantines or locks a file, the response is FAILED with a reason (`blocked`, `locked`, `missing`), not retried forever. Two products acting on one file was not tested.
+- **File symbolic links** could not be tested on this machine (creating one needs a privilege this account lacks); a link to a folder (a junction) is tested. The check is in the code.
+- **Restore puts the file back dangerous.** It does not re-scan; the allow-list option stops further proposals for that exact content only.
+- **The console runs in a browser tab,** not a native window. It is same-origin with the API behind a strict policy, and other pages in the same browser cannot read its `sessionStorage` because of the browser's origin rules. `Mirage.Agent.exe --open-console` puts the token in the address fragment once; browsers do not send it to servers, the console removes it from the address bar at once, but the browser's history may keep the first visit. Typing the token avoids that.
+- **Not verified:** the console in Chrome or Firefox; screen readers and keyboard-only use beyond the semantic markup used; very large numbers of events (lists are capped at 100 to 200 rows and refresh every few seconds).
 ## The live mailbox (M5): what it is and is not
 
 - **Never run against real Google.** Everything is tested against a fake Gmail that follows the documented request and response shapes. That proves our logic (de-duplication, recovery, failure handling, read-only enforcement, privacy), not that Google accepts this client, that consent works for your account, or that real raw messages parse. The live checklist is in `docs/milestones/M5.md`.

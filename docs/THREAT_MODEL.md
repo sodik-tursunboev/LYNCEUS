@@ -62,3 +62,16 @@ New assets: an OAuth client id/secret (operator's own), a refresh token that can
 | Malicious mail attacking the parser | Same sandbox as M2 (AppContainer, job limits, no network); size cap; strict output validation | See "What the sandbox does not cover" |
 | Authorization-code interception | Loopback listener on 127.0.0.1 only, one shot, PKCE S256, `state` in constant time, `Host` checked | A local process could race the listener for a few seconds during sign-in |
 | Privacy leak into logs/DB | Only hashes, rule ids and counts are stored; a test plants markers and searches DB, state file and logs | |
+
+## Responses and the console (M6)
+
+New: a component that moves the user's files (the agent) and a UI that can ask it to (the console).
+
+| Threat | Control | Residual |
+|---|---|---|
+| A wrong or forged verdict moves a harmless file | the agent moves only a file whose SHA-256 equals the judged one; default needs a click; everything is restorable; nothing is deleted | `auto` mode moves without asking |
+| A web page drives the console or the API | bearer token required for every route; no CORS; `Host` check; strict CSP; the console holds the token in `sessionStorage` only | a local process running as you can read the token or the quarantine folder |
+| The console or core names a path to act on | the core never has paths; the agent looks up its own record by action id | the agent's records are readable by the same user |
+| Interrupted or failed move loses a file | record before any irreversible step; verify the copy before the original goes; resume after a crash; rename on one volume; restore never overwrites and keeps the quarantine copy | the quarantine copy is kept forever (no purge) |
+| Markup injection through rule names, hosts, reasons | everything is rendered as text by React; a test scans the source for every injection route and inline style | |
+| The agent acts on an unapproved action | the core refuses an `applied` report for anything not APPROVED; the agent acts only on APPROVED actions | |
