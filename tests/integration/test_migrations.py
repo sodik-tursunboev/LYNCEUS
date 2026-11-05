@@ -18,6 +18,7 @@ from core.db.models import Base
 TABLES = {
     "events", "artifacts", "extracted_urls", "domains", "provider_results", "detections",
     "verdicts", "evidence", "evidence_payloads", "detection_evidence", "audit_logs",
+    "actions", "allowlist",
 }  # fmt: skip
 LOOKUPS = {
     "events": ["observed_at"],
@@ -30,6 +31,8 @@ LOOKUPS = {
     "evidence": ["artifact_id", "sha256", "payload_id"],
     "detection_evidence": ["evidence_id"],
     "audit_logs": ["action", "target_id", "at"],
+    "actions": ["sha256", "state", "verdict_id", "file_ref"],
+    "allowlist": ["sha256"],
 }
 
 

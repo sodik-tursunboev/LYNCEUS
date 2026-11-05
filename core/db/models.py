@@ -231,3 +231,54 @@ class AuditLog(Base):
     target_type: Mapped[str] = mapped_column(String(32))
     target_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
     detail: Mapped[dict[str, object] | None] = mapped_column(JSON)  # redacted before storing
+
+
+ACTION_KINDS = ("FILE_QUARANTINE",)
+ACTION_STATES = (
+    "PENDING", "APPROVED", "APPLIED", "DISMISSED", "FAILED", "RESTORE_REQUESTED", "RESTORED",
+)  # fmt: skip
+
+
+def _quoted(values: tuple[str, ...]) -> str:
+    return ", ".join(repr(v) for v in values)
+
+
+class Action(Base):
+    """A response to a verdict (M6, ADR-018): what MIRAGE proposes, what was decided, what happened.
+
+    Holds ids, states and reason codes only: never a path or a file name (those stay with the agent,
+    in its quarantine folder). One row follows a file from PENDING through APPLIED to RESTORED.
+    """
+
+    __tablename__ = "actions"
+    __table_args__ = (
+        CheckConstraint(f"kind IN ({_quoted(ACTION_KINDS)})", name="kind_valid"),
+        CheckConstraint(f"state IN ({_quoted(ACTION_STATES)})", name="state_valid"),
+        CheckConstraint("decided_by IS NULL OR decided_by IN ('user', 'policy')", name="decider"),
+    )
+
+    id: Mapped[UuidPk]
+    verdict_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("verdicts.id", ondelete="RESTRICT"), index=True
+    )
+    kind: Mapped[str] = mapped_column(String(24))
+    state: Mapped[str] = mapped_column(String(24), index=True)
+    file_ref: Mapped[str] = mapped_column(String(32), unique=True)  # the agent's opaque file id
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    decided_by: Mapped[str | None] = mapped_column(String(16))
+    reason: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[CreatedAt]
+    decided_at: Mapped[datetime | None]
+    finished_at: Mapped[datetime | None]
+
+
+class Allow(Base):
+    """ "Do not propose responses for this exact file again" (by SHA-256). Visible and removable."""
+
+    __tablename__ = "allowlist"
+
+    id: Mapped[UuidPk]
+    sha256: Mapped[str] = mapped_column(String(64), unique=True)
+    created_by: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[CreatedAt]
+    expires_at: Mapped[datetime | None]

@@ -9,9 +9,11 @@ import asyncio
 import json
 import logging
 import math
+import re
 import secrets
 import threading
 import time
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
@@ -29,7 +31,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from core.config import Settings
-from core.contracts import EventSource
+from core.contracts import EventSource, VerdictState
 from core.db import audit
 from core.db.store import save_analysis, save_email_analysis, save_file_analysis
 from core.detection.engine import ENGINE_VERSION, UrlReport
@@ -42,6 +44,8 @@ from core.intel.registry import build_intel
 from core.log import configure
 from core.mailbox.service import MailboxService
 from core.mailbox.wiring import build_mailbox
+from core.response import service as response_service
+from core.response.routes import build_router as response_router
 from core.urls.parse import ParsedUrl, parse_url
 
 log = logging.getLogger(__name__)
@@ -92,6 +96,8 @@ class EmailResponse(EmailReport):
 
 class FileResponse(FileReport):
     persisted: bool
+    action_id: uuid.UUID | None = None  # the pending response the engine proposed, if any
+    allow_listed: bool = False  # this exact file was marked "do not flag again" by the user
 
 
 class FileCheck(BaseModel):
@@ -104,6 +110,7 @@ class FileCheck(BaseModel):
     sha256: Annotated[str, Field(pattern=r"^[0-9a-fA-F]{64}$")]
     magic: Annotated[str, Field(max_length=16)] | None = None
     origin_host: Annotated[str, Field(max_length=253)] | None = None
+    file_ref: Annotated[str, Field(pattern=r"^[0-9a-f]{32}$")] | None = None  # the agent's file id
 
 
 class OverrideRequest(BaseModel):
@@ -165,6 +172,11 @@ class RateLimit:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS, "rate limit", headers={"Retry-After": str(wait)}
         )
+
+
+def _file_ref(value: str | None) -> str | None:
+    """The agent's opaque file id, or None if absent or malformed (then it is just not linked)."""
+    return value if value and re.fullmatch(r"[0-9a-f]{32}", value) else None
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -239,6 +251,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "invalid token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+    app.include_router(
+        response_router(db, require_token, RateLimit(settings.rate_limit_per_minute * 5))
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -316,7 +332,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return EmailResponse(**analysis.report.model_dump(), persisted=persisted)
 
     async def _file_verdict(
-        name: str, size: int, sha256: str, data: bytes | None, magic: str | None, host: str | None
+        name: str,
+        size: int,
+        sha256: str,
+        data: bytes | None,
+        magic: str | None,
+        host: str | None,
+        file_ref: str | None = None,
     ) -> FileResponse:
         try:
             await asyncio.wait_for(parser_slots.acquire(), timeout=1.0)
@@ -340,7 +362,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     log.exception("could not persist file analysis")
         finally:
             parser_slots.release()
-        return FileResponse(**analysis.report.model_dump(), persisted=persisted)
+        action_id: uuid.UUID | None = None
+        allowed = False
+        if persisted and db is not None:
+            try:  # proposed only for a stored MALICIOUS verdict of a file not allow-listed
+                allowed = await run_in_threadpool(
+                    response_service.allow_listed, db, analysis.sha256
+                )
+                if (
+                    file_ref
+                    and not allowed
+                    and analysis.report.verdict.state is VerdictState.MALICIOUS
+                ):
+                    action_id = await run_in_threadpool(
+                        response_service.create_pending,
+                        db, analysis.report.verdict.id, file_ref, analysis.sha256,
+                    )  # fmt: skip
+            except Exception:  # the verdict stands even if the response could not be recorded
+                log.exception("could not record the proposed response")
+        return FileResponse(
+            **analysis.report.model_dump(),
+            persisted=persisted,
+            action_id=action_id,
+            allow_listed=allowed,
+        )
 
     @app.post(
         FILE_PATH,
@@ -369,12 +414,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return await _file_verdict(
             name, len(data), request.headers.get("x-mirage-sha256", ""), data, None,
             request.headers.get("x-mirage-origin-host"),
+            _file_ref(request.headers.get("x-mirage-file-id")),
         )  # fmt: skip
 
     @app.post("/v1/files/check", dependencies=[Depends(require_token), Depends(limiter)])
     async def check_file(body: FileCheck) -> FileResponse:
         return await _file_verdict(
-            body.name, body.size, body.sha256, None, body.magic, body.origin_host
+            body.name, body.size, body.sha256, None, body.magic, body.origin_host, body.file_ref
         )
 
     @app.post("/v1/overrides", dependencies=[Depends(require_token), Depends(limiter)])

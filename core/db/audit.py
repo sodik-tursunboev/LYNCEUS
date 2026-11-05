@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Engine, insert
 
@@ -12,12 +13,21 @@ from core.db import models as db
 
 
 def record(
-    engine: Engine, actor: str, action: str, target_type: str, detail: Mapping[str, Any]
+    engine: Engine,
+    actor: str,
+    action: str,
+    target_type: str,
+    detail: Mapping[str, Any],
+    target_id: UUID | None = None,
 ) -> None:
     with engine.begin() as c:
         c.execute(
             insert(db.AuditLog).values(
-                actor=actor, action=action, target_type=target_type, detail=dict(detail)
+                actor=actor,
+                action=action,
+                target_type=target_type,
+                target_id=target_id,
+                detail=dict(detail),
             )
         )
 
