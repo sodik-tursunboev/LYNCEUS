@@ -1148,6 +1148,32 @@
         "summary": "Intel Health"
       }
     },
+    "/v1/mailbox/status": {
+      "get": {
+        "description": "Counts and states only: never an address, a subject or a token.",
+        "operationId": "mailbox_status_v1_mailbox_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Mailbox Status V1 Mailbox Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mailbox Status"
+      }
+    },
     "/v1/overrides": {
       "post": {
         "operationId": "record_override_v1_overrides_post",

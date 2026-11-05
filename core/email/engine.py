@@ -471,3 +471,4 @@ describe_file = _describe
 referenced_urls = _refs
 link_report = _link_report
 NOT_SAFE = _NOT_SAFE
+unscored = _unscored

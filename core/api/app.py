@@ -40,6 +40,8 @@ from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.registry import build_intel
 from core.log import configure
+from core.mailbox.service import MailboxService
+from core.mailbox.wiring import build_mailbox
 from core.urls.parse import ParsedUrl, parse_url
 
 log = logging.getLogger(__name__)
@@ -170,9 +172,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure(settings.log_level)
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
 
+    mailbox: MailboxService | None = None  # built below, once the database exists
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        if mailbox is not None:
+            mailbox.start()
         yield
+        if mailbox is not None:
+            await run_in_threadpool(mailbox.stop)
         if intel is not None:
             await intel.aclose()
 
@@ -201,6 +209,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.database_url
         else None
     )
+    mailbox = build_mailbox(settings, db, intel)  # None unless MIRAGE_GMAIL_ENABLED
     feed_store = FeedStore(settings.data_dir / "feeds")
     if intel is not None and db is not None:
         for p in intel.providers:
@@ -253,6 +262,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         skipped = [Skipped(provider=n, reason=why) for n, why in outcome.skipped]
         report = analysis.report().model_dump()
         return AnalyzeResponse(**report, persisted=persisted, intel_skipped=skipped)
+
+    @app.get("/v1/mailbox/status", dependencies=[Depends(require_token)])
+    def mailbox_status() -> dict[str, object]:
+        """Counts and states only: never an address, a subject or a token."""
+        return mailbox.status() if mailbox is not None else {"state": "off"}
 
     @app.get("/v1/intel/health", dependencies=[Depends(require_token)])
     def intel_health() -> IntelHealth:

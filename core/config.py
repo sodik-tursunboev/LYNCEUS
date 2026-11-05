@@ -29,5 +29,12 @@ class Settings(BaseSettings):
     urlhaus_auth_key: SecretStr | None = None
     virustotal_api_key: SecretStr | None = None
 
+    # Live mailbox (M5, ADR-017). Off until the operator connects a Google account.
+    gmail_enabled: bool = False
+    gmail_client_id: str | None = None  # an OAuth "Desktop app" client of the operator's own
+    gmail_client_secret: SecretStr | None = None
+    gmail_lookback_days: int = 2  # on first connect, and after a lost position
+    gmail_poll_seconds: int = 60
+
     def intel_enabled(self) -> frozenset[str]:
         return frozenset(n.strip().lower() for n in self.intel_providers.split(",") if n.strip())
