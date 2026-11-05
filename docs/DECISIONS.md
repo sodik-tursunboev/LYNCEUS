@@ -72,6 +72,14 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 
   **OCR is deferred (owner decision, 2026-11-05).** Tesseract is not installed here, and the sandbox allows one process (`ActiveProcessLimit=1`), so an OCR step would need an in-process binding or a change to ADR-008. Image text is not read in M2. Reopen with its own plan when it is wanted: it needs a Tesseract install with Polish data, a decision on how it runs inside the sandbox, and a corpus of screenshots with typed URLs to measure it.
 - **M3 added no dependency.** `httpx` was already approved and listed; `bz2`, `asyncio` and `json` are standard library.
+- **M4 adds .NET packages (approved with the M4 plan, D7; versions and licences checked on nuget.org on 2026-11-05).** Central version file `agent/Directory.Packages.props`, lock files committed (`packages.lock.json`, content hashes), NuGet audit on. `Microsoft.WindowsAppSDK` was **not** added (spike 2: toasts need only the SDK's own Windows target).
+
+  | Package | Used for |
+  |---|---|
+  | Microsoft.Extensions.Hosting 10.0.14 (MIT) | the agent's host: lifetime, logging, dependency injection |
+  | xunit 2.9.3 (Apache-2.0), Microsoft.NET.Test.Sdk 18.10.1 (MIT) | agent tests |
+  | xunit.runner.visualstudio 3.1.5 (Apache-2.0) | lets `dotnet test` run xunit. **Not named in the D7 list**; it cannot be left out |
+  | System.Security.Cryptography.ProtectedData (added in M4 step 5) | DPAPI for the stored API token |
 - **Open:** pytest prints a Starlette deprecation warning saying `TestClient` over `httpx` is deprecated in favour of a package named `httpx2`. Not acted on (a dependency change needs approval); revisit when it stops being a warning.
 
 ## ADR-005: Eval scoring rule
