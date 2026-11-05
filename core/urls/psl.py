@@ -60,6 +60,17 @@ def _result(labels: list[str], suffix_len: int, private: bool) -> Match:
     return Match(suffix, registered, private)
 
 
+def known_suffix(host: str) -> bool:
+    """True when the host ends in a suffix the list knows, not just the implicit `*` rule.
+
+    Separates `paypal.com` from `report.pdf`: both look like a name and a dot-suffix.
+    """
+    rules = _load()
+    labels = host.lower().split(".")
+    window = labels[-_MAX_RULE_LABELS:]
+    return any(".".join(window[i:]) in rules.plain for i in range(len(window)))
+
+
 def lookup(host: str) -> Match:
     """`host`: lowercase ASCII (punycode) domain name, no trailing dot, not an IP address.
 

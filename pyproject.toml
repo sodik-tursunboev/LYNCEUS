@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
+pythonpath = [".", "core/sandbox/guest"]   # the guest modules import each other by bare name
 markers = ["integration: needs a reachable PostgreSQL (skipped otherwise)"]
 
 [tool.ruff]
@@ -23,3 +23,7 @@ plugins = ["pydantic.mypy"]
 [[tool.mypy.overrides]]
 module = ["ada_url", "ada_url.*"]
 ignore_missing_imports = true  # ada-url ships no type information
+
+[[tool.mypy.overrides]]
+module = ["limits", "htmlscan", "mailparse", "textscan", "worker"]
+ignore_missing_imports = true  # sandbox guest modules run with their own folder as the path

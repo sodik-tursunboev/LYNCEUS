@@ -135,7 +135,7 @@ def test_bad_or_missing_token_is_401(headers: dict[str, str]) -> None:
 
 
 def test_non_ascii_token_is_refused_not_a_crash() -> None:
-    headers = {"Authorization": "Bearer ü".encode("latin-1")}
+    headers = {"Authorization": "Bearer \u00fc".encode("latin-1")}
     r = client().post(PATH, json={"url": "x"}, headers=headers)  # type: ignore[arg-type]
     assert r.status_code == 401
 

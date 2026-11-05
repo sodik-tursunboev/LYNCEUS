@@ -8,9 +8,10 @@ import hashlib
 import json
 import struct
 import sys
+from typing import Any
 
 
-def read_request() -> tuple[dict[str, object], bytes]:
+def read_request() -> tuple[dict[str, Any], bytes]:
     data = sys.stdin.buffer.read()
     (n,) = struct.unpack(">I", data[:4])
     header = json.loads(data[4 : 4 + n])
@@ -19,7 +20,7 @@ def read_request() -> tuple[dict[str, object], bytes]:
     return header, data[4 + n :]
 
 
-def handle(header: dict[str, object], body: bytes) -> dict[str, object]:
+def handle(header: dict[str, Any], body: bytes) -> dict[str, Any]:
     op = header.get("op")
     if op == "ping":
         return {
@@ -28,11 +29,22 @@ def handle(header: dict[str, object], body: bytes) -> dict[str, object]:
             "bytes": len(body),
             "sha256": hashlib.sha256(body).hexdigest(),
         }
+    if op == "mime":
+        import mailparse
+
+        scan = mailparse.scan(body)
+        return scan if "error" in scan else {"ok": True, "scan": scan}
     return {"error": "unknown_op"}
 
 
 def main() -> int:
     header, body = read_request()
-    sys.stdout.buffer.write(json.dumps(handle(header, body)).encode("utf-8"))
+    try:
+        answer = handle(header, body)
+    except MemoryError:
+        answer = {"error": "memory"}
+    except RecursionError:
+        answer = {"error": "mime_too_deep"}
+    sys.stdout.buffer.write(json.dumps(answer).encode("utf-8"))
     sys.stdout.buffer.flush()
     return 0

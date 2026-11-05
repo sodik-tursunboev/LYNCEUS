@@ -27,7 +27,7 @@ def strip(obj: Any) -> Any:
     "url",
     [
         "https://paypal.com@secure-check.test/login.php",
-        "https://аllegro.test/konto",
+        "https://\u0430llegro.test/konto",
         "http://0xcb007105/",
         "https://www.paypal.com/signin",
         "https://example.test/",
@@ -126,7 +126,7 @@ def test_hostile_urls_stay_fast_and_never_crash(url: str) -> None:
 
 def test_signals_are_in_a_stable_order() -> None:
     names: Sequence[str] = [
-        s.rule_id for s in analyze_url("https://paypal.com@аllegro.test/").verdict.signals
+        s.rule_id for s in analyze_url("https://paypal.com@\u0430llegro.test/").verdict.signals
     ]
     assert list(names) == sorted(names) and len(names) >= 2
 

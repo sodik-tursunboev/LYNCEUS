@@ -70,7 +70,7 @@ def test_brand_list_shape() -> None:
 
 
 def test_skeleton_follows_uts39() -> None:
-    assert skeleton("аpple") == skeleton("apple")  # Cyrillic a
+    assert skeleton("\u0430pple") == skeleton("apple")  # Cyrillic a
     assert skeleton("paypa1") == skeleton("paypal")
     assert skeleton("g00gle") == skeleton("google")
     assert skeleton("arnazon") == skeleton("amazon")  # rn looks like m

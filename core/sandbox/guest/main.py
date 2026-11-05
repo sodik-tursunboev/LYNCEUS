@@ -5,6 +5,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import worker  # type: ignore[import-not-found]  # noqa: E402
+import worker  # noqa: E402
 
 raise SystemExit(worker.main())
