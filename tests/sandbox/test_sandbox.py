@@ -93,10 +93,13 @@ def test_the_worker_runs_in_an_appcontainer() -> None:
 
 def test_the_worker_sees_no_user_paths_or_secrets() -> None:
     seen = probe(cmd="env")
-    blob = json.dumps(seen)
+    blob = json.dumps(seen["env"])  # the environment, not the working directory (below)
     for private in (os.environ["USERNAME"], os.environ["USERPROFILE"], "MIRAGE_", "API_TOKEN"):
         assert private.lower() not in blob.lower(), private
     assert set(seen["env"]) >= {"LOCALAPPDATA", "SYSTEMROOT"}
+    # The worker's own folder is the one path it must know; a clone under the user profile puts the
+    # user name in that path, which is not a leak of anything the worker was not given.
+    assert Path(seen["cwd"]).resolve() == sandbox.APP.resolve()
 
 
 # ---- files: denied outside the grant, with controls -------------------------------------------
