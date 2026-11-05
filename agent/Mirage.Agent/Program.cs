@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Mirage.Agent;
 
-const string Usage = "MIRAGE agent. Without arguments it runs in the background.\n  --install     start at logon and register the browser bridge for Edge and Chrome\n  --uninstall   undo --install\n  --status      show what is registered\n  --set-token   read the core's API token from standard input and store it (DPAPI)";
+const string Usage = "MIRAGE agent. Without arguments it runs in the background.\n  --install     start at logon and register the browser bridge for Edge and Chrome\n  --uninstall   undo --install\n  --status      show what is registered\n  --set-token   read the core's API token from standard input and store it (DPAPI)\n  --open-console open the MIRAGE console in your browser, already signed in";
 
 [DllImport("kernel32.dll")]
 static extern bool AttachConsole(int processId);
@@ -45,6 +45,11 @@ switch (args.FirstOrDefault())
     case "--status":
         var s = installer.Status();
         Console.WriteLine($"at logon: {s.AtLogon}; Edge bridge: {s.Edge}; Chrome bridge: {s.Chrome}; host manifest: {s.Manifest}");
+        return 0;
+    case "--open-console":
+        var link = ConsoleLink.Build(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir));
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(link) { UseShellExecute = true });
+        Console.WriteLine("Opened the console in your browser.");
         return 0;
     case "--set-token":
         var token = (Console.In.ReadLine() ?? string.Empty).Trim();

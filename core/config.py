@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     urlhaus_auth_key: SecretStr | None = None
     virustotal_api_key: SecretStr | None = None
 
+    console_dir: Path = Path(
+        "console/dist"
+    )  # the built console, served at /console/ if it exists (M6)
+
     # Live mailbox (M5, ADR-017). Off until the operator connects a Google account.
     gmail_enabled: bool = False
     gmail_client_id: str | None = None  # an OAuth "Desktop app" client of the operator's own

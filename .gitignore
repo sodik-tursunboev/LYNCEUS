@@ -15,3 +15,5 @@ obj/
 .data/
 
 extension/dist/
+
+console/dist/

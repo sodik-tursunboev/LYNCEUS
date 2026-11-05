@@ -1,4 +1,4 @@
-"""The life of one response action, as a table. Nothing else decides what may happen next.
+r"""The life of one response action, as a table. Nothing else decides what may happen next.
 
     PENDING -approve-> APPROVED -applied-> APPLIED -restore-> RESTORE_REQUESTED -restored-> RESTORED
        |                    |  \-failed-> FAILED -approve (retry)-> APPROVED

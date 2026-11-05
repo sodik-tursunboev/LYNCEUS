@@ -92,6 +92,15 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   | puppeteer-core 25.16.0 | Apache-2.0 | drive the installed Edge for the end-to-end test (M4 step 6). It downloads no browser |
 
   No `@types/node` was added: the one test that reads files declares the three Node calls it needs in `extension/test/node-shim.d.ts`.
+
+- **M6 adds npm dev dependencies for the console (approved with the M6 plan, D7; checked on the npm registry on 2026-11-05; each at least two weeks old).** `console/package.json` pins exact versions, `package-lock.json` has integrity hashes, installed with `--ignore-scripts`, `npm audit`: 0 vulnerabilities.
+
+  | Package | Licence | Used for |
+  |---|---|---|
+  | react 19.2.9, react-dom 19.2.9 | MIT | the console's user interface (bundled into `console/dist/console.js`) |
+  | @types/react 19.2.18, @types/react-dom 19.2.7 | MIT | types only |
+
+  `typescript`, `esbuild`, `vitest` and `puppeteer-core` repeat the versions already approved for the extension. No Python or .NET dependency was added.
 - **Open:** pytest prints a Starlette deprecation warning saying `TestClient` over `httpx` is deprecated in favour of a package named `httpx2`. Not acted on (a dependency change needs approval); revisit when it stops being a warning.
 
 ## ADR-005: Eval scoring rule

@@ -30,6 +30,7 @@ from sqlalchemy import create_engine
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from core.api.console import mount_console
 from core.config import Settings
 from core.contracts import EventSource, VerdictState
 from core.db import audit
@@ -252,6 +253,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+    mount_console(app, settings.console_dir)  # only if the console has been built
     app.include_router(
         response_router(db, require_token, RateLimit(settings.rate_limit_per_minute * 5))
     )
