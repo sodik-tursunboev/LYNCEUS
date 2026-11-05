@@ -1,0 +1,25 @@
+From: "Dev" <dev@build-artifacts.test>
+To: g@rcpt.test
+Subject: Build output
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-006@mail.origin-6.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7994622514469715731=="
+
+--===============7994622514469715731==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Build attached.
+
+--===============7994622514469715731==
+Content-Type: application/gzip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="build.tar.gz"
+MIME-Version: 1.0
+
+H4sIAAAAAAAC/+3UMQ5AQBCF4UlcxAk2S7CncAGdYlvEjmSP4cg2NKJHxP81bzLNVG+C12UyPnq5
+j02aqtozuaYtTvOxd7Vzklt5wBK0n9NJ+ae2WyUT/NUwqg9Go77Y//QBrv1vypr+PyFSAQAAAAAA
+AAAAAAAAgE/bAJ2HfUQAKAAA
+
+--===============7994622514469715731==--

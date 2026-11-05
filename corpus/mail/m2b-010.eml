@@ -1,0 +1,25 @@
+From: "Accounts" <ar@supplier-co.test>
+To: bob@rcpt.test
+Subject: Payment advice
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-009@mail.sender-9.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6491028462468014602=="
+
+--===============6491028462468014602==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Advice attached.
+
+--===============6491028462468014602==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="advice.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV2NCO+fCgAAAEAAAAAPAAAAYWR2aWNlLnhsc3guZXhl842awMDMQD4AAFBL
+AQIUABQAAAAIAJcdZV2NCO+fCgAAAEAAAAAPAAAAAAAAAAAAAACAAQAAAABhZHZpY2UueGxzeC5l
+eGVQSwUGAAAAAAEAAQA9AAAANwAAAAAA
+
+--===============6491028462468014602==--

@@ -1,0 +1,27 @@
+From: "Accounts" <ap@supplier.example.com>
+To: me@rcpt.test
+Subject: Invoices for October
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-008@mail.origin-8.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7903941434184630642=="
+
+--===============7903941434184630642==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Invoices attached.
+
+--===============7903941434184630642==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoices.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIALcdZV2qHEA/DAAAAAoAAAAMAAAAaW52LTEwMDEucGRmUw1wcdM11DNXqAAAUEsD
+BBQAAAAIALcdZV08LEdIDAAAAAoAAAAMAAAAaW52LTEwMDIucGRmUw1wcdM11DNXqAQAUEsBAhQA
+FAAAAAgAtx1lXaocQD8MAAAACgAAAAwAAAAAAAAAAAAAAIABAAAAAGludi0xMDAxLnBkZlBLAQIU
+ABQAAAAIALcdZV08LEdIDAAAAAoAAAAMAAAAAAAAAAAAAACAATYAAABpbnYtMTAwMi5wZGZQSwUG
+AAAAAAIAAgB0AAAAbAAAAAAA
+
+--===============7903941434184630642==--

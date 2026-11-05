@@ -1,0 +1,29 @@
+From: "Docs" <docs@project.example.org>
+To: me@rcpt.test
+Subject: Handbook
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-009@mail.origin-9.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7959859337463456934=="
+
+--===============7959859337463456934==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+The handbook is attached.
+
+--===============7959859337463456934==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="handbook.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cHM6Ly9kb2NzLmV4YW1wbGUu
+b3JnL2hhbmRib29rL3N0YXJ0KSA+PiA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+
+PgolJUVPRg==
+
+--===============7959859337463456934==--

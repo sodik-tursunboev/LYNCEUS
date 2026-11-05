@@ -1,0 +1,26 @@
+From: "Support" <help@it-helpdesk.test>
+To: ann@rcpt.test
+Subject: Security update (password inside)
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-008@mail.sender-8.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5102694254590575875=="
+
+--===============5102694254590575875==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Password: update2026. Your account will be suspended within 24 hours. Open th=
+e attachment and confirm your password.
+
+--===============5102694254590575875==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="update.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAQAIAJcdZV2NCO+fCgAAAEAAAAAKAAAAdXBkYXRlLmV4ZfONmsDAzEA+AABQSwECFAAU
+AAEACACXHWVdjQjvnwoAAABAAAAACgAAAAAAAAAAAAAAgAEAAAAAdXBkYXRlLmV4ZVBLBQYAAAAA
+AQABADgAAAAyAAAAAAA=
+
+--===============5102694254590575875==--

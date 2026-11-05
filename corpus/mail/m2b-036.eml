@@ -1,0 +1,26 @@
+From: "Designer" <studio@design.example.net>
+To: me@rcpt.test
+Subject: Assets
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-035@mail.sender-35.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3740367399697508661=="
+
+--===============3740367399697508661==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Logo files.
+
+--===============3740367399697508661==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="assets.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV2kCQd6CgAAAAgAAAAIAAAAbG9nby5wbmfrDPBz5+WS4gIAUEsDBBQAAAAI
+AJcdZV2sKpPYBAAAAAIAAAAKAAAAcmVhZG1lLnR4dMvIBABQSwECFAAUAAAACACXHWVdpAkHegoA
+AAAIAAAACAAAAAAAAAAAAAAAgAEAAAAAbG9nby5wbmdQSwECFAAUAAAACACXHWVdrCqT2AQAAAAC
+AAAACgAAAAAAAAAAAAAAgAEwAAAAcmVhZG1lLnR4dFBLBQYAAAAAAgACAG4AAABcAAAAAAA=
+
+--===============3740367399697508661==--

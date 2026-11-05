@@ -1,0 +1,27 @@
+From: "Zamowienia" <biuro@hurtownia-zamowienia.test>
+To: i@rcpt.test
+Subject: Zamowienie pilne
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-012@mail.origin-12.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5271625170438357010=="
+
+--===============5271625170438357010==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Pilne - otworz zalacznik natychmiast.
+
+--===============5271625170438357010==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="zamowienie.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIALcdZV32Q2qPnQAAAMYAAAAKAAAAbGV2ZWwxLnppcAvwZmYRYWBg4GDYLpsae2+O
+q08AAwNDDQMDAxcDA0NOallqjoFeVWYB94e0NMHEhIQHCTf0ZkvdPv2xzk6cmbmZOaKlUVHd1NB3
+/ZJFT4rfr2FmP2dxw9CApcLYqNPgwTVGZt4eBaFl9gdmT+U9kp6SkGKQnJBgwKDNxBDgzcgkwoDb
+ZhhoYASRCHcEeLOygUQYGRgZLBgYGCrAygBQSwECFAAUAAAACAC3HWVd9kNqj50AAADGAAAACgAA
+AAAAAAAAAAAAgAEAAAAAbGV2ZWwxLnppcFBLBQYAAAAAAQABADgAAADFAAAAAAA=
+
+--===============5271625170438357010==--

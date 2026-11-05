@@ -1,0 +1,28 @@
+From: "Docs" <docs@file-transfer.test>
+To: pat@rcpt.test
+Subject: Portfolio
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-017@mail.sender-17.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0505633235708334198=="
+
+--===============0505633235708334198==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+See attached.
+
+--===============0505633235708334198==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="portfolio.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0VtYmVkZGVkRmlsZSAvTGVuZ3RoIDUg
+Pj4Kc3RyZWFtCmhlbGxvCmVuZHN0cmVhbQplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+
+PgolJUVPRg==
+
+--===============0505633235708334198==--

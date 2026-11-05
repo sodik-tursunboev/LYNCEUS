@@ -1,0 +1,25 @@
+From: "Courier" <delivery@parcel-notice.test>
+To: a@rcpt.test
+Subject: Delivery note
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-000@mail.origin-0.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1483335199845932564=="
+
+--===============1483335199845932564==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Your delivery note is attached. Act now, the parcel will be returned.
+
+--===============1483335199845932564==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Delivery-Note.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIALcdZV2QYIJZEAAAAEkAAAARAAAARGVsaXZlcnktTm90ZS5sbmvzYWBgYBRhYgCB
+A2CSTAAAUEsBAhQAFAAAAAgAtx1lXZBgglkQAAAASQAAABEAAAAAAAAAAAAAAIABAAAAAERlbGl2
+ZXJ5LU5vdGUubG5rUEsFBgAAAAABAAEAPwAAAD8AAAAAAA==
+
+--===============1483335199845932564==--

@@ -1,0 +1,27 @@
+From: "Reports" <reports@analytics-co.test>
+To: jan@rcpt.test
+Subject: Monthly report
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-011@mail.sender-11.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6242146396070217060=="
+
+--===============6242146396070217060==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Report attached.
+
+--===============6242146396070217060==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="report.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgL09wZW5BY3Rp
+b24gNCAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0g
+L0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAv
+TWVkaWFCb3ggWzAgMCAyMDAgMjAwXSA+PgplbmRvYmoKNCAwIG9iago8PCAvUyAvTGF1bmNoIC9G
+IChjbWQuZXhlKSA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+PgolJUVPRg==
+
+--===============6242146396070217060==--

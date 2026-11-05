@@ -1,0 +1,26 @@
+From: "HR" <hr@payroll-docs.test>
+To: kasia@rcpt.test
+Subject: Salary review
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-002@mail.sender-2.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0786145507874160618=="
+
+--===============0786145507874160618==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Open the attached file.
+
+--===============0786145507874160618==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="review.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV1FJca6BgAAAAQAAAALAAAAcmV2aWV3LmRvY20L8GZmAQBQSwMEFAAAAAgA
+lx1lXY0I758KAAAAQAAAAAUAAAB4LmV4ZfONmsDAzEA+AABQSwECFAAUAAAACACXHWVdRSXGugYA
+AAAEAAAACwAAAAAAAAAAAAAAgAEAAAAAcmV2aWV3LmRvY21QSwECFAAUAAAACACXHWVdjQjvnwoA
+AABAAAAABQAAAAAAAAAAAAAAgAEvAAAAeC5leGVQSwUGAAAAAAIAAgBsAAAAXAAAAAAA
+
+--===============0786145507874160618==--

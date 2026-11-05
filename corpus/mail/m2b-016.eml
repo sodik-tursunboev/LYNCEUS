@@ -1,0 +1,27 @@
+From: "Forms" <forms@secure-forms.test>
+To: olek@rcpt.test
+Subject: Fill in the form
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-015@mail.sender-15.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2362578297689846452=="
+
+--===============2362578297689846452==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Open the attached form.
+
+--===============2362578297689846452==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="form.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgL09wZW5BY3Rp
+b24gNCAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0g
+L0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAv
+TWVkaWFCb3ggWzAgMCAyMDAgMjAwXSA+PgplbmRvYmoKNCAwIG9iago8PCAvUyAvSiM2MXZhU2Ny
+IzY5cHQgL0pTICh4KSA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+PgolJUVPRg==
+
+--===============2362578297689846452==--

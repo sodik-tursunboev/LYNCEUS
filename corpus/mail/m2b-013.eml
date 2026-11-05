@@ -1,0 +1,30 @@
+From: "PayPal" <service@paypal-support.test>
+To: lena@rcpt.test
+Subject: Action required: verify your account
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-012@mail.sender-12.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2735907737171276278=="
+
+--===============2735907737171276278==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Your account will be suspended within 24 hours. Open the attachment and confi=
+rm your password.
+
+--===============2735907737171276278==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="statement.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cHM6Ly9wYXlwYWwtc2VjdXJl
+LWxvZ2luLnRlc3Qvc2lnbmluP2VtYWlsPWxlbmElNDByY3B0LnRlc3QpID4+ID4+CmVuZG9iagp0
+cmFpbGVyCjw8IC9Sb290IDEgMCBSID4+CiUlRU9G
+
+--===============2735907737171276278==--

@@ -1,0 +1,30 @@
+From: "InPost" <powiadomienie@inpost-paczka.test>
+To: igor@rcpt.test
+Subject: Twoja paczka - dokonaj doplaty
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-013@mail.sender-13.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5948573570255679684=="
+
+--===============5948573570255679684==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Twoje konto zostanie zablokowane w ciagu 24 godzin. Otworz zalacznik i zweryf=
+ikuj konto.
+
+--===============5948573570255679684==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="potwierdzenie.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cHM6Ly9pbnBvc3QtZG9wbGF0
+YS50ZXN0L29kYmlvci9ibGlrKSA+PiA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+
+PgolJUVPRg==
+
+--===============5948573570255679684==--

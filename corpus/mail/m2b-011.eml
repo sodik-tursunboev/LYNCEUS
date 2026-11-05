@@ -1,0 +1,28 @@
+From: "Scan" <noreply@docs-share.test>
+To: zofia@rcpt.test
+Subject: Document for your review
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-010@mail.sender-10.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5755560617026943513=="
+
+--===============5755560617026943513==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please review the attached document.
+
+--===============5755560617026943513==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="document.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgL09wZW5BY3Rp
+b24gNCAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0g
+L0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAv
+TWVkaWFCb3ggWzAgMCAyMDAgMjAwXSA+PgplbmRvYmoKNCAwIG9iago8PCAvUyAvSmF2YVNjcmlw
+dCAvSlMgKGFwcC5hbGVydFwoMVwpKSA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+
+PgolJUVPRg==
+
+--===============5755560617026943513==--

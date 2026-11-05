@@ -1,0 +1,28 @@
+From: "Records" <records@archive-office.test>
+To: h@rcpt.test
+Subject: Records request
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-007@mail.origin-7.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6053756578769018510=="
+
+--===============6053756578769018510==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Open to view.
+
+--===============6053756578769018510==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="records.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgL09wZW5BY3Rp
+b24gNCAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0g
+L0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAv
+TWVkaWFCb3ggWzAgMCAyMDAgMjAwXSA+PgplbmRvYmoKNCAwIG9iago8PCAvUyAvTGF1bmNoIC9G
+IChwb3dlcnNoZWxsLmV4ZSkgPj4KZW5kb2JqCnRyYWlsZXIKPDwgL1Jvb3QgMSAwIFIgPj4KJSVF
+T0Y=
+
+--===============6053756578769018510==--

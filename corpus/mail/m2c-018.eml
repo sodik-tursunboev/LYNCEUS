@@ -1,0 +1,28 @@
+From: "School" <office@school.example.org>
+To: me@rcpt.test
+Subject: Timetable
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-017@mail.origin-17.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8155572553982845721=="
+
+--===============8155572553982845721==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Timetable attached.
+
+--===============8155572553982845721==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="timetable.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVk
+aWFCb3ggWzAgMCAxMDAgMTAwXSA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+Pgol
+JUVPRg==
+
+--===============8155572553982845721==--

@@ -1,0 +1,25 @@
+From: "IT" <it@corp-storage.test>
+To: b@rcpt.test
+Subject: Disk image of the new policy
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-001@mail.origin-1.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============3676603148536949995=="
+
+--===============3676603148536949995==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+See the attached image.
+
+--===============3676603148536949995==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="policy.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIALcdZV02Y411BgAAAEAAAAAKAAAAcG9saWN5Lmlzb2NgoAwAAFBLAQIUABQAAAAI
+ALcdZV02Y411BgAAAEAAAAAKAAAAAAAAAAAAAACAAQAAAABwb2xpY3kuaXNvUEsFBgAAAAABAAEA
+OAAAAC4AAAAAAA==
+
+--===============3676603148536949995==--

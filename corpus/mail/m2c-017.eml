@@ -1,0 +1,25 @@
+From: "Finance" <fin@budget-office.test>
+To: m@rcpt.test
+Subject: Budget 2027
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-016@mail.origin-16.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2163550949672424638=="
+
+--===============2163550949672424638==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Budget attached.
+
+--===============2163550949672424638==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="budget.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIALcdZV1FJca6BgAAAAQAAAALAAAAYnVkZ2V0Lnhsc20L8GZmAQBQSwECFAAUAAAA
+CAC3HWVdRSXGugYAAAAEAAAACwAAAAAAAAAAAAAAgAEAAAAAYnVkZ2V0Lnhsc21QSwUGAAAAAAEA
+AQA5AAAALwAAAAAA
+
+--===============2163550949672424638==--

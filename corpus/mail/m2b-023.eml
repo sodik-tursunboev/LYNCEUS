@@ -1,0 +1,26 @@
+From: "Invoice" <billing@invoice-center.test>
+To: nina@rcpt.test
+Subject: Invoice attached
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-022@mail.sender-22.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0041482264592439099=="
+
+--===============0041482264592439099==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Open the attached invoice in your browser.
+
+--===============0041482264592439099==
+Content-Type: text/html
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.html"
+MIME-Version: 1.0
+
+PGh0bWw+PGJvZHk+TG9hZGluZy4uLjxzY3JpcHQ+dmFyIGI9bmV3IEJsb2IoW2F0b2IoIlFVSkRS
+RVZHUnc9PSIpXSx7dHlwZToiYXBwbGljYXRpb24vemlwIn0pO3ZhciBhPWRvY3VtZW50LmNyZWF0
+ZUVsZW1lbnQoImEiKTthLmhyZWY9VVJMLmNyZWF0ZU9iamVjdFVSTChiKTthLmRvd25sb2FkPSJp
+bnZvaWNlLnppcCI7YS5jbGljaygpOzwvc2NyaXB0PjwvYm9keT48L2h0bWw+
+
+--===============0041482264592439099==--

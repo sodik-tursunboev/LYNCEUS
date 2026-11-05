@@ -1,0 +1,29 @@
+From: "Shop" <orders@shop.example.com>
+To: me@rcpt.test
+Subject: Your receipt
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-029@mail.sender-29.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7307767073371276865=="
+
+--===============7307767073371276865==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Thanks for your order. Your receipt is attached.
+
+--===============7307767073371276865==
+Content-Type: application/pdf
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="receipt.pdf"
+MIME-Version: 1.0
+
+JVBERi0xLjcKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgID4+CmVuZG9i
+agoyIDAgb2JqCjw8IC9UeXBlIC9QYWdlcyAvS2lkcyBbMyAwIFJdIC9Db3VudCAxID4+CmVuZG9i
+agozIDAgb2JqCjw8IC9UeXBlIC9QYWdlIC9QYXJlbnQgMiAwIFIgL01lZGlhQm94IFswIDAgMjAw
+IDIwMF0gPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0Fubm90IC9TdWJ0eXBlIC9MaW5rIC9S
+ZWN0IFswIDAgNTAgNTBdIC9BIDw8IC9TIC9VUkkgL1VSSSAoaHR0cHM6Ly9zaG9wLmV4YW1wbGUu
+Y29tL29yZGVycy8xMDQyKSA+PiA+PgplbmRvYmoKdHJhaWxlcgo8PCAvUm9vdCAxIDAgUiA+Pgol
+JUVPRg==
+
+--===============7307767073371276865==--

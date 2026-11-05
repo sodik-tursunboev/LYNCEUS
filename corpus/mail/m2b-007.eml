@@ -1,0 +1,29 @@
+From: "Orders" <orders@trade-supply.test>
+To: ewa@rcpt.test
+Subject: Order 9981
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-006@mail.sender-6.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6370210989860055125=="
+
+--===============6370210989860055125==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+See order.
+
+--===============6370210989860055125==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="order.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV1zBehy8AAAABMBAAAKAAAAbGV2ZWwyLnppcAvwZmYRYWBg4GCYLpsau3if
+56q5DAwMxxgYGLgYGBhyUstScwz1qjILuD+kpQkmJiQ8SJihN1vqt9vv6jIGZmZnXmZmZnFmZme/
+rMisvsa40DTG7+1bTA4eaWlh5zT+kuZ91+7vxnN+c2bunGm5aGlg4N0rF8r/TnL177q/PjHNPr3w
+8IWGpYdurLj84KCpW9o9OdaFqd/Y0/yf2k6aN2lC0oQ5ExIOLDh7RODB2RMqhxpup0lkJLBM5Chn
+qdi8qdFFQlJCUkdCQkLrwCmGAG9GJhEG3N6AgQZGEInwVIA3KxtIhJGBkcGCgYHhKFgZAFBLAQIU
+ABQAAAAIAJcdZV1zBehy8AAAABMBAAAKAAAAAAAAAAAAAACAAQAAAABsZXZlbDIuemlwUEsFBgAA
+AAABAAEAOAAAABgBAAAAAA==
+
+--===============6370210989860055125==--

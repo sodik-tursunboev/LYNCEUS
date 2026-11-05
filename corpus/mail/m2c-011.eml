@@ -1,0 +1,24 @@
+From: "Dad" <dad@family-mail.test>
+To: me@rcpt.test
+Subject: Look
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-010@mail.origin-10.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============6807411438733433026=="
+
+--===============6807411438733433026==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Taken yesterday.
+
+--===============6807411438733433026==
+Content-Type: image/gif
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="pic.gif"
+MIME-Version: 1.0
+
+R0lGODdhPAAoAIAAAAAAAAAAACwAAAAAPAAoAEAIUAABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLF
+ixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bNmzhz6tzJs6fPn0CDCh1K1GZAADs=
+
+--===============6807411438733433026==--

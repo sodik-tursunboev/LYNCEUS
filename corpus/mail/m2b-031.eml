@@ -1,0 +1,28 @@
+From: "Team" <team@project.example.org>
+To: me@rcpt.test
+Subject: Project files
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-030@mail.sender-30.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2901617043515022370=="
+
+--===============2901617043515022370==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Files for the meeting.
+
+--===============2901617043515022370==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="files.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV13yO0sCAAAAAYAAAAJAAAAbm90ZXMudHh0S0xPzUtJBABQSwMEFAAAAAgA
+lx1lXXJjBwkPAAAAMwAAAAkAAABwaG90by5qcGf7f+P/AwYBLzdPNwZiAQBQSwMEFAAAAAgAlx1l
+XaocQD8MAAAACgAAAAgAAABwbGFuLnBkZlMNcHHTNdQzV6gAAFBLAQIUABQAAAAIAJcdZV13yO0s
+CAAAAAYAAAAJAAAAAAAAAAAAAACAAQAAAABub3Rlcy50eHRQSwECFAAUAAAACACXHWVdcmMHCQ8A
+AAAzAAAACQAAAAAAAAAAAAAAgAEvAAAAcGhvdG8uanBnUEsBAhQAFAAAAAgAlx1lXaocQD8MAAAA
+CgAAAAgAAAAAAAAAAAAAAIABZQAAAHBsYW4ucGRmUEsFBgAAAAADAAMApAAAAJcAAAAAAA==
+
+--===============2901617043515022370==--

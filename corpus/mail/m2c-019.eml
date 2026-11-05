@@ -1,0 +1,25 @@
+From: "Notes" <notes@club.example.net>
+To: me@rcpt.test
+Subject: Meeting notes
+Date: Wed, 04 Nov 2026 14:40:00 +0000
+Message-ID: <m2c-018@mail.origin-18.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============2900415801635204086=="
+
+--===============2900415801635204086==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Notes attached.
+
+--===============2900415801635204086==
+Content-Type: application/gzip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="notes.tar.gz"
+MIME-Version: 1.0
+
+H4sIAAAAAAAC/+3TQQ7CIBBA0TmKBzANKMHzoDYNSdtFmRqPL7pq3biCxPDfZsiwmNWf4rxqnzp9
+qpRiMu/cZ2bf8/27eee9NdZ7ORipYE0alnxe2hSGfr4HQaPGmLS7pUfJG7/7P+/7Nxd3ov86/R+v
+RAAAAAAAAAAAAAAAAPDHXmF86k8AKAAA
+
+--===============2900415801635204086==--

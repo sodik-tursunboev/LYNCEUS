@@ -1,0 +1,26 @@
+From: "DHL Express" <track@dhl-parcel-info.test>
+To: adam@rcpt.test
+Subject: Paczka czeka na odbior
+Date: Tue, 03 Nov 2026 09:15:00 +0000
+Message-ID: <m2b-001@mail.sender-1.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============5646809267621577611=="
+
+--===============5646809267621577611==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Twoje konto zostanie zablokowane w ciagu 24 godzin. Otworz zalacznik i zweryf=
+ikuj konto.
+
+--===============5646809267621577611==
+Content-Type: application/zip
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="etykieta.zip"
+MIME-Version: 1.0
+
+UEsDBBQAAAAIAJcdZV2fFO+eEQAAAA8AAAALAAAAZXR5a2lldGEuanMLD04uyiwo0XNNzsjXMNQE
+AFBLAQIUABQAAAAIAJcdZV2fFO+eEQAAAA8AAAALAAAAAAAAAAAAAACAAQAAAABldHlraWV0YS5q
+c1BLBQYAAAAAAQABADkAAAA6AAAAAAA=
+
+--===============5646809267621577611==--
