@@ -12,6 +12,8 @@ import math
 import secrets
 import threading
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -130,8 +132,21 @@ class RateLimit:
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     configure(settings.log_level)
+    intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        yield
+        if intel is not None:
+            await intel.aclose()
+
     app = FastAPI(
-        title="MIRAGE", version=ENGINE_VERSION, docs_url=None, redoc_url=None, openapi_url=None
+        title="MIRAGE",
+        version=ENGINE_VERSION,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+        lifespan=lifespan,
     )
     app.add_middleware(
         BodyLimit,
@@ -147,7 +162,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.database_url
         else None
     )
-    intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
     feed_store = FeedStore(settings.data_dir / "feeds")
     if intel is not None and db is not None:
         for p in intel.providers:

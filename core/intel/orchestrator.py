@@ -195,6 +195,14 @@ class Intel:
         if self._late:
             await asyncio.gather(*self._late, return_exceptions=True)
 
+    async def aclose(self) -> None:
+        """Close the HTTP clients of providers that own one (application shutdown)."""
+        await self.settle()
+        for p in self.providers:
+            close = getattr(p, "aclose", None)
+            if close is not None:
+                await close()
+
     def health(self) -> list[dict[str, Any]]:
         out = []
         for p in self.providers:

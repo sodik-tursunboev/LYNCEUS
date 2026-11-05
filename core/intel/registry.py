@@ -11,12 +11,28 @@ from collections.abc import Callable
 from core.config import Settings
 from core.intel.base import Provider
 from core.intel.feeds import FEEDS, FeedStore, ListFeed
+from core.intel.http import make_client
 from core.intel.orchestrator import Intel
+from core.intel.rdap import Rdap
+from core.intel.virustotal import VirusTotal
 
 log = logging.getLogger(__name__)
 Builder = Callable[[Settings], Provider]
-# Providers that ask an outside service are registered here (RDAP, VirusTotal: M3 step 4).
-QUERY_BUILDERS: dict[str, Builder] = {}
+
+
+def _rdap(_settings: Settings) -> Provider:
+    return Rdap(make_client())
+
+
+def _virustotal(settings: Settings) -> Provider:
+    key = settings.virustotal_api_key
+    if key is None or not key.get_secret_value():
+        raise ValueError("virustotal is enabled but MIRAGE_VIRUSTOTAL_API_KEY is not set")
+    return VirusTotal(make_client(), key.get_secret_value())
+
+
+# Providers that ask an outside service. Each sends one public registered domain, nothing else.
+QUERY_BUILDERS: dict[str, Builder] = {"rdap": _rdap, "virustotal": _virustotal}
 
 
 def known() -> frozenset[str]:
