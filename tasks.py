@@ -20,6 +20,7 @@ TASKS: dict[str, list[list[str]]] = {
         [PY, "-m", "mypy", "core", "eval", "rules", "tasks.py"],
     ],
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
+    "sandbox": [[PY, "-m", "core.sandbox.build"]],  # build .sandbox/ (Windows)
     "serve": [
         [
             PY,
@@ -51,7 +52,13 @@ _SCAN_SKIP = ("docs/schemas/", "docs/eval/", "tests/data/")  # generated; third-
 
 
 def run(task: str, extra: list[str]) -> int:
-    cmds = TASKS[task]
+    cmds = list(TASKS[task])
+    if (
+        task == "test"
+        and os.name == "nt"
+        and not (ROOT / ".sandbox" / "runtime" / "python.exe").exists()
+    ):
+        cmds = [*TASKS["sandbox"], *cmds]  # the sandbox tests need the sandbox built once
     for i, cmd in enumerate(cmds):
         tail = extra if i == len(cmds) - 1 else []  # extra args go to the last command
         rc = subprocess.call(cmd + tail, cwd=ROOT)

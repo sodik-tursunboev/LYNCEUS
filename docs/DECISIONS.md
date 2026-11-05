@@ -12,7 +12,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 | 005 | Eval scoring rule | Accepted (flag-rate line added in M1, see below) |
 | 006 | M0 conventions: contracts, logging, corpus, migrations | Accepted (checked against SPEC §7/§8; one difference to confirm) |
 | 007 | Evidence encryption at rest and key management | Draft: needs human sign-off, decide before M1 writes evidence |
-| 008 | Parser sandbox | Draft: needs human sign-off, decide before M2 |
+| 008 | Parser sandbox | Accepted 2026-11-05: option B, a restricted Windows process |
 | 009 | Local IPC | Draft: needs human sign-off, decide before M4 |
 | 010 | Email transport | Draft: needs human sign-off, decide before M5 |
 | 011 | Resolver egress policy | Draft: needs human sign-off. Code exists but is off and unwired |
@@ -100,7 +100,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **M1 consequence (owner decision D2):** M1 persists hashes, host, verdict, signals and redacted evidence only; full URL text waits for this ADR.
 
 ## ADR-008: Parser sandbox
-**Status:** Draft: needs human sign-off. Decide before M2.
+**Status:** Accepted 2026-11-05 by the owner (option B). Implementation notes and what was actually verified are at the end of this ADR.
 
 - **Context:** documents, archives and images are hostile input (CLAUDE.md rule 5). The parser must have hard limits (time, memory, size, archive depth and ratio) and no network. The target is an end-user Windows PC.
 - **Options:**
@@ -109,6 +109,16 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
   - C. **VM** (Hyper-V or Windows Sandbox). Strongest, but slow to start, heavy, and edition-dependent.
 - **Proposal:** B as the product default, with a narrow stdin/stdout protocol between core and the worker; run the same worker under a Linux container in CI to exercise bomb and malformed-file fixtures portably. Revisit C only if the threat assessment demands it.
 - **Verify before building:** current AppContainer and Job Object documentation; that network denial really holds on the target Windows editions.
+
+**Implementation (M2 step 1, 2026-11-05)** — `core/sandbox/`:
+- **Two layers.** An AppContainer token with no capabilities denies the network and every file not granted to its SID; a Job Object adds hard limits (committed memory, user CPU time, exactly one process, no UI access, kill when the handle closes). The parent adds a wall-clock deadline and an output cap, and kills the job when either is hit.
+- **What the worker can touch:** a private copy of the interpreter and the worker code under `.sandbox/` (about 36 MB), read-only. The project root, which holds `.env`, is never granted. The worker's whole environment is four variables with no real user path in them.
+- **Side effect outside the project, to know about:** Windows will not start a process in an AppContainer whose profile is not registered, so `python tasks.py sandbox` registers one per user (a registry key and `%LOCALAPPDATA%\Packages\mirage.parser`) and runs `icacls` on `.sandbox` only. `python -m core.sandbox.build --remove` undoes both.
+- **Protocol:** stdin is a 4-byte length, a JSON header, then the raw body; the answer is one JSON document on stdout. The parent treats it as untrusted: size-capped, schema-validated, never executed.
+- **Fails closed:** a missing or non-starting sandbox raises `SandboxUnavailable`; no caller may parse in-process instead.
+- **Proved by 29 tests** (`tests/sandbox`), each with a positive control: the worker's token is an AppContainer; it cannot read your files, the project, `.env` or your home folder, cannot write anywhere, cannot connect even to loopback, cannot start programs; memory, CPU, wall-clock and output limits each stop it while the caller survives; it dies with its parent; nothing outlives a run. **Seven deliberate breakages** of the controls were each caught by a test.
+- **Checked by hand, outside pytest:** a real non-loopback connection (this machine's LAN address, and 1.1.1.1:443) succeeds from outside the sandbox and is denied inside it.
+- **Not proved, to be honest about:** the Job Object's UI restrictions are untested; the boundary is only as strong as Windows' AppContainer and the Win32 calls (no separate review); the worker is still CPython plus whatever parsers run in it, so a memory-safety bug there is contained, not prevented; start-up costs about 0.7 s per run; the interpreter copy goes stale when Python is upgraded and needs `python tasks.py sandbox` again; Windows only, and the tests skip elsewhere, so a Linux CI would not exercise this.
 
 ## ADR-009: Local IPC
 **Status:** Draft: needs human sign-off. Decide before M4.

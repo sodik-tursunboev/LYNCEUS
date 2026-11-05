@@ -93,6 +93,7 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `eval` | run the engine over the dev split, write `docs/eval/dev.{json,md}`. `--split holdout` is explicit and logged; reserve cannot be selected |
 | `lint` | ruff check + format check + mypy |
 | `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
+| `sandbox` | build `.sandbox/` and register its per-user AppContainer profile (Windows). `python -m core.sandbox.build --remove` undoes it |
 | `serve` | run the API on `127.0.0.1:8765`, no access log (needs `MIRAGE_API_TOKEN`) |
 | `fmt` | `ruff format` + `ruff check --fix` |
 | `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |

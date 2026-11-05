@@ -1,0 +1,68 @@
+"""Build .sandbox/: a private interpreter copy and the worker code (python tasks.py sandbox).
+
+Only this folder is made readable to the sandbox's AppContainer SID, and read-only. The project
+root, which holds .env, is never granted.
+
+Windows will not start a process in an AppContainer whose profile is not registered, so building
+registers one per user (a registry key and %LOCALAPPDATA%\\Packages\\mirage.parser). Undo it with
+`python -m core.sandbox.build --remove`, which deletes the profile and the .sandbox folder.
+"""
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from core.sandbox import APP, CONTAINER, RUNTIME, SANDBOX_DIR, SandboxUnavailable
+
+GUEST = Path(__file__).parent / "guest"
+_SKIP = {  # parts of the standard library the worker never needs
+    "site-packages", "test", "tests", "idlelib", "tkinter", "turtledemo", "ensurepip",
+    "__pycache__", "venv", "lib2to3",
+}  # fmt: skip
+
+
+def _copy_lib(src: Path, dst: Path) -> None:
+    shutil.copytree(src, dst, ignore=lambda _d, names: [n for n in names if n in _SKIP])
+    (dst / "site-packages").mkdir()
+
+
+def build() -> None:
+    if sys.platform != "win32":
+        raise SandboxUnavailable("the sandbox is implemented for Windows only (ADR-008)")
+    from core.sandbox import _win32
+
+    base = Path(sys.base_prefix)
+    if SANDBOX_DIR.exists():
+        shutil.rmtree(SANDBOX_DIR)
+    RUNTIME.mkdir(parents=True)
+    for pattern in ("python.exe", "python3*.dll", "vcruntime*.dll"):
+        for f in base.glob(pattern):
+            shutil.copy2(f, RUNTIME / f.name)
+    shutil.copytree(base / "DLLs", RUNTIME / "DLLs")
+    _copy_lib(base / "Lib", RUNTIME / "Lib")
+    shutil.copytree(GUEST, APP, ignore=shutil.ignore_patterns("__pycache__"))
+
+    sid = _win32.register_container(CONTAINER)
+    done = subprocess.run(  # noqa: S603
+        ["icacls", str(SANDBOX_DIR), "/grant", f"*{sid}:(OI)(CI)(RX)", "/T", "/C", "/Q"],  # noqa: S607
+        capture_output=True, text=True, check=False,
+    )  # fmt: skip
+    if done.returncode != 0:
+        raise SandboxUnavailable(f"could not grant the sandbox read access: {done.stderr.strip()}")
+    print(f"sandbox built: {SANDBOX_DIR} (container {CONTAINER}, read-only grant to {sid})")
+
+
+def remove() -> None:
+    if sys.platform != "win32":
+        return
+    from core.sandbox import _win32
+
+    _win32.remove_container(CONTAINER)
+    if SANDBOX_DIR.exists():
+        shutil.rmtree(SANDBOX_DIR)
+    print(f"removed the {CONTAINER} profile and {SANDBOX_DIR}")
+
+
+if __name__ == "__main__":
+    remove() if "--remove" in sys.argv[1:] else build()
