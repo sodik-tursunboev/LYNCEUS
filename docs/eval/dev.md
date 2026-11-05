@@ -1,6 +1,6 @@
-# Eval report
+# Eval report (url)
 
-Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+a01a3baf2dc5`. 2026-11-04 22:58Z.
+Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+a01a3baf2dc5`. 2026-11-05 16:52Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
@@ -18,7 +18,7 @@ Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+a01a3baf2dc5`. 2026-11-04 22:
 | Abstain rate | 0.320 | 0.251 to 0.398 |
 | Error rate | 0.000 | |
 
-Latency per URL: p50 16.882 ms, p95 33.741 ms, max 357.464 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per URL: p50 1.398 ms, p95 3.172 ms, max 35.528 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
