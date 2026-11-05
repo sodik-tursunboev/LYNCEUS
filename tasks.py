@@ -46,6 +46,19 @@ TASKS: dict[str, list[list[str]]] = {
             "sys.exit(main(['--baseline', '.secrets.baseline', *sys.argv[1:]]))",
         ]
     ],
+    "deps": [  # a fresh clone: dev tools, then the parser libraries (checked against hashes)
+        [PY, "-m", "pip", "install", "-r", "requirements-dev.txt"],
+        [
+            PY,
+            "-m",
+            "pip",
+            "install",
+            "--require-hashes",
+            "--only-binary=:all:",
+            "-r",
+            "requirements-sandbox.txt",
+        ],
+    ],  # fmt: skip
     "hooks": [["git", "config", "core.hooksPath", ".githooks"]],  # once per clone
 }
 _SCAN_SKIP = (  # generated; third-party test vectors; file hashes that look like high-entropy keys

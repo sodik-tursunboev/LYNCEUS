@@ -3,8 +3,8 @@
 # Platform: Windows x64, CPython 3.14 (the only platform the sandbox supports). Licences and wheels
 # were checked on pypi.org on 2026-11-05; see ADR-004 for the purpose of each.
 #
-# Installed by `python tasks.py sandbox` into .sandbox/runtime, and by requirements-dev.txt into the
-# project venv so the parsers can be unit-tested in-process.
+# Installed by `python tasks.py sandbox` into .sandbox/runtime, and by `python tasks.py deps` into the
+# project venv so the parsers can be unit-tested in-process. Install with --require-hashes.
 pikepdf==10.17.0 \
     --hash=sha256:c1778c3e9dcb0caae239910bb3d438d2d68b1d1b278b4322ddd1a91d267e1dcf
 pillow==13.0.0 \

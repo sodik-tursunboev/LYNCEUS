@@ -1,5 +1,6 @@
+# The hash-pinned parser libraries are a separate file and a separate command (pip checks hashes for
+# everything in one run once any line has one): see `python tasks.py deps`.
 -r requirements.txt
--r requirements-sandbox.txt
 pytest>=8
 ruff>=0.6
 mypy>=1.11

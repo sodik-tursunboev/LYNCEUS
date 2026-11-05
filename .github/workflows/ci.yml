@@ -15,6 +15,9 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
       - run: pip install -r requirements-dev.txt
+      # The parser libraries only matter to the in-process scanner tests here: the sandbox is Windows-only,
+      # so CI never runs it and cannot use the Windows-pinned wheels. Unpinned on purpose; unverified.
+      - run: pip install pikepdf pillow opencv-python-headless numpy
       - name: Secret scan (same task as the local pre-commit hook)
         run: git ls-files | grep -Ev '^(docs/schemas|docs/eval|tests/data)/' | xargs python tasks.py secrets
       - name: Lint and type check

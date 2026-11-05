@@ -101,4 +101,4 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 
 Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`. Analyze one message (parsed in the sandbox, so run `sandbox` once first): `python -m core.cli analyze-eml <path> [--json]`. After changing anything in `core/sandbox/guest/`, run `python tasks.py sandbox` again: the sandbox holds a copy, and a test fails if it is stale.
 
-Setup on a fresh clone: `python -m venv .venv`, `.venv\Scripts\pip install -r requirements-dev.txt`, `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.
+Setup on a fresh clone: `python -m venv .venv`, `python tasks.py deps` (dev tools, then the hash-pinned parser libraries), `python tasks.py sandbox` (Windows), `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.

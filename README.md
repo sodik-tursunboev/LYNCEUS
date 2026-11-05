@@ -1,6 +1,6 @@
 # MIRAGE
 
-Local-first phishing detection and threat intelligence for Windows. Work in progress: milestone M0 (foundation).
+Local-first phishing detection and threat intelligence for Windows. Work in progress: M0 (foundation), M1 (URL engine) and M2 (email and file inspection) are built; see CLAUDE.md for the current state.
 
 - Project rules and architecture: [CLAUDE.md](CLAUDE.md)
 - Current plan: [docs/milestones/M0.md](docs/milestones/M0.md)
@@ -10,7 +10,8 @@ Local-first phishing detection and threat intelligence for Windows. Work in prog
 
 ```
 python -m venv .venv
-.venv\Scripts\pip install -r requirements-dev.txt
+python tasks.py deps
+python tasks.py sandbox
 python tasks.py hooks
 python tasks.py test
 python tasks.py eval
