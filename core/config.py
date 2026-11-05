@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     allowed_hosts: list[str] = ["127.0.0.1", "localhost"]  # Host header: stops DNS rebinding
     max_body_bytes: int = 65536  # raw request body, over this is HTTP 413
     max_message_bytes: int = 10 * 1024 * 1024  # the same cap for /v1/emails/analyze
+    max_file_bytes: int = 16 * 1024 * 1024 - 4096  # a file body for /v1/files/analyze
     max_concurrent_parsers: int = 4  # sandboxes running at once; more get HTTP 503
     rate_limit_per_minute: int = 120
     resolve_redirects: bool = False  # operator opt-in only; needs ADR-011 signed off

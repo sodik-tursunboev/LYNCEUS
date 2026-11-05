@@ -88,6 +88,11 @@ def in_process_inspect(raw: bytes, path: str) -> sandbox.Result:
     return ok_result(json.dumps(reply).encode())
 
 
+def in_process_file(data: bytes) -> sandbox.Result:
+    """The same, for a whole file (op "inspect_bytes")."""
+    return ok_result(json.dumps({"ok": True, **filescan.inspect_standalone(data)}).encode())
+
+
 def parsed(raw: bytes) -> MessageScan:
     """What the host would accept from the worker for `raw` (validates the guest's output)."""
     return MessageScan.model_validate(mailparse.scan(raw))

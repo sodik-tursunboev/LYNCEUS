@@ -460,3 +460,14 @@ def analyze_message(
     except Exception:  # an engine bug is an explicit ERROR, never a silent pass
         log.exception("message analysis failed")
         return _unscored(aid, raw_hash, VerdictState.ERROR, "Analysis failed.", "error")
+
+
+# What the file engine (core/files) reuses: the same rules, links, verdicts and summaries.
+rule_signals = _signals
+build_verdict = _verdict
+file_links = _file_links
+resolve_links = _links
+describe_file = _describe
+referenced_urls = _refs
+link_report = _link_report
+NOT_SAFE = _NOT_SAFE

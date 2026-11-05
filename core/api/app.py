@@ -14,15 +14,16 @@ import threading
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import unquote
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import create_engine
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -30,17 +31,20 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from core.config import Settings
 from core.contracts import EventSource
 from core.db import audit
-from core.db.store import save_analysis, save_email_analysis
+from core.db.store import save_analysis, save_email_analysis, save_file_analysis
 from core.detection.engine import ENGINE_VERSION, UrlReport
 from core.email import engine as email_engine
 from core.email.engine import EmailReport
+from core.files.engine import FileReport, analyze_file
 from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.registry import build_intel
 from core.log import configure
+from core.urls.parse import ParsedUrl, parse_url
 
 log = logging.getLogger(__name__)
 EMAIL_PATH = "/v1/emails/analyze"
+FILE_PATH = "/v1/files/analyze"
 _MESSAGE_TYPES = ("message/rfc822", "application/octet-stream")
 
 
@@ -82,6 +86,38 @@ class IntelHealth(BaseModel):
 
 class EmailResponse(EmailReport):
     persisted: bool
+
+
+class FileResponse(FileReport):
+    persisted: bool
+
+
+class FileCheck(BaseModel):
+    """What the agent knows about a file it did not send (too big, or not an openable type)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[str, Field(max_length=1024)]
+    size: Annotated[int, Field(ge=0, le=2**50)]
+    sha256: Annotated[str, Field(pattern=r"^[0-9a-fA-F]{64}$")]
+    magic: Annotated[str, Field(max_length=16)] | None = None
+    origin_host: Annotated[str, Field(max_length=253)] | None = None
+
+
+class OverrideRequest(BaseModel):
+    """The user chose to continue to a page the extension warned about (decision D5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: Annotated[str, Field(min_length=1, max_length=8192)]
+    minutes: Annotated[int, Field(ge=1, le=60)] = 15
+    state: str | None = Field(default=None, max_length=16)  # the verdict that was overridden
+
+
+class OverrideResponse(BaseModel):
+    recorded: bool
+    expires_at: datetime
+    stored_in: str
 
 
 class BodyLimit:
@@ -151,7 +187,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         BodyLimit,
         default=settings.max_body_bytes,
-        per_path={EMAIL_PATH: settings.max_message_bytes},
+        per_path={
+            EMAIL_PATH: settings.max_message_bytes,
+            FILE_PATH: settings.max_file_bytes,
+        },
     )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
     token = settings.api_token.get_secret_value().encode() if settings.api_token else None
@@ -256,6 +295,97 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             parser_slots.release()
         return EmailResponse(**analysis.report.model_dump(), persisted=persisted)
+
+    async def _file_verdict(
+        name: str, size: int, sha256: str, data: bytes | None, magic: str | None, host: str | None
+    ) -> FileResponse:
+        try:
+            await asyncio.wait_for(parser_slots.acquire(), timeout=1.0)
+        except TimeoutError:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "all parsers are busy",
+                headers={"Retry-After": "2"},
+            ) from None
+        try:
+            analyze = partial(
+                analyze_file, name, size, sha256, data, claimed_magic=magic, origin_host=host
+            )
+            analysis = await run_in_threadpool(analyze)
+            persisted = False
+            if db is not None:
+                try:
+                    await run_in_threadpool(save_file_analysis, db, analysis, EventSource.AGENT)
+                    persisted = True
+                except Exception:  # a storage failure must not cost the caller the verdict
+                    log.exception("could not persist file analysis")
+        finally:
+            parser_slots.release()
+        return FileResponse(**analysis.report.model_dump(), persisted=persisted)
+
+    @app.post(
+        FILE_PATH,
+        dependencies=[Depends(require_token), Depends(limiter)],
+        openapi_extra={
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+                },
+            }
+        },
+    )
+    async def analyze_file_bytes(request: Request) -> FileResponse:
+        if request.headers.get("content-type", "").split(";")[0].strip().lower() != (
+            "application/octet-stream"
+        ):
+            raise HTTPException(
+                status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "send application/octet-stream"
+            )
+        raw_name = request.headers.get("x-mirage-name", "")
+        name = unquote(raw_name, errors="replace")
+        if not raw_name or len(raw_name) > 4096 or len(name) > 1024 or "\x00" in name:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "X-Mirage-Name is required")
+        data = await request.body()
+        return await _file_verdict(
+            name, len(data), request.headers.get("x-mirage-sha256", ""), data, None,
+            request.headers.get("x-mirage-origin-host"),
+        )  # fmt: skip
+
+    @app.post("/v1/files/check", dependencies=[Depends(require_token), Depends(limiter)])
+    async def check_file(body: FileCheck) -> FileResponse:
+        return await _file_verdict(
+            body.name, body.size, body.sha256, None, body.magic, body.origin_host
+        )
+
+    @app.post("/v1/overrides", dependencies=[Depends(require_token), Depends(limiter)])
+    async def record_override(body: OverrideRequest) -> OverrideResponse:
+        parsed = parse_url(body.url)
+        if not isinstance(parsed, ParsedUrl):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT, "not a URL that can be analysed"
+            )
+        expires = datetime.now(UTC) + timedelta(minutes=body.minutes)
+        detail = {
+            "host": parsed.host, "url_sha256": parsed.url_sha256, "minutes": body.minutes,
+            "overridden_state": body.state, "expires_at": expires.isoformat(),
+        }  # fmt: skip
+        try:
+            where = await run_in_threadpool(
+                audit.record_anywhere,
+                db,
+                settings.data_dir,
+                "user",
+                "override.grant",
+                "url",
+                detail,
+            )
+        except Exception:
+            log.exception("could not write the override audit record")
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE, "the override could not be recorded"
+            ) from None
+        return OverrideResponse(recorded=True, expires_at=expires, stored_in=where)
 
     return app
 

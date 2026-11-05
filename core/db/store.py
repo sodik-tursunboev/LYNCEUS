@@ -15,6 +15,7 @@ from core.contracts import ArtifactKind, EventSource, Evidence, Verdict
 from core.db import models as db
 from core.detection.engine import UrlAnalysis
 from core.email.engine import EmailAnalysis, ExtractedRef
+from core.files.engine import FileAnalysis
 
 _MAX_HOST = 253  # longest DNS name, and the column size; longer hosts are hostile input
 
@@ -139,6 +140,13 @@ def save_analysis(engine: Engine, a: UrlAnalysis, source: EventSource) -> None:
     digest = a.url.url_sha256 if a.url else a.input_sha256
     host = a.url.host if a.url else None
     _write(engine, a.verdict, a.evidence, ArtifactKind.URL, digest, host, source)
+
+
+def save_file_analysis(engine: Engine, a: FileAnalysis, source: EventSource) -> None:
+    r = a.report
+    _write(
+        engine, r.verdict, r.evidence, ArtifactKind.FILE, a.sha256, a.origin_host, source, a.urls
+    )
 
 
 def save_email_analysis(engine: Engine, a: EmailAnalysis, source: EventSource) -> None:

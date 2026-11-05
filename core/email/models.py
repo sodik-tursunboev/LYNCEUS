@@ -202,3 +202,21 @@ class FileReply(_Strict):
         ):
             raise ValueError("a reply is either a file scan or an error")
         return self
+
+
+class FileBytesReply(_Strict):
+    """The answer to `inspect_bytes`: a whole file's real type, its scan and page indicators."""
+
+    ok: Literal[True] | None = None
+    magic: Magic | None = None
+    file: FileScan | None = None
+    html: HtmlStats | None = None
+    error: WorkerError | None = None
+
+    @model_validator(mode="after")
+    def _exactly_one(self) -> "FileBytesReply":
+        if (self.file is not None) == (self.error is not None) or (self.file is not None) != bool(
+            self.ok
+        ):
+            raise ValueError("a reply is either a file scan or an error")
+        return self

@@ -12,6 +12,23 @@ IMAGES = {"png", "jpeg", "gif", "bmp", "tiff", "webp"}
 ARCHIVES = {"zip", "gz", "bz2", "xz", "tar"}
 
 
+def inspect_standalone(data: bytes) -> dict[str, Any]:
+    """A whole file (not a message part): its real type, the scan of its contents and, for a web
+    page, the same smuggling indicators as an HTML attachment."""
+    from limits import MAX_HTML_CHARS
+
+    magic: str | None = detect_magic(data[:600])
+    html: dict[str, Any] | None = None
+    if magic in ("html", "svg"):
+        import htmlscan
+
+        budget = htmlscan.Budget()
+        text = data[: MAX_HTML_CHARS * 4].decode("utf-8", "replace")[:MAX_HTML_CHARS]
+        htmlscan.scan_html(text, "1", budget)
+        html = dict(budget.stats)
+    return {"magic": magic, "file": inspect_data(data), "html": html}
+
+
 def inspect_data(data: bytes) -> dict[str, Any]:
     magic = detect_magic(data[:600])
     if magic in ARCHIVES:

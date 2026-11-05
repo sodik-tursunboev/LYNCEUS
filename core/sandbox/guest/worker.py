@@ -43,6 +43,10 @@ def handle(header: dict[str, Any], body: bytes) -> dict[str, Any]:
         if data is None:
             return {"error": "no_such_part"}
         return {"ok": True, "file": filescan.inspect_data(data)}
+    if op == "inspect_bytes":  # a whole file: the body is the file
+        import filescan
+
+        return {"ok": True, **filescan.inspect_standalone(body)}
     return {"error": "unknown_op"}
 
 
