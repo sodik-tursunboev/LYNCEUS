@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T16:53:35.878831Z",
+  "generated_at": "2026-11-05T17:57:42.437385Z",
   "engine_version": "email-1.1.0",
   "ruleset_version": "1.1.0+9790be320fdd",
   "kind": "mail",
@@ -42,9 +42,9 @@
     }
   },
   "latency": {
-    "p50_ms": 366.5238000030513,
-    "p95_ms": 1128.598700001021,
-    "max_ms": 1207.3481000043103
+    "p50_ms": 301.85559999517864,
+    "p95_ms": 949.9537000010605,
+    "max_ms": 1008.8850000029197
   },
   "rules": [
     {
@@ -503,7 +503,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 346.42860000167275
+      "latency_ms": 290.94749999785563
     },
     {
       "id": "m-002",
@@ -518,7 +518,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 355.51049999776296
+      "latency_ms": 291.22340000321856
     },
     {
       "id": "m-004",
@@ -534,7 +534,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 335.02779999980703
+      "latency_ms": 290.9155000015744
     },
     {
       "id": "m-006",
@@ -549,7 +549,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 391.5863000001991
+      "latency_ms": 305.5850999953691
     },
     {
       "id": "m-008",
@@ -564,7 +564,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 344.9791999955778
+      "latency_ms": 297.96640000131447
     },
     {
       "id": "m-010",
@@ -580,7 +580,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 333.43779999995604
+      "latency_ms": 300.44679999991786
     },
     {
       "id": "m-011",
@@ -590,7 +590,7 @@
       "rules": [
         "email.link_text_brand_mismatch"
       ],
-      "latency_ms": 338.8813999990816
+      "latency_ms": 287.8411999990931
     },
     {
       "id": "m-012",
@@ -600,7 +600,7 @@
       "rules": [
         "email.link_text_brand_mismatch"
       ],
-      "latency_ms": 347.2829000020283
+      "latency_ms": 294.0708999958588
     },
     {
       "id": "m-014",
@@ -610,7 +610,7 @@
       "rules": [
         "email.link_text_brand_mismatch"
       ],
-      "latency_ms": 391.8439999979455
+      "latency_ms": 286.32240000297315
     },
     {
       "id": "m-016",
@@ -620,7 +620,7 @@
       "rules": [
         "email.link_text_brand_mismatch"
       ],
-      "latency_ms": 366.25379999895813
+      "latency_ms": 293.7383000025875
     },
     {
       "id": "m-018",
@@ -630,7 +630,7 @@
       "rules": [
         "email.link_text_brand_mismatch"
       ],
-      "latency_ms": 372.4876000051154
+      "latency_ms": 295.36100000404986
     },
     {
       "id": "m-019",
@@ -641,7 +641,7 @@
         "email.display_name_brand",
         "email.password_form"
       ],
-      "latency_ms": 344.5579999970505
+      "latency_ms": 287.6804999978049
     },
     {
       "id": "m-020",
@@ -652,7 +652,7 @@
         "email.display_name_brand",
         "email.password_form"
       ],
-      "latency_ms": 358.71169999882113
+      "latency_ms": 293.23049999948125
     },
     {
       "id": "m-022",
@@ -663,7 +663,7 @@
         "email.display_name_brand",
         "email.password_form"
       ],
-      "latency_ms": 355.53490000165766
+      "latency_ms": 298.3639000012772
     },
     {
       "id": "m-024",
@@ -674,7 +674,7 @@
         "email.display_name_brand",
         "email.password_form"
       ],
-      "latency_ms": 335.2521000051638
+      "latency_ms": 292.81719999562483
     },
     {
       "id": "m-025",
@@ -684,7 +684,7 @@
       "rules": [
         "email.dangerous_attachment"
       ],
-      "latency_ms": 333.25979999790434
+      "latency_ms": 293.3192999989842
     },
     {
       "id": "m-026",
@@ -694,7 +694,7 @@
       "rules": [
         "email.dangerous_attachment"
       ],
-      "latency_ms": 331.3227000035113
+      "latency_ms": 295.3561000031186
     },
     {
       "id": "m-028",
@@ -704,7 +704,7 @@
       "rules": [
         "email.dangerous_attachment"
       ],
-      "latency_ms": 335.62520000123186
+      "latency_ms": 309.35699999827193
     },
     {
       "id": "m-030",
@@ -714,7 +714,7 @@
       "rules": [
         "email.dangerous_attachment"
       ],
-      "latency_ms": 359.89160000463016
+      "latency_ms": 293.32070000236854
     },
     {
       "id": "m-031",
@@ -725,7 +725,7 @@
         "email.dangerous_attachment",
         "email.double_extension"
       ],
-      "latency_ms": 338.5580999965896
+      "latency_ms": 292.28039999725297
     },
     {
       "id": "m-032",
@@ -736,7 +736,7 @@
         "email.dangerous_attachment",
         "email.double_extension"
       ],
-      "latency_ms": 347.71080000064103
+      "latency_ms": 298.794900001667
     },
     {
       "id": "m-034",
@@ -747,7 +747,7 @@
         "email.dangerous_attachment",
         "email.double_extension"
       ],
-      "latency_ms": 344.2542999982834
+      "latency_ms": 290.8984999958193
     },
     {
       "id": "m-036",
@@ -758,7 +758,7 @@
         "email.dangerous_attachment",
         "email.rtl_filename"
       ],
-      "latency_ms": 366.4210999995703
+      "latency_ms": 318.47360000392655
     },
     {
       "id": "m-037",
@@ -769,7 +769,7 @@
         "email.dangerous_attachment",
         "email.rtl_filename"
       ],
-      "latency_ms": 348.76329999679
+      "latency_ms": 298.13939999439754
     },
     {
       "id": "m-039",
@@ -782,7 +782,7 @@
         "email.password_form",
         "email.script_content"
       ],
-      "latency_ms": 399.40110000316054
+      "latency_ms": 288.44009999738773
     },
     {
       "id": "m-040",
@@ -795,7 +795,7 @@
         "email.password_form",
         "email.script_content"
       ],
-      "latency_ms": 400.83900000172434
+      "latency_ms": 289.5615999950678
     },
     {
       "id": "m-042",
@@ -808,7 +808,7 @@
         "email.password_form",
         "email.script_content"
       ],
-      "latency_ms": 330.46959999774117
+      "latency_ms": 297.44400000345195
     },
     {
       "id": "m-044",
@@ -819,7 +819,7 @@
         "email.archive_attachment",
         "email.macro_attachment"
       ],
-      "latency_ms": 788.3877999993274
+      "latency_ms": 676.5966000020853
     },
     {
       "id": "m-045",
@@ -830,7 +830,7 @@
         "email.archive_attachment",
         "email.macro_attachment"
       ],
-      "latency_ms": 792.0624999969732
+      "latency_ms": 666.6622999982792
     },
     {
       "id": "m-046",
@@ -841,7 +841,7 @@
         "email.archive_attachment",
         "email.macro_attachment"
       ],
-      "latency_ms": 803.3709000010276
+      "latency_ms": 664.6213999993051
     },
     {
       "id": "m-048",
@@ -852,7 +852,7 @@
         "email.attachment_type_mismatch",
         "email.dangerous_attachment"
       ],
-      "latency_ms": 350.58460000436753
+      "latency_ms": 305.32400000083726
     },
     {
       "id": "m-049",
@@ -862,7 +862,7 @@
       "rules": [
         "email.attachment_type_mismatch"
       ],
-      "latency_ms": 782.079500000691
+      "latency_ms": 668.7830000009853
     },
     {
       "id": "m-050",
@@ -873,7 +873,7 @@
         "email.attachment_type_mismatch",
         "email.dangerous_attachment"
       ],
-      "latency_ms": 335.0051999950665
+      "latency_ms": 304.6621000030427
     },
     {
       "id": "m-052",
@@ -886,7 +886,7 @@
         "email.reply_to_mismatch",
         "email.sender.brand_in_domain"
       ],
-      "latency_ms": 361.91580000013346
+      "latency_ms": 293.2421000004979
     },
     {
       "id": "m-053",
@@ -899,7 +899,7 @@
         "email.reply_to_mismatch",
         "email.sender.brand_in_domain"
       ],
-      "latency_ms": 354.01330000604503
+      "latency_ms": 292.2928000043612
     },
     {
       "id": "m-054",
@@ -912,7 +912,7 @@
         "email.reply_to_mismatch",
         "email.sender.brand_in_domain"
       ],
-      "latency_ms": 357.4707000007038
+      "latency_ms": 299.17659999773605
     },
     {
       "id": "m-056",
@@ -922,7 +922,7 @@
       "rules": [
         "email.hidden_link"
       ],
-      "latency_ms": 360.2673999994295
+      "latency_ms": 293.5183000008692
     },
     {
       "id": "m-057",
@@ -933,7 +933,7 @@
         "email.display_name_brand",
         "email.hidden_link"
       ],
-      "latency_ms": 352.4061999996775
+      "latency_ms": 292.2441999980947
     },
     {
       "id": "m-058",
@@ -944,7 +944,7 @@
         "email.display_name_brand",
         "email.hidden_link"
       ],
-      "latency_ms": 363.9130000010482
+      "latency_ms": 297.47060000227066
     },
     {
       "id": "m-060",
@@ -957,7 +957,7 @@
         "email.social_engineering",
         "url.combosquat"
       ],
-      "latency_ms": 375.3035000045202
+      "latency_ms": 286.5453999984311
     },
     {
       "id": "m-061",
@@ -970,7 +970,7 @@
         "email.social_engineering",
         "url.combosquat"
       ],
-      "latency_ms": 349.8076999967452
+      "latency_ms": 298.51110000163317
     },
     {
       "id": "m-063",
@@ -983,7 +983,7 @@
         "email.social_engineering",
         "url.combosquat"
       ],
-      "latency_ms": 394.96380000491627
+      "latency_ms": 311.5937999973539
     },
     {
       "id": "m-065",
@@ -996,7 +996,7 @@
         "email.social_engineering",
         "url.combosquat"
       ],
-      "latency_ms": 331.82350000424776
+      "latency_ms": 329.2113999996218
     },
     {
       "id": "m-067",
@@ -1012,7 +1012,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 330.64179999928456
+      "latency_ms": 302.7354999940144
     },
     {
       "id": "m-068",
@@ -1028,7 +1028,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 364.76630000106525
+      "latency_ms": 293.04229999979725
     },
     {
       "id": "m-069",
@@ -1044,7 +1044,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 335.3879999995115
+      "latency_ms": 307.3205000036978
     },
     {
       "id": "m-071",
@@ -1054,7 +1054,7 @@
       "rules": [
         "email.image_only_link"
       ],
-      "latency_ms": 363.2743999987724
+      "latency_ms": 314.50559999939287
     },
     {
       "id": "m-072",
@@ -1064,7 +1064,7 @@
       "rules": [
         "email.image_only_link"
       ],
-      "latency_ms": 368.83210000087274
+      "latency_ms": 309.0352999934112
     },
     {
       "id": "m-074",
@@ -1074,7 +1074,7 @@
       "rules": [
         "email.image_only_link"
       ],
-      "latency_ms": 410.82900000037625
+      "latency_ms": 312.6401000045007
     },
     {
       "id": "m-076",
@@ -1084,7 +1084,7 @@
       "rules": [
         "email.image_only_link"
       ],
-      "latency_ms": 381.2811000025249
+      "latency_ms": 327.3031999997329
     },
     {
       "id": "m-078",
@@ -1094,7 +1094,7 @@
       "rules": [
         "email.image_only_link"
       ],
-      "latency_ms": 409.07200000219746
+      "latency_ms": 315.19899999693735
     },
     {
       "id": "m-079",
@@ -1102,7 +1102,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 351.5890999988187
+      "latency_ms": 295.3032000004896
     },
     {
       "id": "m-080",
@@ -1110,7 +1110,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 342.51030000450555
+      "latency_ms": 304.5180999979493
     },
     {
       "id": "m-082",
@@ -1118,7 +1118,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 329.56479999847943
+      "latency_ms": 287.7042000036454
     },
     {
       "id": "m-084",
@@ -1126,7 +1126,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 337.7840999964974
+      "latency_ms": 288.4723999959533
     },
     {
       "id": "m-086",
@@ -1134,7 +1134,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 343.35279999504564
+      "latency_ms": 292.4801000044681
     },
     {
       "id": "m-087",
@@ -1142,7 +1142,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 339.39549999922747
+      "latency_ms": 296.1377000028733
     },
     {
       "id": "m-088",
@@ -1150,7 +1150,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 376.38650000008056
+      "latency_ms": 292.3865000047954
     },
     {
       "id": "m-090",
@@ -1158,7 +1158,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 352.3172000059276
+      "latency_ms": 294.80730000068434
     },
     {
       "id": "m-092",
@@ -1166,7 +1166,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 336.70120000169845
+      "latency_ms": 298.36250000516884
     },
     {
       "id": "m-094",
@@ -1174,7 +1174,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 360.42060000181664
+      "latency_ms": 292.29929999564774
     },
     {
       "id": "m-095",
@@ -1182,7 +1182,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1009.9170999965281
+      "latency_ms": 840.6136999983573
     },
     {
       "id": "m-096",
@@ -1190,7 +1190,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1055.748400001903
+      "latency_ms": 950.2805000010994
     },
     {
       "id": "m-098",
@@ -1198,7 +1198,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 768.3659000031184
+      "latency_ms": 673.0995000034454
     },
     {
       "id": "m-100",
@@ -1208,7 +1208,7 @@
       "rules": [
         "email.archive_attachment"
       ],
-      "latency_ms": 802.2053999957279
+      "latency_ms": 660.9373999963282
     },
     {
       "id": "m-102",
@@ -1216,7 +1216,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 349.9071999976877
+      "latency_ms": 294.1285999986576
     },
     {
       "id": "m-103",
@@ -1226,7 +1226,7 @@
       "rules": [
         "email.malformed_mime"
       ],
-      "latency_ms": 367.5345000010566
+      "latency_ms": 296.77169999922626
     },
     {
       "id": "m-104",
@@ -1236,7 +1236,7 @@
       "rules": [
         "email.malformed_mime"
       ],
-      "latency_ms": 353.4570999981952
+      "latency_ms": 290.9261000022525
     },
     {
       "id": "m-105",
@@ -1246,7 +1246,7 @@
       "rules": [
         "email.malformed_mime"
       ],
-      "latency_ms": 345.02749999955995
+      "latency_ms": 290.2183999976842
     },
     {
       "id": "m-107",
@@ -1256,7 +1256,7 @@
       "rules": [
         "email.malformed_mime"
       ],
-      "latency_ms": 339.89260000089416
+      "latency_ms": 293.143400005647
     },
     {
       "id": "m-108",
@@ -1264,7 +1264,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 366.5238000030513
+      "latency_ms": 292.595099999744
     },
     {
       "id": "m-109",
@@ -1274,7 +1274,7 @@
       "rules": [
         "email.malformed_mime"
       ],
-      "latency_ms": 335.26849999907427
+      "latency_ms": 290.09100000257604
     },
     {
       "id": "m-111",
@@ -1282,7 +1282,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 332.00339999893913
+      "latency_ms": 297.1553000024869
     },
     {
       "id": "m-112",
@@ -1290,7 +1290,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 343.4064999964903
+      "latency_ms": 294.79839999839896
     },
     {
       "id": "m-113",
@@ -1298,7 +1298,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 334.4301000033738
+      "latency_ms": 291.52829999657115
     },
     {
       "id": "m-115",
@@ -1306,7 +1306,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 342.0292000009795
+      "latency_ms": 291.568599997845
     },
     {
       "id": "m-117",
@@ -1314,7 +1314,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 367.5172000002931
+      "latency_ms": 301.85559999517864
     },
     {
       "id": "m-118",
@@ -1322,7 +1322,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 339.64779999951134
+      "latency_ms": 290.63809999934165
     },
     {
       "id": "m-119",
@@ -1330,7 +1330,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 363.1124000021373
+      "latency_ms": 288.61000000324566
     },
     {
       "id": "m2b-001",
@@ -1342,7 +1342,7 @@
         "email.archive_contents_dangerous",
         "email.social_engineering"
       ],
-      "latency_ms": 798.3791000006022
+      "latency_ms": 682.9268000001321
     },
     {
       "id": "m2b-002",
@@ -1356,7 +1356,7 @@
         "email.sender.brand_in_domain",
         "email.social_engineering"
       ],
-      "latency_ms": 776.5471000020625
+      "latency_ms": 667.6116999951773
     },
     {
       "id": "m2b-003",
@@ -1368,7 +1368,7 @@
         "email.archive_contains_macro",
         "email.archive_contents_dangerous"
       ],
-      "latency_ms": 765.3105999997933
+      "latency_ms": 660.3691000054823
     },
     {
       "id": "m2b-004",
@@ -1380,7 +1380,7 @@
         "email.archive_contents_dangerous",
         "email.archive_double_extension"
       ],
-      "latency_ms": 794.6526000014273
+      "latency_ms": 661.672099995485
     },
     {
       "id": "m2b-005",
@@ -1392,7 +1392,7 @@
         "email.archive_encrypted",
         "email.social_engineering"
       ],
-      "latency_ms": 783.4179999990738
+      "latency_ms": 662.6524000021163
     },
     {
       "id": "m2b-006",
@@ -1403,7 +1403,7 @@
         "email.archive_attachment",
         "email.archive_bomb"
       ],
-      "latency_ms": 818.0704999977024
+      "latency_ms": 686.5623999983654
     },
     {
       "id": "m2b-007",
@@ -1415,7 +1415,7 @@
         "email.archive_contents_dangerous",
         "email.archive_nested"
       ],
-      "latency_ms": 782.8437999996822
+      "latency_ms": 683.3485999959521
     },
     {
       "id": "m2b-008",
@@ -1427,7 +1427,7 @@
         "email.archive_contents_dangerous",
         "email.social_engineering"
       ],
-      "latency_ms": 761.7473999998765
+      "latency_ms": 664.559000004374
     },
     {
       "id": "m2b-009",
@@ -1440,7 +1440,7 @@
         "email.archive_encrypted",
         "email.social_engineering"
       ],
-      "latency_ms": 803.4355999989202
+      "latency_ms": 700.5174000005354
     },
     {
       "id": "m2b-010",
@@ -1452,7 +1452,7 @@
         "email.archive_contents_dangerous",
         "email.archive_double_extension"
       ],
-      "latency_ms": 793.0077999990317
+      "latency_ms": 697.6699000006192
     },
     {
       "id": "m2b-011",
@@ -1462,7 +1462,7 @@
       "rules": [
         "email.pdf_javascript"
       ],
-      "latency_ms": 1016.9480000040494
+      "latency_ms": 841.9089000017266
     },
     {
       "id": "m2b-012",
@@ -1472,7 +1472,7 @@
       "rules": [
         "email.pdf_launch_action"
       ],
-      "latency_ms": 996.546499998658
+      "latency_ms": 858.1389000028139
     },
     {
       "id": "m2b-013",
@@ -1487,7 +1487,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 987.9580999986501
+      "latency_ms": 878.5647000040626
     },
     {
       "id": "m2b-014",
@@ -1501,7 +1501,7 @@
         "url.combosquat",
         "url.credential_bait"
       ],
-      "latency_ms": 1002.3194000023068
+      "latency_ms": 883.7812000056147
     },
     {
       "id": "m2b-015",
@@ -1514,7 +1514,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 993.9592000009725
+      "latency_ms": 949.3157999968389
     },
     {
       "id": "m2b-016",
@@ -1524,7 +1524,7 @@
       "rules": [
         "email.pdf_javascript"
       ],
-      "latency_ms": 947.0376999961445
+      "latency_ms": 916.1411000022781
     },
     {
       "id": "m2b-017",
@@ -1538,7 +1538,7 @@
         "url.combosquat",
         "url.login_path"
       ],
-      "latency_ms": 982.5667999975849
+      "latency_ms": 889.304299998912
     },
     {
       "id": "m2b-018",
@@ -1548,7 +1548,7 @@
       "rules": [
         "email.pdf_embedded_file"
       ],
-      "latency_ms": 1039.5601999989594
+      "latency_ms": 851.5600000027916
     },
     {
       "id": "m2b-019",
@@ -1558,7 +1558,7 @@
       "rules": [
         "email.pdf_launch_action"
       ],
-      "latency_ms": 977.699199997005
+      "latency_ms": 869.7240999972564
     },
     {
       "id": "m2b-020",
@@ -1573,7 +1573,7 @@
         "url.login_path",
         "url.prefilled_identity"
       ],
-      "latency_ms": 1154.745499996352
+      "latency_ms": 965.2090000017779
     },
     {
       "id": "m2b-021",
@@ -1587,7 +1587,7 @@
         "url.brand_in_domain",
         "url.credential_bait"
       ],
-      "latency_ms": 1132.927300001029
+      "latency_ms": 949.9537000010605
     },
     {
       "id": "m2b-022",
@@ -1599,7 +1599,7 @@
         "url.ip_literal",
         "url.login_path"
       ],
-      "latency_ms": 1201.4838000031887
+      "latency_ms": 1008.8850000029197
     },
     {
       "id": "m2b-023",
@@ -1611,7 +1611,7 @@
         "email.html_smuggling",
         "email.script_content"
       ],
-      "latency_ms": 357.48420000163605
+      "latency_ms": 292.20120000536554
     },
     {
       "id": "m2b-024",
@@ -1623,7 +1623,7 @@
         "email.html_smuggling",
         "url.dangerous_scheme"
       ],
-      "latency_ms": 348.50129999540513
+      "latency_ms": 295.254799995746
     },
     {
       "id": "m2b-025",
@@ -1633,7 +1633,7 @@
       "rules": [
         "email.qr_code_link"
       ],
-      "latency_ms": 1205.7022000008146
+      "latency_ms": 938.6330999986967
     },
     {
       "id": "m2b-026",
@@ -1645,7 +1645,7 @@
         "email.html_smuggling",
         "email.script_content"
       ],
-      "latency_ms": 382.6123000035295
+      "latency_ms": 296.79400000168243
     },
     {
       "id": "m2b-027",
@@ -1658,7 +1658,7 @@
         "email.sender.combosquat",
         "url.combosquat"
       ],
-      "latency_ms": 1207.3481000043103
+      "latency_ms": 957.6295000006212
     },
     {
       "id": "m2b-028",
@@ -1670,7 +1670,7 @@
         "email.html_smuggling",
         "email.script_content"
       ],
-      "latency_ms": 359.07120000047144
+      "latency_ms": 289.70249999838416
     },
     {
       "id": "m2b-029",
@@ -1678,7 +1678,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 995.0450000033015
+      "latency_ms": 844.3763999966905
     },
     {
       "id": "m2b-030",
@@ -1686,7 +1686,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1010.1350000040838
+      "latency_ms": 830.2057000037166
     },
     {
       "id": "m2b-031",
@@ -1696,7 +1696,7 @@
       "rules": [
         "email.archive_attachment"
       ],
-      "latency_ms": 790.0794000015594
+      "latency_ms": 664.2720000018016
     },
     {
       "id": "m2b-032",
@@ -1706,7 +1706,7 @@
       "rules": [
         "email.archive_attachment"
       ],
-      "latency_ms": 783.6021999974037
+      "latency_ms": 669.345099995553
     },
     {
       "id": "m2b-033",
@@ -1714,7 +1714,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1128.598700001021
+      "latency_ms": 947.6353999998537
     },
     {
       "id": "m2b-034",
@@ -1724,7 +1724,7 @@
       "rules": [
         "email.qr_code_link"
       ],
-      "latency_ms": 1106.6938000003574
+      "latency_ms": 952.4368999991566
     },
     {
       "id": "m2b-035",
@@ -1734,7 +1734,7 @@
       "rules": [
         "email.pdf_encrypted"
       ],
-      "latency_ms": 1023.7426999956369
+      "latency_ms": 844.9356999990414
     },
     {
       "id": "m2b-036",
@@ -1744,7 +1744,7 @@
       "rules": [
         "email.archive_attachment"
       ],
-      "latency_ms": 815.4542000047513
+      "latency_ms": 654.8337999993237
     },
     {
       "id": "m2b-037",
@@ -1752,7 +1752,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1031.030300000566
+      "latency_ms": 839.9695999978576
     },
     {
       "id": "m2b-038",
@@ -1760,7 +1760,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 1107.407499999681
+      "latency_ms": 934.337400001823
     },
     {
       "id": "m2b-039",
@@ -1770,7 +1770,7 @@
       "rules": [
         "email.qr_code_link"
       ],
-      "latency_ms": 1103.8517999986652
+      "latency_ms": 937.3640000048908
     },
     {
       "id": "m2b-040",
@@ -1778,7 +1778,7 @@
       "label": "benign",
       "state": "UNKNOWN",
       "rules": [],
-      "latency_ms": 993.3404000039445
+      "latency_ms": 822.5451000034809
     }
   ]
 }

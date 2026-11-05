@@ -1,6 +1,6 @@
 # Eval report (mail)
 
-Split `dev`, n=119. Engine `email-1.1.0`, ruleset `1.1.0+9790be320fdd`. 2026-11-05 16:53Z.
+Split `dev`, n=119. Engine `email-1.1.0`, ruleset `1.1.0+9790be320fdd`. 2026-11-05 17:57Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
@@ -18,7 +18,7 @@ Split `dev`, n=119. Engine `email-1.1.0`, ruleset `1.1.0+9790be320fdd`. 2026-11-
 | Abstain rate | 0.395 | 0.312 to 0.485 |
 | Error rate | 0.000 | |
 
-Latency per message (includes starting the sandbox): p50 366.524 ms, p95 1128.599 ms, max 1207.348 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per message (includes starting the sandbox): p50 301.856 ms, p95 949.954 ms, max 1008.885 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
