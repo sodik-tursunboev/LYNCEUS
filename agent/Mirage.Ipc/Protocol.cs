@@ -111,7 +111,7 @@ public static partial class Protocol
             error = string.Empty;
             return true;
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException or InvalidOperationException or ArgumentException)
         {
             return false;
         }
@@ -128,7 +128,7 @@ public static partial class Protocol
                 && root.TryGetProperty("type", out var type) && type.ValueKind == JsonValueKind.String && type.GetString() == "hello"
                 && root.TryGetProperty("ok", out var ok) && ok.ValueKind == JsonValueKind.True;
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException or InvalidOperationException or ArgumentException)
         {
             return false;
         }

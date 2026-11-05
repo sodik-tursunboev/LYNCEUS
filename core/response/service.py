@@ -30,6 +30,11 @@ class Transition(NamedTuple):
     state: str | None
 
 
+def _known(actor: str) -> str:
+    """Only the three real actors reach the audit log; anything else is recorded as the user."""
+    return actor if actor in ("user", "policy", "agent") else "user"
+
+
 def _now() -> datetime:
     return datetime.now(UTC)
 
@@ -75,6 +80,7 @@ def create_pending(
 def transition(
     engine: Engine, action_id: uuid.UUID, event: Event, actor: str, reason: str | None = None
 ) -> Transition:
+    actor = _known(actor)
     if reason is not None and not _REASON.match(reason):
         reason = "invalid_reason"
     for _ in range(3):
@@ -151,6 +157,7 @@ def list_actions(engine: Engine, states: list[str] | None, limit: int) -> list[d
 
 
 def allow_add(engine: Engine, sha256: str, actor: str, days: int | None) -> datetime | None:
+    actor = _known(actor)
     expires = _now() + timedelta(days=days) if days else None
     with engine.begin() as c:
         have = c.scalar(select(db.Allow.id).where(db.Allow.sha256 == sha256))
@@ -172,6 +179,7 @@ def allow_add(engine: Engine, sha256: str, actor: str, days: int | None) -> date
 
 
 def allow_remove(engine: Engine, sha256: str, actor: str) -> bool:
+    actor = _known(actor)
     with engine.begin() as c:
         gone = c.execute(delete(db.Allow).where(db.Allow.sha256 == sha256)).rowcount
         if gone:

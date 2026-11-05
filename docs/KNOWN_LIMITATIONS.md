@@ -1,10 +1,10 @@
-# Known limitations (v0.1: M0 to M3; M4 to M6 added below)
+# Known limitations (v0.1: M0 to M3; M4 to M7 added below)
 
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
 ## The Windows agent and browser extension (M4): what they are and are not
 
-- **Blocking is "fail open" and asynchronous by default.** The first visit to a URL nobody has judged yet can start loading before the verdict arrives (tens of milliseconds locally); the warning page then replaces it. Only a URL **already judged bad** is stopped before any request is sent, and only after you grant the extension site access on its options page. Measured earlier on 2026-11-05: with the permission granted, a second visit to a bad URL never reached the server (headful Edge, `extension/e2e`); in later runs the browser did not accept the permission request automatically, so that test now skips itself and the claim is not re-confirmed. Without it, every visit can reach the server first.
+- **Blocking is "fail open" and asynchronous by default.** The first visit to a URL nobody has judged yet can start loading before the verdict arrives (tens of milliseconds locally); the warning page then replaces it. Only a URL **already judged bad** is stopped before any request is sent, and only after you grant the extension site access on its options page. Measured earlier on 2026-11-05: with the permission granted, a second visit to a bad URL never reached the server (headful Edge, `extension/e2e`); in later runs the browser did not accept the permission request automatically, so that test skips itself in that case; a later run passed it again, so it is intermittent and environment-dependent. Without it, every visit can reach the server first.
 - **If the agent is not running, nothing is checked.** Pages open as normal and the toolbar badge shows `!`. A core that is down while the agent is up shows `?`. The agent is started at logon by a per-user Run entry; if you log out, or it crashes, there is no protection until it restarts.
 - **Files are flagged, never touched.** A verdict, a notification and a record: no quarantine, move or delete (M6). A file is never BENIGN. Files over 16 MiB are described (name, size, hash, type) but their contents are not opened. A file an antivirus has already blocked cannot be read and is skipped and counted.
 - **A download is seen when the folder watcher sees it, not when the browser starts it.** The agent waits until the file has been quiet for a second and can be opened. A file locked for ten minutes is given up on. `FileSystemWatcher` can lose events; every loss triggers a re-scan, and a checkpoint covers restarts, but this is a safety net, not a guarantee. First start looks only at files from then on.
@@ -26,6 +26,12 @@ Written to be read before trusting anything in the repo. "Not verified" means co
 - **Restore puts the file back dangerous.** It does not re-scan; the allow-list option stops further proposals for that exact content only.
 - **The console runs in a browser tab,** not a native window. It is same-origin with the API behind a strict policy, and other pages in the same browser cannot read its `sessionStorage` because of the browser's origin rules. `Mirage.Agent.exe --open-console` puts the token in the address fragment once; browsers do not send it to servers, the console removes it from the address bar at once, but the browser's history may keep the first visit. Typing the token avoids that.
 - **Not verified:** the console in Chrome or Firefox; screen readers and keyboard-only use beyond the semantic markup used; very large numbers of events (lists are capped at 100 to 200 rows and refresh every few seconds).
+## Deployment and CI (M7)
+
+- **The installer is a script, not an MSI.** `deploy\install.ps1` is reproducible and per-user, but it needs the .NET SDK, Node, Python and a checkout on the machine, is unsigned, and the core keeps running from the checkout. A packaged installer and code signing are not done.
+- **CI has never run.** The Windows job added in M7 is `continue-on-error` and unverified; whether the sandbox (an AppContainer) works on a hosted runner is unknown.
+- **Performance numbers are one machine, one run, a shared desktop.** They are an order of magnitude, not a guarantee. A mailbox burst and a large download backlog were not load-tested.
+- **Fuzzing is bounded** (fixed seeds, thousands of cases); it is not coverage-guided and it did not cover the native parsers inside the sandbox beyond the existing fixtures.
 ## The live mailbox (M5): what it is and is not
 
 - **Never run against real Google.** Everything is tested against a fake Gmail that follows the documented request and response shapes. That proves our logic (de-duplication, recovery, failure handling, read-only enforcement, privacy), not that Google accepts this client, that consent works for your account, or that real raw messages parse. The live checklist is in `docs/milestones/M5.md`.

@@ -75,3 +75,7 @@ New: a component that moves the user's files (the agent) and a UI that can ask i
 | Interrupted or failed move loses a file | record before any irreversible step; verify the copy before the original goes; resume after a crash; rename on one volume; restore never overwrites and keeps the quarantine copy | the quarantine copy is kept forever (no purge) |
 | Markup injection through rule names, hosts, reasons | everything is rendered as text by React; a test scans the source for every injection route and inline style | |
 | The agent acts on an unapproved action | the core refuses an `applied` report for anything not APPROVED; the agent acts only on APPROVED actions | |
+
+## Hardening pass (M7)
+
+The new doors (native-messaging protocol, pipe, response routes, console route) were attacked with seeded random and mutated input; see `tests/adversarial/test_response_fuzz.py` and `agent/Mirage.Agent.Tests/FuzzTests.cs`. Two defects were found and fixed: a protocol parser that threw on invalid UTF-8 (a hostile frame closed the connection instead of being refused) and an audit log that could record an unknown actor name. **Residual:** the fuzzing is bounded (fixed seeds, thousands of cases, not coverage-guided); the sandbox's escape resistance has been tested with bomb and malformed-input fixtures only, never with a real exploit; nothing has been reviewed by anyone but the author.

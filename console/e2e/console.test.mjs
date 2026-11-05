@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO = resolve(import.meta.dirname, "..", "..");
 const PY = join(REPO, ".venv", "Scripts", "python.exe");
-const AGENT = join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0", "Mirage.Agent.exe");
+const AGENT = join(process.env.MIRAGE_AGENT_BIN ?? join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0"), "Mirage.Agent.exe");
 const EDGE = ["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe"].find(existsSync);
 const TOKEN = "e2e-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + "0123456789";
 

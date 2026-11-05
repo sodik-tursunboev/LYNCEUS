@@ -12,7 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO = resolve(import.meta.dirname, "..", "..");
 const PY = join(REPO, ".venv", "Scripts", "python.exe");
-const BIN = join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0");
+const BIN = process.env.MIRAGE_AGENT_BIN ?? join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0");
 const AGENT = join(BIN, "Mirage.Agent.exe");
 const HOST = join(BIN, "Mirage.NativeHost.exe");
 const DIST = join(REPO, "extension", "dist");

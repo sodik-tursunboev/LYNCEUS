@@ -28,3 +28,56 @@ jobs:
         run: |
           python tasks.py eval --out "$RUNNER_TEMP/eval"
           test -s "$RUNNER_TEMP/eval/dev.json"
+
+  # Windows job (M7): the agent, the extension, the console and the Python tests with the real sandbox.
+  # UNVERIFIED: CI has never run (nothing has been pushed). Until it has passed once it must not gate anything,
+  # so it is allowed to fail. The Python version matches the hash-pinned sandbox wheels in requirements-sandbox.txt.
+  windows:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Python dependencies and the parser sandbox
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe tasks.py deps
+          .\.venv\Scripts\python.exe tasks.py sandbox
+      - name: Python lint and tests (the Postgres tests skip: no database here)
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe tasks.py lint
+          .\.venv\Scripts\python.exe tasks.py test
+      - name: Agent (build with warnings as errors, locked restore, tests)
+        shell: pwsh
+        env:
+          CI: "true"
+        run: |
+          dotnet restore agent/Mirage.slnx
+          dotnet build agent/Mirage.slnx --no-restore
+          dotnet test agent/Mirage.slnx --no-build
+      - name: Extension
+        shell: pwsh
+        working-directory: extension
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm test
+          node build.mjs
+      - name: Console
+        shell: pwsh
+        working-directory: console
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm test
+          node build.mjs

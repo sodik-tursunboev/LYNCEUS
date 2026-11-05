@@ -3,7 +3,8 @@
 safe_fetch (the redirect resolver) is off and unwired; core/intel/http.py is the one place
 threat-intelligence providers open connections, and only for providers the operator enabled;
 core/mailbox/gmail.py and oauth.py are the only places the live mailbox talks to Google (three
-fixed hosts, GET-only to Gmail), and only when the operator connected an account (M5)."""
+fixed hosts, GET-only to Gmail), and only when the operator connected an account (M5);
+eval/perf.py is a measurement tool that talks only to a local server it starts itself (M7)."""
 
 import ast
 from pathlib import Path
@@ -18,6 +19,7 @@ ALLOWED = {
     ROOT / "core" / "intel" / "http.py",
     ROOT / "core" / "mailbox" / "gmail.py",
     ROOT / "core" / "mailbox" / "oauth.py",
+    ROOT / "eval" / "perf.py",  # loopback only: checked by the test below
 }
 
 
@@ -91,3 +93,20 @@ def test_the_mailbox_reaches_the_network_only_through_its_two_guarded_modules() 
 def test_the_analysis_engines_do_not_import_the_mailbox() -> None:
     for engine in ("core/detection/engine.py", "core/email/engine.py", "core/files/engine.py"):
         assert not any(n.startswith("core.mailbox") for n in imports(ROOT / engine)), engine
+
+
+def test_the_measurement_tool_only_ever_connects_to_this_machine() -> None:
+    """Every address passed to urlopen/Request in eval/perf.py starts with http://127.0.0.1:
+    (the sample URLs it analyses are data, never connected to)."""
+    tree = ast.parse((ROOT / "eval" / "perf.py").read_text(encoding="utf-8"))
+    targets = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and getattr(node.func, "attr", "") in ("urlopen", "Request"):
+            first = node.args[0] if node.args else None
+            if isinstance(first, ast.JoinedStr):
+                head = first.values[0]
+                targets.append(head.value if isinstance(head, ast.Constant) else "?")
+            elif isinstance(first, ast.Constant):
+                targets.append(str(first.value))
+    assert len(targets) >= 2, targets
+    assert all(str(x).startswith("http://127.0.0.1:") for x in targets), targets
