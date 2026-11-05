@@ -22,7 +22,14 @@ for _noisy in ("httpx", "httpcore"):
 API = "https://gmail.googleapis.com/gmail/v1/users/me"
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 GMAIL_HOST = "gmail.googleapis.com"
-ALLOWED_HOSTS = frozenset({GMAIL_HOST, "oauth2.googleapis.com", "accounts.google.com"})
+GRAPH_HOST = "graph.microsoft.com"
+READ_ONLY_HOSTS = frozenset({GMAIL_HOST, GRAPH_HOST})  # GET and nothing else, ever
+ALLOWED_HOSTS = frozenset(
+    {
+        GMAIL_HOST, GRAPH_HOST, "oauth2.googleapis.com", "accounts.google.com",
+        "login.microsoftonline.com",
+    }
+)  # fmt: skip
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024  # a 10 MiB message is about 14 MB as base64url JSON
 PAGE = 100
 
@@ -48,8 +55,8 @@ class EgressRefused(Exception):
 def guard(request: httpx.Request) -> None:
     if request.url.scheme != "https" or request.url.host not in ALLOWED_HOSTS:
         raise EgressRefused(f"{request.url.scheme}://{request.url.host}")
-    if request.url.host == GMAIL_HOST and request.method != "GET":
-        raise EgressRefused(f"{request.method} to Gmail")
+    if request.url.host in READ_ONLY_HOSTS and request.method != "GET":
+        raise EgressRefused(f"{request.method} to a mail host")
 
 
 def make_client(
@@ -185,6 +192,8 @@ def _status_error(r: httpx.Response, missing: ErrorKind) -> GmailError:
     code = r.status_code
     retry = r.headers.get("retry-after")
     after = float(retry) if retry and retry.replace(".", "", 1).isdigit() else None
+    if code == 410:
+        return GmailError("history_gone")  # a change token the provider no longer has
     if code == 404:
         return GmailError(missing)
     if code == 401:

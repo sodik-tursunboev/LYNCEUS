@@ -22,7 +22,7 @@ export function Overview({ api }: { api: Api }) {
         <div className="card"><div className="muted">Waiting for your decision</div><div className="big">{waiting}</div><a href="#/actions">Open</a></div>
         <div className="card"><div className="muted">In quarantine</div><div className="big">{quarantined}</div></div>
         <div className="card"><div className="muted">Flagged recently</div><div className="big">{bad}</div><a href="#/events">Open</a></div>
-        <div className="card"><div className="muted">Gmail</div><div className="big">{mailbox.data?.state ?? "…"}</div></div>
+        <div className="card"><div className="muted">Mail</div><div className="big">{mailbox.data?.state ?? "…"}</div></div>
       </div>
       <p className="muted">This console only shows what MIRAGE found and carries out your decisions. Monitoring runs without it.</p>
     </>

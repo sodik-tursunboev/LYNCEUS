@@ -43,8 +43,8 @@ from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.registry import build_intel
 from core.log import configure
-from core.mailbox.service import MailboxService
-from core.mailbox.wiring import build_mailbox
+from core.mailbox.service import MailboxService, combined_status
+from core.mailbox.wiring import build_mailboxes
 from core.response import service as response_service
 from core.response.routes import build_router as response_router
 from core.urls.parse import ParsedUrl, parse_url
@@ -185,15 +185,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure(settings.log_level)
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
 
-    mailbox: MailboxService | None = None  # built below, once the database exists
+    mailboxes: list[MailboxService] = []  # filled below, once the database exists
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        if mailbox is not None:
-            mailbox.start()
+        for service in mailboxes:
+            service.start()
         yield
-        if mailbox is not None:
-            await run_in_threadpool(mailbox.stop)
+        for service in mailboxes:
+            await run_in_threadpool(service.stop)
         if intel is not None:
             await intel.aclose()
 
@@ -222,7 +222,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.database_url
         else None
     )
-    mailbox = build_mailbox(settings, db, intel)  # None unless MIRAGE_GMAIL_ENABLED
+    mailboxes.extend(build_mailboxes(settings, db, intel))  # only what the operator enabled
     feed_store = FeedStore(settings.data_dir / "feeds")
     if intel is not None and db is not None:
         for p in intel.providers:
@@ -284,7 +284,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/v1/mailbox/status", dependencies=[Depends(require_token)])
     def mailbox_status() -> dict[str, object]:
         """Counts and states only: never an address, a subject or a token."""
-        return mailbox.status() if mailbox is not None else {"state": "off"}
+        return combined_status(mailboxes)
 
     @app.get("/v1/intel/health", dependencies=[Depends(require_token)])
     def intel_health() -> IntelHealth:

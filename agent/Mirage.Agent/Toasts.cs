@@ -44,7 +44,7 @@ public static class ToastText
     }
 
     public static (string Title, string Body) ForReconnect() =>
-        ("MIRAGE: Gmail needs to be connected again", "Access expired or was revoked, so new mail is not being checked. Run: python -m core.mailbox connect");
+        ("MIRAGE: your mailbox needs to be connected again", "Access expired or was revoked, so new mail is not being checked. Run: python -m core.mailbox connect (add --provider outlook for Outlook)");
 
     internal static string Friendly(string rule) => Cut(Clean(rule[(rule.LastIndexOf('.') + 1)..].Replace('_', ' ')), 60);
 

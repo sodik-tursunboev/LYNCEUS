@@ -18,15 +18,28 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Protocol
 
 from core.contracts import VerdictState
 from core.email.engine import EmailAnalysis, unscored
-from core.mailbox.gmail import GmailClient, GmailError
+from core.mailbox.gmail import GmailError, HistoryPage, ListPage
 
 log = logging.getLogger(__name__)
 SEEN_LIMIT = 5000
 MAX_ATTEMPTS = 3
 MAX_PER_POLL = 200  # a burst is queued for the next poll, not dropped
+
+
+class MailSource(Protocol):
+    """What the sync needs from a mailbox, whoever provides it (Gmail, Microsoft Graph)."""
+
+    def profile_history_id(self) -> str: ...
+
+    def list_recent(self, days: int, page: str | None = None) -> ListPage: ...
+
+    def history(self, start_history_id: str, page: str | None = None) -> HistoryPage: ...
+
+    def get_raw(self, message_id: str) -> bytes: ...
 
 
 def message_key(message_id: str) -> str:
@@ -60,7 +73,9 @@ class State:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             hid = data.get("history_id")
-            self.history_id = hid if isinstance(hid, str) and hid.isdigit() else None
+            self.history_id = (
+                hid if isinstance(hid, str) and 0 < len(hid) <= 4096 and hid.isprintable() else None
+            )
             for k in data.get("seen", []):
                 if isinstance(k, str) and len(k) == 64:
                     self._remember(k)
@@ -96,7 +111,7 @@ class State:
 class Mailbox:
     def __init__(
         self,
-        client: GmailClient,
+        client: MailSource,
         analyze: Callable[[bytes], EmailAnalysis],
         store: Callable[[EmailAnalysis], None],
         state: State,

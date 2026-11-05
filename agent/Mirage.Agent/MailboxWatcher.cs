@@ -4,7 +4,7 @@ namespace Mirage.Agent;
 
 /// <summary>
 /// Turns the core's live-mailbox status into notifications: one for each newly flagged email, and one when
-/// Gmail has to be connected again. It never claims the mailbox is clean: if the core cannot be asked,
+/// a mailbox (Gmail or Outlook) has to be connected again. It never claims the mailbox is clean: if the core cannot be asked,
 /// it says nothing and tries again. The first look only sets the baseline, so a restart does not replay
 /// old alerts.
 /// </summary>

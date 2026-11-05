@@ -8,9 +8,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from core.email.engine import EmailAnalysis
-from core.mailbox.gmail import GmailClient
 from core.mailbox.oauth import TokenSource
-from core.mailbox.sync import Mailbox, State
+from core.mailbox.sync import Mailbox, MailSource, State
 from core.mailbox.tokens import TokenFile
 
 log = logging.getLogger(__name__)
@@ -24,7 +23,9 @@ class MailboxService:
         source: TokenSource | None,
         poll_seconds: float,
         wait: Callable[[float], bool] | None = None,
+        name: str = "gmail",
     ) -> None:
+        self.name = name
         self.mailbox, self.tokens, self.source, self.poll_seconds = (
             mailbox,
             tokens,
@@ -38,7 +39,7 @@ class MailboxService:
     @classmethod
     def build(
         cls,
-        client: GmailClient,
+        client: MailSource,
         source: TokenSource | None,
         tokens: TokenFile,
         directory: Path,
@@ -47,10 +48,11 @@ class MailboxService:
         lookback_days: int,
         poll_seconds: float,
         fetch_gap: float = 0.7,
+        name: str = "gmail",
     ) -> "MailboxService":
-        state = State(directory / "gmail-state.json")
+        state = State(directory / f"{name}-state.json")
         mailbox = Mailbox(client, analyze, store, state, lookback_days, fetch_gap)
-        return cls(mailbox, tokens, source, poll_seconds)
+        return cls(mailbox, tokens, source, poll_seconds, name=name)
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._run, name="mailbox", daemon=True)
@@ -87,6 +89,7 @@ class MailboxService:
         else:
             state = "connected"
         return {
+            "provider": self.name,
             "state": state,
             "last_poll": datetime.fromtimestamp(s.last_poll, UTC).isoformat()
             if s.last_poll
@@ -99,6 +102,26 @@ class MailboxService:
             "recoveries": s.recoveries,
             "flagged": s.flagged[-20:],
         }
+
+
+def combined_status(services: list[MailboxService]) -> dict[str, object]:
+    """One answer for the console and the agent: a problem wins (sign-in needed, then error),
+    otherwise connected if any provider is; flagged mail is merged. With one provider it is that
+    provider's own status."""
+    if not services:
+        return {"state": "off"}
+    each = {s.name: s.status() for s in services}
+    if len(services) == 1:
+        return next(iter(each.values())) | {"providers": each}
+    states = [str(v["state"]) for v in each.values()]
+    for worst in ("reauth_needed", "error", "connected", "disconnected"):
+        if worst in states:
+            state = worst
+            break
+    else:
+        state = "disconnected"
+    flagged = sorted((f for v in each.values() for f in v["flagged"]), key=lambda f: f["at"])  # type: ignore[attr-defined]
+    return {"state": state, "flagged": flagged[-20:], "providers": each}
 
 
 def now() -> float:

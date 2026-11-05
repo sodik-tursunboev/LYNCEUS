@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +39,15 @@ class Settings(BaseSettings):
     gmail_client_secret: SecretStr | None = None
     gmail_lookback_days: int = 2  # on first connect, and after a lost position
     gmail_poll_seconds: int = 60
+
+    # Live Outlook / Microsoft 365 mailbox (M5b): the same rules as Gmail (read-only, off).
+    outlook_enabled: bool = False
+    outlook_client_id: str | None = (
+        None  # an Azure app registration of the operator's own (public client)
+    )
+    outlook_tenant: str = Field(default="common", pattern=r"^[A-Za-z0-9.\-]{1,64}$")
+    outlook_lookback_days: int = 2
+    outlook_poll_seconds: int = 60
 
     def intel_enabled(self) -> frozenset[str]:
         return frozenset(n.strip().lower() for n in self.intel_providers.split(",") if n.strip())

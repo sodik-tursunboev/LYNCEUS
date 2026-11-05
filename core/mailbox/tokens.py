@@ -54,8 +54,8 @@ def unprotect(blob: bytes) -> bytes:
 
 
 class TokenFile:
-    def __init__(self, directory: Path) -> None:
-        self.path = directory / "gmail.token"
+    def __init__(self, directory: Path, name: str = "gmail.token") -> None:
+        self.path = directory / name
 
     def save(self, refresh_token: str) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

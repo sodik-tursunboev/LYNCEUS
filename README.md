@@ -1,8 +1,8 @@
 # MIRAGE
 
-A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes anything.
+A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail or Outlook, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes anything.
 
-**Status:** built and verified on one Windows 11 machine with Edge, as one person's local tool. Several parts have never been run against a real outside service (Gmail, the threat-intelligence providers) and CI has never run. The honest list is in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
+**Status:** built and verified on one Windows 11 machine with Edge, as one person's local tool. Several parts have never been run against a real outside service (Gmail, Outlook, the threat-intelligence providers) and CI has never run. The honest list is in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 
 ## What it does
 
@@ -13,7 +13,7 @@ A local-first phishing detector for Windows. It watches your downloads and your 
 | Threat intelligence | optional: list feeds matched locally, query providers asked about a bare domain only; a provider failure is never "safe" | `core/intel` |
 | Windows agent | watches Downloads, judges each new file, answers the browser, shows notifications, carries out your decisions | `agent/` (.NET) |
 | Browser extension | Edge/Chrome MV3: warns before a page that looks like phishing, fails open and says so when the agent is down | `extension/` |
-| Live Gmail | read-only; new mail is analysed once and missed mail is found again | `core/mailbox` |
+| Live Gmail and Outlook | read-only; new mail is analysed once and missed mail is found again (both tested against fakes only) | `core/mailbox` |
 | Responses | a dangerous file can be quarantined (reversible, audited, asks first by default) | `core/response`, `agent/` |
 | Console | see events with their evidence, decide on pending actions, restore, read the audit log | `console/` |
 
@@ -25,7 +25,7 @@ Every verdict is one of `MALICIOUS | SUSPICIOUS | BENIGN | UNKNOWN | ERROR`, wit
  browser ──(Native Messaging)──> native host ──(named pipe, current user, secret)──> AGENT ─┐
  Downloads folder ──(file watcher)──────────────────────────────────────────────────────>  │ loopback HTTP
                                                                                             v + bearer token
- Gmail (read-only, optional) ──HTTPS──> CORE (FastAPI) ── sandboxed parsers ── rules ── PostgreSQL
+ Gmail / Outlook (read-only, optional) ──HTTPS──> CORE (FastAPI) ── sandboxed parsers ── rules ── PostgreSQL
                                           │
                                           └── serves the CONSOLE at http://127.0.0.1:8765/console/
 ```

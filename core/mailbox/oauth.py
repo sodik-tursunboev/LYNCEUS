@@ -64,7 +64,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         url = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         host = self.headers.get("Host", "")
-        ok = url.path == "/" and host.split(":")[0] == "127.0.0.1"
+        ok = url.path == "/" and host.split(":")[0] in self.server.hosts
         if (
             ok
             and secrets.compare_digest(q.get("state", ""), self.server.state)
@@ -87,8 +87,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 
 class _Listener(http.server.HTTPServer):
-    def __init__(self, state: str) -> None:
-        super().__init__(("127.0.0.1", 0), _Handler)  # loopback only
+    def __init__(
+        self, state: str, hosts: tuple[str, ...] = ("127.0.0.1",), redirect_host: str = "127.0.0.1"
+    ) -> None:
+        super().__init__(("127.0.0.1", 0), _Handler)  # always bound to loopback only
+        self.hosts = (
+            hosts  # the Host header names accepted (Microsoft wants "localhost" in the URI)
+        )
+        self.redirect_host = redirect_host
         self.state = state
         self.result: dict[str, str] | None = None
         self.strays = 0
@@ -96,7 +102,7 @@ class _Listener(http.server.HTTPServer):
 
     @property
     def redirect_uri(self) -> str:
-        return f"http://127.0.0.1:{self.server_address[1]}"
+        return f"http://{self.redirect_host}:{self.server_address[1]}"
 
 
 def wait_for_code(
@@ -143,11 +149,21 @@ def revoke(http: httpx.Client, token: str) -> bool:
         return False
 
 
+def _google_scope_ok(scope: object) -> bool:
+    return scope is None or set(str(scope).split()) == {SCOPE}
+
+
 def _token_request(
-    http: httpx.Client, form: dict[str, str], now: Callable[[], float], *, require_refresh: bool
+    http: httpx.Client,
+    form: dict[str, str],
+    now: Callable[[], float],
+    *,
+    require_refresh: bool,
+    url: str = TOKEN_URL,
+    scope_ok: Callable[[object], bool] = _google_scope_ok,
 ) -> Tokens:
     try:
-        r = http.post(TOKEN_URL, data=form)
+        r = http.post(url, data=form)
     except httpx.HTTPError:
         raise OAuthError("network") from None
     if r.status_code == 400 and b"invalid_grant" in r.content[:2000]:
@@ -165,7 +181,7 @@ def _token_request(
         raise OAuthError("token") from None
     if require_refresh and not isinstance(refresh, str):
         raise OAuthError("token")
-    if scope is not None and set(str(scope).split()) != {SCOPE}:
+    if not scope_ok(scope):
         raise OAuthError("scope")  # asked for read-only mail; anything else is refused
     return Tokens(access, now() + expires, refresh if isinstance(refresh, str) else None)
 
@@ -176,6 +192,8 @@ class TokenSource:
     def __init__(
         self, http: httpx.Client, client_id: str, client_secret: str | None,
         refresh_token: Callable[[], str | None], now: Callable[[], float] = time.time,
+        refresher: Callable[[str], Tokens] | None = None,
+        store: Callable[[str], None] | None = None,
     ) -> None:  # fmt: skip
         self._http, self._id, self._secret, self._refresh = (
             http,
@@ -184,6 +202,8 @@ class TokenSource:
             refresh_token,
         )
         self._now = now
+        self._refresher = refresher  # None: Google's refresh
+        self._store = store  # called with a NEW refresh token (Microsoft rotates it on every use)
         self._tokens: Tokens | None = None
         self._lock = threading.Lock()
         self.last_error: str | None = None  # "revoked" means the user has to connect again
@@ -195,9 +215,13 @@ class TokenSource:
                     refresh = self._refresh()
                     if refresh is None:
                         raise OAuthError("revoked")
-                    self._tokens = refresh_access(
-                        self._http, self._id, self._secret, refresh, self._now
+                    self._tokens = (
+                        self._refresher(refresh)
+                        if self._refresher
+                        else refresh_access(self._http, self._id, self._secret, refresh, self._now)
                     )
+                    if self._store and self._tokens.refresh_token not in (None, refresh):
+                        self._store(self._tokens.refresh_token)
                 except OAuthError as e:
                     self.last_error = e.kind
                     raise GmailError("auth") from None

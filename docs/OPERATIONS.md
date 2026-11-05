@@ -27,7 +27,7 @@ The install script builds the agent, the extension and the console, copies the a
 | The core | the checkout; listens on `127.0.0.1:8765` |
 | Console | `http://127.0.0.1:8765/console/` |
 | Database | the PostgreSQL named in `.env` (`MIRAGE_DATABASE_URL`) |
-| Threat-intelligence lists, Gmail state | `.data/` in the checkout (`MIRAGE_DATA_DIR`) |
+| Threat-intelligence lists, Gmail and Outlook state | `.data/` in the checkout (`MIRAGE_DATA_DIR`) |
 
 Files in the data folder: `agent.json` (settings), `agent.log` and `core.log` (rolling, about 1 MB each plus one old copy), `spool.jsonl` (files waiting to be judged), `flagged.json` (which local file each proposed response is about), `state.json` (what the file watcher has seen), `core.token` (the API token, encrypted for your Windows user), `pipe.secret` (the pipe password, plain text, readable only by you through folder permissions), `quarantine\<id>\` (quarantined files).
 
@@ -56,6 +56,7 @@ Files in the data folder: `agent.json` (settings), `agent.log` and `core.log` (r
 - **Nothing to do.** The agent starts at logon and keeps the core running. The extension's toolbar badge is empty when all is well, `!` when the agent is not running (pages then open unchecked), `?` when the agent is up but cannot reach the core.
 - **Decide on a flagged file:** the console, Responses page. Nothing moves until you confirm (in `ask` mode).
 - **Gmail:** `python -m core.mailbox connect` once (needs your own Google OAuth client, see `docs/milestones/M5.md`), set `MIRAGE_GMAIL_ENABLED=true`, restart the agent. While the Google project is in "Testing" the connection lapses after 7 days and the agent tells you.
+- **Outlook / Microsoft 365** (never run live, see `docs/milestones/M5b.md`): register an app in your own Azure tenant (public client, redirect `http://localhost`, delegated `Mail.Read`), put its id in `MIRAGE_OUTLOOK_CLIENT_ID`, run `python -m core.mailbox connect --provider outlook`, set `MIRAGE_OUTLOOK_ENABLED=true`, restart the agent. `--provider outlook` also works with `status`, `poll` and `disconnect`. Both providers can run at once.
 - **Threat-intelligence lists:** off until you name providers; `python -m core.intel sync` downloads the lists.
 
 ## Back up
@@ -73,6 +74,7 @@ Back up the PostgreSQL database and the data folder (`%LOCALAPPDATA%\Mirage`, wh
 | A file seems ignored | files that appear before the agent starts are not looked at; temporary names (`.crdownload`, `.tmp`) wait until renamed; files over 16 MiB are described, not opened; a file another security product blocks is skipped (`agent.log` says so) |
 | The console asks for a token | open it with `Mirage.Agent.exe --open-console`, or type the token |
 | Gmail says `reauth_needed` | `python -m core.mailbox connect` again |
+| Outlook says `reauth_needed` | `python -m core.mailbox connect --provider outlook` again (Microsoft no longer accepts the saved sign-in) |
 | A test or build fails with a locked file | the running agent holds its own DLLs: stop it, or build in Release |
 
 ## Limits worth knowing

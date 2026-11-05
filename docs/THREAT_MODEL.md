@@ -61,6 +61,9 @@ New assets: an OAuth client id/secret (operator's own), a refresh token that can
 | Exfiltration through the poller | Only HTTPS to three allowed hosts; redirects not followed; the raw message never leaves memory or goes to intel providers; email-link lookups stay off by default | A compromised core process could still use the token for reads |
 | Malicious mail attacking the parser | Same sandbox as M2 (AppContainer, job limits, no network); size cap; strict output validation | See "What the sandbox does not cover" |
 | Authorization-code interception | Loopback listener on 127.0.0.1 only, one shot, PKCE S256, `state` in constant time, `Host` checked | A local process could race the listener for a few seconds during sign-in |
+| Outlook: scope creep / write access (M5b) | Consent asks for `Mail.Read offline_access`; a granted list with any other scope, or none, is refused and nothing stored; transport hook refuses any non-GET to `graph.microsoft.com` | Microsoft could change defaults (live checklist) |
+| Outlook: a hostile or confused answer sends the client elsewhere | `nextLink`/`deltaLink` followed only if HTTPS to Graph's `/v1.0/` API; tenant restricted to `[A-Za-z0-9.-]`; redirects not followed; replies size-capped; ids validated before they go into a URL | A compromised Microsoft endpoint can still lie about mail content |
+| Outlook: rotated refresh token lost | Stored after every refresh; if storing fails that poll fails (logged by class, never the token) and the next one reuses the new access token | Once that expires the old stored token is tried; if Microsoft already replaced it the status shows `reauth_needed` and you reconnect |
 | Privacy leak into logs/DB | Only hashes, rule ids and counts are stored; a test plants markers and searches DB, state file and logs | |
 
 ## Responses and the console (M6)

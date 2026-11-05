@@ -9,6 +9,7 @@ Written from the code (database models, the agent's file formats, the log statem
 | Nothing | by default | |
 | A bare registered domain (no path, query, user name, port or IP) or a hash | only for a threat-intelligence provider **you name** in `MIRAGE_INTEL_PROVIDERS`: RDAP and VirusTotal get one public domain; list feeds (PhishTank, OpenPhish, URLhaus) are *downloaded* and matched here, so nothing about your URL is sent | that provider. Links inside email only reach list feeds unless `MIRAGE_INTEL_EMAIL_LINKS=true`. See ADR-015 |
 | Requests to read your mail | only after you connect Gmail | `gmail.googleapis.com`, `oauth2.googleapis.com`, `accounts.google.com`, read-only, GET only (enforced in code) |
+| Requests to read your mail | only after you connect Outlook | `graph.microsoft.com` (GET only, enforced in code), `login.microsoftonline.com` (sign-in and token refresh), read-only `Mail.Read` |
 | A Windows toast, a browser warning page | always, but local | your screen |
 
 The agent talks to the core only over loopback (no proxy, no redirects, the resolved address is checked on every connection). The extension makes no network requests of its own.
@@ -42,7 +43,7 @@ These are the places where **local** names and paths do exist, because the agent
 | `core.token` | the API token, encrypted with Windows DPAPI for your user | other users and other machines cannot read it |
 | `pipe.secret` | the password the native host uses to talk to the agent, plain text | any program running as you can read it (same trust level as anything you run) |
 
-The core's own folder (`.data/`) holds downloaded list feeds and, if Gmail is connected, `mailbox\gmail.token` (DPAPI-encrypted refresh token) and `gmail-state.json` (a history position, SHA-256 of message ids already analysed, retry counts; no address, subject or body).
+The core's own folder (`.data/`) holds downloaded list feeds and, if Gmail is connected, `mailbox\gmail.token` (DPAPI-encrypted refresh token) and `gmail-state.json` (a history position, SHA-256 of message ids already analysed, retry counts; no address, subject or body). Outlook has its own pair, `outlook.token` and `outlook-state.json`, with the same contents (the position is Microsoft's opaque change link).
 
 ## In the browser extension
 
@@ -54,4 +55,4 @@ The verdict cache lives in `chrome.storage.session` (memory, gone when the brows
 
 ## What you control
 
-Turn providers and Gmail off by leaving their settings empty; `python -m core.mailbox disconnect` revokes Google's access and deletes the token; `deploy\uninstall.ps1 -RemoveData` deletes the data folder (including the quarantine); clearing the database tables removes the history.
+Turn providers and Gmail off by leaving their settings empty; `python -m core.mailbox disconnect` revokes Google's access and deletes the token (`--provider outlook` deletes the local token and state; remove the app in your Microsoft account's app-permissions page to end its access); `deploy\uninstall.ps1 -RemoveData` deletes the data folder (including the quarantine); clearing the database tables removes the history.

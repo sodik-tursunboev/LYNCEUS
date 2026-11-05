@@ -12,7 +12,9 @@ from core.db.store import save_email_analysis
 from core.email.engine import EmailAnalysis, analyze_message
 from core.intel.analyze import link_analyzer
 from core.intel.orchestrator import Intel
+from core.mailbox import ms_oauth
 from core.mailbox.gmail import GmailClient, make_client
+from core.mailbox.graph import GraphClient
 from core.mailbox.oauth import TokenSource
 from core.mailbox.service import MailboxService
 from core.mailbox.tokens import TokenFile
@@ -48,3 +50,43 @@ def build_mailbox(
         GmailClient(source, http), source, tokens, directory, analyze, store,
         settings.gmail_lookback_days, settings.gmail_poll_seconds,
     )  # fmt: skip
+
+
+def build_outlook(
+    settings: Settings, db: Engine | None, intel: Intel | None
+) -> MailboxService | None:
+    """None unless turned on; a missing client id is an error, not a silent no-op."""
+    if not settings.outlook_enabled:
+        return None
+    if not settings.outlook_client_id:
+        raise RuntimeError(
+            "MIRAGE_OUTLOOK_CLIENT_ID is required when MIRAGE_OUTLOOK_ENABLED is true"
+        )
+    directory = mailbox_dir(settings)
+    tokens = TokenFile(directory, "outlook.token")
+    http = make_client()
+    tenant, client_id = settings.outlook_tenant, settings.outlook_client_id
+    source = TokenSource(
+        http, client_id, None, tokens.load,
+        refresher=lambda r: ms_oauth.refresh(http, tenant, client_id, r),
+        store=tokens.save,
+    )  # fmt: skip
+    links = link_analyzer(intel) if intel is not None else None
+    analyze: Callable[[bytes], EmailAnalysis] = partial(analyze_message, link_analyzer=links)
+
+    def store(a: EmailAnalysis) -> None:
+        if db is not None:
+            save_email_analysis(db, a, EventSource.EMAIL)
+
+    return MailboxService.build(
+        GraphClient(source, http), source, tokens, directory, analyze, store,
+        settings.outlook_lookback_days, settings.outlook_poll_seconds, name="outlook",
+    )  # fmt: skip
+
+
+def build_mailboxes(
+    settings: Settings, db: Engine | None, intel: Intel | None
+) -> list[MailboxService]:
+    """Every provider the operator turned on."""
+    built = [build_mailbox(settings, db, intel), build_outlook(settings, db, intel)]
+    return [s for s in built if s is not None]

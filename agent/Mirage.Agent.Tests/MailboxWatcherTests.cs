@@ -67,7 +67,8 @@ public class MailboxWatcherTests
         await watcher.PollOnceAsync(CancellationToken.None);
         await watcher.PollOnceAsync(CancellationToken.None);
         Assert.Single(shown);
-        Assert.Contains("Gmail", shown[0].Title, StringComparison.Ordinal);
+        Assert.Contains("mailbox", shown[0].Title, StringComparison.Ordinal);
+        Assert.Contains("--provider outlook", shown[0].Body, StringComparison.Ordinal);
         fake.Respond = _ => FakeCore.Json(Status("connected"));
         await watcher.PollOnceAsync(CancellationToken.None);
         fake.Respond = _ => FakeCore.Json(Status("reauth_needed"));
