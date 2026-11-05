@@ -1,6 +1,23 @@
-# Known limitations (end of M1)
+# Known limitations (M1 done, M2 in progress)
 
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
+
+## What the M2a message engine cannot do (MIME, headers, HTML, links, attachment inventory)
+- **Attachments are inventoried, not opened.** Type by file signature, name flags, size and hash only. PDFs, images (QR, OCR), archives and Office files are not looked inside until M2b, and Office documents are out of M2 entirely. A harmless-looking `.pdf` that is a real PDF with a malicious link is not caught yet.
+- **A message is never BENIGN** (ADR-014). The best a clean message gets is UNKNOWN. That is correct and also means there is no "this is fine" answer to show a user.
+- **CSS is read only where it is written on the element.** `style="display:none"` and the common tricks (zero size, off-screen, clipped, transparent) are caught; hiding through a `<style>` block, a class or a stylesheet is not. Text and link order are not rendered, so overlaid or reordered text can fool the link-text rules.
+- **Link text is compared to its target only for anchors,** and only when the text contains something that parses as a domain with a known suffix. "Click here" over a bad link is not a mismatch; it is still analysed as a link.
+- **Relative links are skipped** unless the message sets `<base href>` (counted in the report as `relative_links_skipped`). Past 100 distinct links the rest are counted, not analysed. Past 500 links, or 2 MiB of HTML, or 50,000 tags, the scan stops and says so (`limits_hit`).
+- **`Authentication-Results` is whatever the header says.** It is added by the receiving server, so a forged header from a sender who is not stripped by their provider reads like a pass; the rule only counts `fail` and `softfail`. Nothing is recomputed (no DNS, by design).
+- **Brand and sender checks inherit the M1 gaps:** an unverified brand list, and no typosquat/combosquat catch for a digit-swapped brand plus keyword (`paypa1-secure.test`): the M1 rules were left alone after the holdout was spent.
+- **Non-English coverage is thin:** urgency and credential phrases are English and Polish only, from general knowledge, not measured.
+- **Storage keeps hosts in plaintext** (`domains`), so the database records which sites a user's mail linked to. No message text, URL, address or file name is stored (a test scans every table), and ADR-007 is still unsigned.
+
+## What the sandbox does not cover
+- **Windows only.** The restricted process (AppContainer plus Job Object) is Windows-specific; on any other system analysis returns ERROR `sandbox_unavailable`, and the sandbox tests are skipped. A Linux container route is not built.
+- **Per-user setup.** Building registers an AppContainer profile (`python tasks.py sandbox`; `python -m core.sandbox.build --remove` undoes it). The sandbox is rebuilt from scratch each time, and a stale copy is caught by a test, not by the runtime.
+- **It is a mitigation, not a proof.** Kernel or interpreter escapes are out of scope; the limits are memory, CPU time, wall time, output size and one process. A hostile message can still burn those limits (and does, by design, end as UNKNOWN with a reason).
+- **Concurrency is capped at 4** (`MIRAGE_MAX_CONCURRENT_PARSERS`); a fifth request waits one second, then gets 503.
 
 ## What the M1 engine cannot catch
 - **It sees only the URL string.** No reputation, domain age, WHOIS, page content, meta-refresh or JavaScript redirects, QR codes, email or files. A freshly registered phishing domain with no brand name or keyword in it is UNKNOWN, never BENIGN.

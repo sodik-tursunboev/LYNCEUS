@@ -103,7 +103,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("artifact_id", sa.Uuid(), nullable=False),
         sa.Column("domain_id", sa.Uuid(), nullable=True),
-        sa.Column("url", sa.Text(), nullable=False),
+        sa.Column("url", sa.Text(), nullable=True),
         sa.Column("url_sha256", sa.String(length=64), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
         sa.Column(

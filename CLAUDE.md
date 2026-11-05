@@ -4,7 +4,7 @@ Local-first phishing detection and threat-intelligence system for Windows.
 **Mission:** detect phishing before the user interacts, investigate the evidence, protect the user, explain every decision.
 
 Read this file at the start of every session. Full spec: `docs/SPEC.md` (read only the sections the current milestone needs).
-**Current milestone: M1 complete, pending review** → `docs/milestones/M1.md`. **Next: M2 (proposed, not approved)** → `docs/milestones/M2.md`. Open from M0: CI has never run.
+**Current milestone: M2 in progress** (approved 2026-11-05; M2a messages built, M2b PDF/images/archives next) → `docs/milestones/M2.md`. M1 is complete (`docs/milestones/M1.md`). Open from M0: CI has never run.
 
 ## What it is
 - A continuous endpoint anti-phishing system: Windows agent + Chrome/Edge extension + local analysis engine + desktop console for investigation.
@@ -90,7 +90,7 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 |---|---|
 | `up` | start Postgres via Docker Compose |
 | `test` | pytest (integration tests skip when no database is reachable) |
-| `eval` | run the engine over the dev split, write `docs/eval/dev.{json,md}`. `--split holdout` is explicit and logged; reserve cannot be selected |
+| `eval` | run the engine over the dev split, write `docs/eval/dev.{json,md}`. `--split holdout` is explicit and logged; reserve cannot be selected. `python -m eval --kind mail` does the same for the message corpus (`mail-dev.*`) |
 | `lint` | ruff check + format check + mypy |
 | `migrate` | `alembic upgrade head` (needs `MIRAGE_DATABASE_URL`) |
 | `sandbox` | build `.sandbox/` and register its per-user AppContainer profile (Windows). `python -m core.sandbox.build --remove` undoes it |
@@ -99,6 +99,6 @@ Task runner: `python tasks.py <task>` (ADR-003). Keep this list current.
 | `secrets` | secret scan against `.secrets.baseline` (file names appended by caller) |
 | `hooks` | enable `.githooks` for this clone (run once) |
 
-Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`.
+Analyze one URL offline: `python -m core.cli analyze-url <url> [--json]`. Analyze one message (parsed in the sandbox, so run `sandbox` once first): `python -m core.cli analyze-eml <path> [--json]`. After changing anything in `core/sandbox/guest/`, run `python tasks.py sandbox` again: the sandbox holds a copy, and a test fails if it is stale.
 
 Setup on a fresh clone: `python -m venv .venv`, `.venv\Scripts\pip install -r requirements-dev.txt`, `python tasks.py hooks`. `tasks.py` finds `.venv` by itself.

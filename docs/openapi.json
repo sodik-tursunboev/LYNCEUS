@@ -82,6 +82,63 @@
         "title": "Confidence",
         "type": "string"
       },
+      "EmailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/LinkSummary"
+            },
+            "title": "Links",
+            "type": "array"
+          },
+          "persisted": {
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MessageSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "verdict",
+          "evidence",
+          "reason",
+          "summary",
+          "links",
+          "persisted"
+        ],
+        "title": "EmailResponse",
+        "type": "object"
+      },
       "Evidence": {
         "additionalProperties": false,
         "properties": {
@@ -143,6 +200,143 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LinkSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "normalized_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Url"
+          },
+          "part": {
+            "title": "Part",
+            "type": "string"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "rules": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "part",
+          "kind",
+          "flags",
+          "normalized_url",
+          "host",
+          "state",
+          "risk_score",
+          "rules"
+        ],
+        "title": "LinkSummary",
+        "type": "object"
+      },
+      "MessageSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "attachments": {
+            "title": "Attachments",
+            "type": "integer"
+          },
+          "defects": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Defects",
+            "type": "array"
+          },
+          "limits_hit": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limits Hit",
+            "type": "array"
+          },
+          "links": {
+            "title": "Links",
+            "type": "integer"
+          },
+          "links_analyzed": {
+            "title": "Links Analyzed",
+            "type": "integer"
+          },
+          "parts": {
+            "title": "Parts",
+            "type": "integer"
+          },
+          "relative_links_skipped": {
+            "title": "Relative Links Skipped",
+            "type": "integer"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "size",
+          "parts",
+          "attachments",
+          "links",
+          "links_analyzed",
+          "relative_links_skipped",
+          "limits_hit",
+          "defects"
+        ],
+        "title": "MessageSummary",
         "type": "object"
       },
       "ProviderResult": {
@@ -487,6 +681,40 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/v1/emails/analyze": {
+      "post": {
+        "operationId": "analyze_email_v1_emails_analyze_post",
+        "requestBody": {
+          "content": {
+            "message/rfc822": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Analyze Email"
       }
     },
     "/v1/urls/analyze": {

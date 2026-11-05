@@ -1,9 +1,11 @@
 """FastAPI app. Serve with `python tasks.py serve`: loopback only, no access log.
 
-Controls (SPEC §9, M1 amendments): bearer token, rate limit, raw body cap, trusted Host header, no
-CORS, no served docs. Nothing here takes a fetch option: analysis is offline.
+Controls (SPEC section 9, M1 amendments): bearer token, rate limit, counted body cap per route,
+trusted Host header, no CORS, no served docs, a cap on parsers running at once. Nothing here takes
+a fetch option: analysis is offline.
 """
 
+import asyncio
 import json
 import logging
 import math
@@ -13,7 +15,8 @@ import time
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import create_engine
@@ -22,11 +25,15 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from core.config import Settings
 from core.contracts import EventSource
-from core.db.store import save_analysis
+from core.db.store import save_analysis, save_email_analysis
 from core.detection.engine import ENGINE_VERSION, UrlReport, analyze_url
+from core.email import engine as email_engine
+from core.email.engine import EmailReport
 from core.log import configure
 
 log = logging.getLogger(__name__)
+EMAIL_PATH = "/v1/emails/analyze"
+_MESSAGE_TYPES = ("message/rfc822", "application/octet-stream")
 
 
 class AnalyzeRequest(BaseModel):
@@ -39,23 +46,28 @@ class AnalyzeResponse(UrlReport):
     persisted: bool  # False when storage is off or failed; the verdict still stands
 
 
+class EmailResponse(EmailReport):
+    persisted: bool
+
+
 class BodyLimit:
     """Cap the raw request body by counting it: a Content-Length header can lie or be absent."""
 
-    def __init__(self, app: ASGIApp, limit: int) -> None:
-        self.app, self.limit = app, limit
+    def __init__(self, app: ASGIApp, default: int, per_path: dict[str, int]) -> None:
+        self.app, self.default, self.per_path = app, default, per_path
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+        limit = self.per_path.get(scope["path"], self.default)
         seen = 0
 
         async def counted() -> Message:
             nonlocal seen
             message = await receive()
             seen += len(message.get("body", b""))
-            if seen > self.limit:
+            if seen > limit:
                 raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "request body too large")
             return message
 
@@ -89,7 +101,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(
         title="MIRAGE", version=ENGINE_VERSION, docs_url=None, redoc_url=None, openapi_url=None
     )
-    app.add_middleware(BodyLimit, limit=settings.max_body_bytes)
+    app.add_middleware(
+        BodyLimit,
+        default=settings.max_body_bytes,
+        per_path={EMAIL_PATH: settings.max_message_bytes},
+    )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
     token = settings.api_token.get_secret_value().encode() if settings.api_token else None
     db = (
@@ -100,6 +116,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         else None
     )
     bearer = HTTPBearer(auto_error=False)
+    limiter = RateLimit(settings.rate_limit_per_minute)
+    parser_slots = asyncio.Semaphore(settings.max_concurrent_parsers)
 
     def require_token(
         credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
@@ -118,10 +136,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.post(
-        "/v1/urls/analyze",
-        dependencies=[Depends(require_token), Depends(RateLimit(settings.rate_limit_per_minute))],
-    )
+    @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(limiter)])
     def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         analysis = analyze_url(request.url)
         persisted = False
@@ -132,6 +147,42 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             except Exception:  # a storage failure must not cost the caller the verdict
                 log.exception("could not persist analysis")
         return AnalyzeResponse(**analysis.report().model_dump(), persisted=persisted)
+
+    @app.post(
+        EMAIL_PATH,
+        dependencies=[Depends(require_token), Depends(limiter)],
+        openapi_extra={
+            "requestBody": {
+                "required": True,
+                "content": {"message/rfc822": {"schema": {"type": "string", "format": "binary"}}},
+            }
+        },
+    )
+    async def analyze_email(request: Request) -> EmailResponse:
+        media_type = request.headers.get("content-type", "").split(";")[0].strip().lower()
+        if media_type not in _MESSAGE_TYPES:
+            raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "send message/rfc822")
+        raw = await request.body()
+        try:
+            await asyncio.wait_for(parser_slots.acquire(), timeout=1.0)
+        except TimeoutError:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "all parsers are busy",
+                headers={"Retry-After": "2"},
+            ) from None
+        try:
+            analysis = await run_in_threadpool(email_engine.analyze_message, raw)
+            persisted = False
+            if db is not None:
+                try:
+                    await run_in_threadpool(save_email_analysis, db, analysis, EventSource.API)
+                    persisted = True
+                except Exception:  # a storage failure must not cost the caller the verdict
+                    log.exception("could not persist message analysis")
+        finally:
+            parser_slots.release()
+        return EmailResponse(**analysis.report.model_dump(), persisted=persisted)
 
     return app
 

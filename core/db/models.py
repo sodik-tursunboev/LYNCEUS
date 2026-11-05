@@ -93,7 +93,7 @@ class ExtractedUrl(Base):
         ForeignKey("artifacts.id", ondelete="CASCADE"), index=True
     )
     domain_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("domains.id"), index=True)
-    url: Mapped[str] = mapped_column(Text)  # sensitive: never log (ADR-006)
+    url: Mapped[str | None] = mapped_column(Text)  # always NULL until ADR-007 is signed off
     url_sha256: Mapped[str] = mapped_column(String(64), index=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[CreatedAt]

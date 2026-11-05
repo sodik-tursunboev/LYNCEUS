@@ -18,6 +18,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 | 011 | Resolver egress policy | Draft: needs human sign-off. Code exists but is off and unwired |
 | 012 | URL parsing: WHATWG via ada-url | Accepted |
 | 013 | Rules-only verdicts and the scoring model | Accepted |
+| 014 | Message analysis conventions (M2) | Accepted with the M2 plan; parts marked "deviation" need a glance |
 
 ---
 
@@ -59,6 +60,7 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **Logging** uses the standard library with a redacting formatter; no structlog.
 - **`idna` was approved for M1 but is not added:** `ada_url.idna` already converts to and from punycode with the same UTS #46 rules the parser uses.
 - **httpx** becomes a runtime dependency at the M1 resolver step only.
+- **M2a added no dependency.** The plan listed `beautifulsoup4`; the worker uses the standard library's `html.parser` instead (ADR-014), so the sandbox runtime still contains the standard library only. M2b dependencies (`pikepdf`, `Pillow`, `opencv-python-headless`) are added one at a time after checking each one's licence, version and wheels, and are listed here when they are.
 - **Open:** pytest prints a Starlette deprecation warning saying `TestClient` over `httpx` is deprecated in favour of a package named `httpx2`. Not acted on (a dependency change needs approval); revisit when it stops being a warning.
 
 ## ADR-005: Eval scoring rule
@@ -201,3 +203,19 @@ Status values: **Accepted** (in force), **Draft: needs human sign-off** (proposa
 - **ATT&CK tags** were checked on attack.mitre.org against v20. URL rules use T1566.002 (Spearphishing Link), credential rules T1598.003 (Phishing for Information: Spearphishing Link), dangerous-scheme rules T1204.001 (User Execution: Malicious Link). T1583.001 (acquiring domains) happens before a URL arrives, so no rule claims to detect it.
 - **Known limits:** brand data is unverified general knowledge. Edit-distance matching will flag some ordinary words; `not_typos` and `fuzzy = false` handle the ones we know about.
 - **Persistence (D2):** `core/db/store.py` writes one analysis in one transaction: event, artifact, verdict, detections, evidence and their links. `artifacts.ref` is `sha256:<hash>`; `artifacts.host` holds the host (dropped above 253 characters); no URL text, path or query reaches any table, and `extracted_urls` stays empty until ADR-007. A test scans every table for markers placed in the URL.
+
+## ADR-014: Message analysis conventions (M2)
+**Status:** Accepted with the M2 plan (amendments 2 to 4). Items marked *deviation* differ from the plan or from CLAUDE.md and need a glance.
+
+- **Pipeline.** `core/email/engine.py`: size check, sandboxed parse (`op: mime`), strict validation of the worker's reply, relative links resolved with `ada_url.join_url`, every distinct link (cap 100) and the sender's domain through the M1 URL engine, message rules, the shared `core/risk/scoring.score`. The host never parses message bytes.
+- **The worker's reply is hostile.** `core/email/models.py` is strict and frozen: every field typed and bounded, unknown fields and enum values rejected. A reply that fails validation is ERROR `worker_output_invalid`. Strings it returns are attacker text; rule summaries therefore name facts (a type, a host, a count), never subjects, names or file names.
+- **Failures are verdicts, never BENIGN.** Empty or over-size input, a stopped parser, a worker error: UNKNOWN with a reason. Sandbox missing, launcher exception, invalid reply, engine bug: ERROR (`sandbox_unavailable`, `sandbox_error`, `worker_output_invalid`, `error`). None carries a score. There is no in-process fallback.
+- **A message is never BENIGN in M2.** No rule firing proves nothing about a message, and there is no allowlist for senders. Weak signals and silence are UNKNOWN; SUSPICIOUS and MALICIOUS work as in ADR-013 (MALICIOUS needs two independent categories). MALICIOUS recommends QUARANTINE; the applied response is always NONE.
+- **Link findings reuse URL rules.** A URL rule that fires on a link becomes a signal in category `link.<category>` with its own cap in `rules/email/scoring.toml`; the strongest signal per rule is kept and counted ("3 link(s): ..."). The sender domain is analysed as `https://<domain>/` and six URL impersonation rules are re-exposed as `email.sender.*`.
+- **Authentication-Results is trusted only as far as whoever added it.** It is read, never recomputed (no DNS). `none`, `pass` and absent prove nothing; only `fail` and `softfail` count, and the summary names the server that claimed it.
+- **HTML with the standard library.** *Deviation from the plan, which listed `beautifulsoup4`.* `html.parser` is enough for tags, attributes, inline-style hiding and link text; it keeps the sandbox runtime to the standard library and the dependency list short. CSS from `<style>` blocks and classes is not evaluated (KNOWN_LIMITATIONS).
+- **Storage (ADR-007 stays unsigned).** `save_email_analysis` writes the event, an `EMAIL` artifact (sha256 of the raw message, `host` NULL), the verdict, detections and evidence, plus one `extracted_urls` row per distinct link: the URL's hash and a `domains` row (host and registered domain); `url` stays NULL. A test puts markers in subject, display name, body, path, query and file name and scans every table. The domains table does record which sites a user's mail linked to, in plaintext, as `artifacts.host` already does for URLs.
+- **API.** `POST /v1/emails/analyze` takes the raw message (`message/rfc822` or `application/octet-stream`, else 415) with its own body cap (`MIRAGE_MAX_MESSAGE_BYTES`, default 10 MiB, counted not trusted), the same token and rate limit as the URL route, and at most `MIRAGE_MAX_CONCURRENT_PARSERS` (4) sandboxes at once (503 with Retry-After beyond that). Analysis runs in a worker thread so the event loop stays free.
+- **ATT&CK tags** verified on attack.mitre.org on 2026-11-05: T1566.001 Spearphishing Attachment, T1204.002 User Execution: Malicious File, T1027.006 HTML Smuggling, T1036.007 Double File Extension, T1036.002 Right-to-Left Override (plus the three from ADR-013). Sender, authentication, structure and content rules have no tag because no technique was verified for them; none is guessed.
+- **Rule fixtures.** *Deviation from CLAUDE.md ("fixtures in `corpus/`").* Each message rule's positive and negative message is built at test time in `tests/unit/test_rules_email.py` (a message needs headers, parts and attachments that read better as code), checked against the real guest parser and engine. The 120-message corpus in `corpus/mail/` covers the rules from the other side.
+- **Versions.** `ENGINE_VERSION = "email-1.0.0"`. `ruleset_version` is the message pack's semver plus a hash of its `scoring.toml`, `lists.toml` and the URL ruleset's version, so a URL rule change changes it too.
