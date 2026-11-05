@@ -77,6 +77,9 @@ public sealed class FilePipeline : IDisposable
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)))[..32].ToLowerInvariant();
     }
 
+    /// <summary>A file MIRAGE itself put back (restore): do not judge it again as if it were new.</summary>
+    public void Suppress(string path, long size, long modifiedTicks) => spool.MarkKnown(EventId(Path.GetFullPath(path), size, modifiedTicks));
+
     // ---- life cycle -------------------------------------------------------------------------
 
     /// <summary>Start watching, then look back over what the previous run may not have seen.</summary>
@@ -583,11 +586,11 @@ public sealed class FilePipeline : IDisposable
 
         var file = snapshot!;
         var result = file.Data is not null
-            ? await core.AnalyzeAsync(e.Name, file.Sha256, file.Host, file.Data, ct).ConfigureAwait(false)
-            : await core.CheckAsync(e.Name, file.Size, file.Sha256, file.Magic, file.Host, ct).ConfigureAwait(false);
+            ? await core.AnalyzeAsync(e.Name, file.Sha256, file.Host, file.Data, ct, e.Id).ConfigureAwait(false)
+            : await core.CheckAsync(e.Name, file.Size, file.Sha256, file.Magic, file.Host, ct, e.Id).ConfigureAwait(false);
         if (result.Status == CoreStatus.TooLarge && file.Data is not null)
         {
-            result = await core.CheckAsync(e.Name, file.Size, file.Sha256, file.Magic, file.Host, ct).ConfigureAwait(false);
+            result = await core.CheckAsync(e.Name, file.Size, file.Sha256, file.Magic, file.Host, ct, e.Id).ConfigureAwait(false);
         }
 
         switch (result.Status)

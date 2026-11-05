@@ -87,6 +87,16 @@ public sealed class Spool
         }
     }
 
+    /// <summary>Remember an event as done without ever queueing it (a file MIRAGE restored itself).</summary>
+    public void MarkKnown(string id)
+    {
+        lock (gate)
+        {
+            Remember(id);
+            Append(new Line { T = "done", Id = id, State = "known", At = time.GetUtcNow() }, durable: false);
+        }
+    }
+
     /// <summary>True when this event is waiting, was judged, or was dropped.</summary>
     public bool Knows(string id)
     {

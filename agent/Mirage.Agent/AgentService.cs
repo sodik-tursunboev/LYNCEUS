@@ -17,7 +17,20 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
         var core = new CoreClient(http, () => token);
         using var pipeline = new FilePipeline(config, folders, spool, core, log);
         var toasts = TryToasts(log);
-        pipeline.Judged += outcome => Notify(toasts, ToastText.ForFile(outcome));
+        var flagged = new FlaggedStore(Path.Combine(dataDir, "flagged.json"));
+        pipeline.Judged += outcome =>
+        {
+            if (outcome.Verdict.ActionId is { } actionId)
+            {
+                flagged.Add(actionId, outcome.Event.Path, outcome.Sha256, outcome.Event.Size, outcome.Event.ModifiedTicks);
+            }
+
+            Notify(toasts, ToastText.ForFile(outcome));
+        };
+        var quarantine = new QuarantineStore(Path.Combine(dataDir, "quarantine"));
+        var responses = new ActionRunner(
+            core, flagged, quarantine, config.ResponseMode, text => Notify(toasts, text),
+            pipeline.Suppress, log);
         var secret = Endpoints.LoadOrCreateSecret(dataDir);
         var handler = new RequestHandler(core, () => pipeline.Stats, (host, state) => Notify(toasts, ToastText.ForBlock(host, state)));
         var server = new PipeServer(Endpoints.PipeName(), secret, handler, log);
@@ -28,7 +41,8 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
             pipeline.RunAsync(stoppingToken),
             server.RunAsync(stoppingToken),
             supervisor.RunAsync(stoppingToken),
-            mail.RunAsync(TimeSpan.FromSeconds(30), stoppingToken)).ConfigureAwait(false);
+            mail.RunAsync(TimeSpan.FromSeconds(30), stoppingToken),
+            responses.RunAsync(TimeSpan.FromSeconds(3), stoppingToken)).ConfigureAwait(false);
     }
 
     private static WindowsToasts? TryToasts(ILogger log)

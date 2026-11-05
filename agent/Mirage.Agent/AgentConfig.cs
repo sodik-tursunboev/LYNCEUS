@@ -65,6 +65,12 @@ public sealed record AgentConfig
     /// <summary>How long a URL check waits for threat-intel providers when the agent runs the core.</summary>
     public double CoreIntelDeadlineSeconds { get; init; } = 0.5;
 
+    /// <summary>
+    /// What happens to a file the core judges MALICIOUS: "ask" (default) waits for your decision in the console,
+    /// "auto" quarantines it at once, "off" never moves anything. SUSPICIOUS files are never moved.
+    /// </summary>
+    public string ResponseMode { get; init; } = "ask";
+
     /// <summary>Where the spool and state live. Null means %LOCALAPPDATA%\Mirage.</summary>
     public string? DataDir { get; init; }
 
@@ -123,6 +129,11 @@ public sealed record AgentConfig
         Range(MaxKnownIds, 1, 10_000_000, nameof(MaxKnownIds));
         Range(MaxRescanFiles, 1, 1_000_000, nameof(MaxRescanFiles));
         Range(MaxAttempts, 1, 100, nameof(MaxAttempts));
+        if (ResponseMode is not ("ask" or "auto" or "off"))
+        {
+            throw new ConfigException("ResponseMode must be ask, auto or off");
+        }
+
         Range(RetryBaseMillis, 1, 600_000, nameof(RetryBaseMillis));
         Range(RetryMaxMillis, RetryBaseMillis, 3_600_000, nameof(RetryMaxMillis));
         Range(InitialLookbackHours, 0, 24 * 365, nameof(InitialLookbackHours));

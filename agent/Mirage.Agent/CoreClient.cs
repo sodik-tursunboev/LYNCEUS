@@ -32,7 +32,12 @@ public sealed record FileVerdict(
     bool Persisted,
     string? Recommended,
     string? Explanation = null,
-    IReadOnlyList<string>? Reasons = null);
+    IReadOnlyList<string>? Reasons = null,
+    Guid? ActionId = null,
+    bool AllowListed = false);
+
+/// <summary>A response the core proposed or recorded for one file (no path: the core never has it).</summary>
+public sealed record ActionInfo(Guid Id, string State, string FileRef, string Sha256);
 
 public sealed record CoreResult(CoreStatus Status, FileVerdict? Verdict = null, string Detail = "");
 
@@ -51,7 +56,7 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
 
     /// <summary>The file's bytes go to the core, which opens them in its sandbox.</summary>
     public async Task<CoreResult> AnalyzeAsync(
-        string name, string sha256, string? originHost, ReadOnlyMemory<byte> data, CancellationToken ct)
+        string name, string sha256, string? originHost, ReadOnlyMemory<byte> data, CancellationToken ct, string? fileRef = null)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/files/analyze") { Content = new ReadOnlyMemoryContent(data) };
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
@@ -62,12 +67,17 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
             request.Headers.Add("X-Mirage-Origin-Host", originHost);
         }
 
+        if (fileRef is not null)
+        {
+            request.Headers.Add("X-Mirage-File-Id", fileRef);
+        }
+
         return await SendAsync(request, ct).ConfigureAwait(false);
     }
 
     /// <summary>Only what the agent knows: name, size, hash, type, origin host.</summary>
     public async Task<CoreResult> CheckAsync(
-        string name, long size, string sha256, string? magic, string? originHost, CancellationToken ct)
+        string name, long size, string sha256, string? magic, string? originHost, CancellationToken ct, string? fileRef = null)
     {
         var body = JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, object?>
         {
@@ -76,6 +86,7 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
             ["sha256"] = sha256,
             ["magic"] = magic,
             ["origin_host"] = originHost,
+            ["file_ref"] = fileRef,
         });
         using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/files/check") { Content = new ByteArrayContent(body) };
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
@@ -114,6 +125,52 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
 
         request.Headers.Add("X-Mirage-Source", "BROWSER");
         return await SendAsync(request, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>The responses in these states (PENDING, APPROVED, RESTORE_REQUESTED, ...), newest first.</summary>
+    public async Task<(CoreStatus Status, IReadOnlyList<ActionInfo> Actions)> ListActionsAsync(string states, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/actions?limit=100&state=" + Uri.EscapeDataString(states));
+        var (status, body, _) = await SendRawAsync(request, ct).ConfigureAwait(false);
+        if (status != CoreStatus.Ok)
+        {
+            return (status, []);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body!);
+            var list = new List<ActionInfo>();
+            foreach (var item in document.RootElement.EnumerateArray().Take(100))
+            {
+                if (Guid.TryParse(Text(item, "id", 40), out var id) && Text(item, "state", 24) is { } state
+                    && Text(item, "file_ref", 32) is { } fileRef && Text(item, "sha256", 64) is { } sha)
+                {
+                    list.Add(new ActionInfo(id, state, fileRef, sha));
+                }
+            }
+
+            return (CoreStatus.Ok, list);
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException)
+        {
+            return (CoreStatus.Rejected, []);
+        }
+    }
+
+    /// <summary>Ask the core to move an action on: "approve" (by policy, in auto mode).</summary>
+    public async Task<CoreStatus> ApproveAsync(Guid actionId, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/v1/actions/{actionId}/approve");
+        request.Headers.Add("X-Mirage-Actor", "policy");
+        return (await SendRawAsync(request, ct).ConfigureAwait(false)).Status;
+    }
+
+    /// <summary>Tell the core what the agent did: applied, failed, restored or restore_failed (+ a reason code).</summary>
+    public async Task<CoreStatus> ReportAsync(Guid actionId, string outcome, string? reason, CancellationToken ct)
+    {
+        using var request = JsonRequest($"/v1/actions/{actionId}/result", new Dictionary<string, object?> { ["outcome"] = outcome, ["reason"] = reason });
+        return request is null ? CoreStatus.Rejected : (await SendRawAsync(request, ct).ConfigureAwait(false)).Status;
     }
 
     /// <summary>GET /v1/mailbox/status. A failure is a status, never "nothing flagged".</summary>
@@ -345,7 +402,9 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
                 root.TryGetProperty("persisted", out var persisted) && persisted.ValueKind == JsonValueKind.True,
                 Text(verdict, "recommended_response", 200),
                 Text(verdict, "explanation", 600),
-                reasons);
+                reasons,
+                root.TryGetProperty("action_id", out var action) && action.ValueKind == JsonValueKind.String && Guid.TryParse(action.GetString(), out var actionId) ? actionId : null,
+                root.TryGetProperty("allow_listed", out var allowed) && allowed.ValueKind == JsonValueKind.True);
         }
         catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
         {

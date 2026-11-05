@@ -17,14 +17,15 @@ public static class ToastText
     public static (string Title, string Body)? ForFile(FileOutcome o)
     {
         var state = o.Verdict.State;
-        if (state is not ("MALICIOUS" or "SUSPICIOUS"))
+        if (state is not ("MALICIOUS" or "SUSPICIOUS") || o.Verdict.AllowListed)
         {
-            return null;
+            return null; // and a file you told MIRAGE to stop flagging stays quiet
         }
 
         var title = state == "MALICIOUS" ? "MIRAGE: dangerous file" : "MIRAGE: suspicious file";
         var reason = o.Verdict.Reasons is { Count: > 0 } reasons ? reasons[0] : "Several signs of a malicious file.";
-        return (title, Cut(Clean(o.Event.Name), 80) + "\n" + Cut(reason, 160) + "\nNothing was moved or deleted.");
+        var tail = o.Verdict.ActionId is not null ? "\nWaiting for your decision in the MIRAGE console." : "\nNothing was moved or deleted.";
+        return (title, Cut(Clean(o.Event.Name), 80) + "\n" + Cut(reason, 160) + tail);
     }
 
     /// <summary>A flagged email: when, how bad, and the names of the signs. No sender, subject or address is ever known here.</summary>

@@ -36,7 +36,7 @@ public sealed class TestDir : IDisposable
     }
 }
 
-public sealed record Seen(string Path, string? Name, string? Sha, string? Host, string? Auth, string? ContentType, byte[] Body);
+public sealed record Seen(string Path, string? Name, string? Sha, string? Host, string? Auth, string? ContentType, byte[] Body, string Query = "", string? Method = null, string? Actor = null, string? FileId = null);
 
 /// <summary>Stands in for the core: records every request and answers as scripted.</summary>
 public sealed class FakeCore : HttpMessageHandler
@@ -68,7 +68,11 @@ public sealed class FakeCore : HttpMessageHandler
             Header("X-Mirage-Origin-Host"),
             request.Headers.Authorization?.ToString(),
             request.Content?.Headers.ContentType?.MediaType,
-            body);
+            body,
+            request.RequestUri.Query,
+            request.Method.Method,
+            Header("X-Mirage-Actor"),
+            Header("X-Mirage-File-Id"));
         Requests.Enqueue(seen);
         return Respond(seen);
     }
