@@ -17,8 +17,11 @@ public sealed class PipeServer(string pipeName, string secret, RequestHandler ha
     internal const int MaxClients = 4;
     internal static readonly TimeSpan HelloDeadline = TimeSpan.FromSeconds(2);
 
+    internal static TimeSpan RetryEvery { get; set; } = TimeSpan.FromSeconds(5);
+
     private int clients;
     private long refused;
+    private int busyRounds;
 
     public long Refused => Interlocked.Read(ref refused);
 
@@ -26,9 +29,35 @@ public sealed class PipeServer(string pipeName, string secret, RequestHandler ha
     {
         while (!ct.IsCancellationRequested)
         {
-            var server = new NamedPipeServerStream(
-                pipeName, PipeDirection.InOut, MaxClients + 2, PipeTransmissionMode.Byte,
-                PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+            NamedPipeServerStream server;
+            try
+            {
+                server = new NamedPipeServerStream(
+                    pipeName, PipeDirection.InOut, MaxClients + 2, PipeTransmissionMode.Byte,
+                    PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+                busyRounds = 0;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // Another program holds the pipe name, so the browser extension cannot reach this agent. Say so
+                // (it would otherwise just look like "protection off") and keep trying: the name may free up.
+                if (busyRounds++ % 12 == 0)
+                {
+                    log.LogError("the agent's pipe name is taken by another program ({Type}); the browser extension cannot reach the agent until it is free", e.GetType().Name);
+                }
+
+                try
+                {
+                    await Task.Delay(RetryEvery, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+
+                continue;
+            }
+
             try
             {
                 await server.WaitForConnectionAsync(ct).ConfigureAwait(false);

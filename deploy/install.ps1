@@ -16,6 +16,9 @@
 .PARAMETER NoStart      Do not start the agent afterwards.
 .PARAMETER ResetConfig  Write agent.json even if one exists (the old one is kept as agent.json.bak).
 .PARAMETER SkipMigrate  Do not run database migrations.
+.PARAMETER HardenAcl    Restrict this checkout (which the core runs from) to you, SYSTEM and Administrators. Only needed when
+                        the script warns that other accounts can change it; the folder's permissions are rewritten.
+.PARAMETER Force        Install into a folder that already holds something that is not a MIRAGE install.
 #>
 [CmdletBinding()]
 param(
@@ -24,10 +27,13 @@ param(
     [switch]$NoRegister,
     [switch]$NoStart,
     [switch]$ResetConfig,
-    [switch]$SkipMigrate
+    [switch]$SkipMigrate,
+    [switch]$HardenAcl,
+    [switch]$Force
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'Acl.ps1')
 function Say($text) { Write-Host "[install] $text" }
 function Need($name) { if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "$name is required and was not found on PATH." } }
 
@@ -47,10 +53,29 @@ try {
     }
 } finally { Pop-Location }
 
-# ---- stop what is running from the install folder (an upgrade) ----------------------------------------
+# ---- is the target sensible, and who can change what the core runs? -------------------------------------
 $installFull = [System.IO.Path]::GetFullPath($InstallDir)
+$profileRoot = [System.IO.Path]::GetFullPath($env:USERPROFILE).TrimEnd('\')
+if ($installFull.TrimEnd('\') -eq [System.IO.Path]::GetPathRoot($installFull).TrimEnd('\') -or $installFull.TrimEnd('\') -eq $profileRoot) {
+    throw "refusing to install into $installFull (a drive root or your profile folder): name a folder of its own"
+}
+if ((Test-Path -LiteralPath $installFull) -and (Get-ChildItem -LiteralPath $installFull -Force | Select-Object -First 1) -and -not (Test-MirageInstall $installFull) -and -not $Force) {
+    throw "$installFull is not empty and is not a MIRAGE install. Choose another folder, or add -Force."
+}
+$others = @(Get-ChangeableByOthers $repo)
+if ($others.Count -and $HardenAcl) {
+    Say "restricting $repo to you, SYSTEM and Administrators (it was changeable by: $($others -join ', '))"
+    Protect-Folder $repo
+    Push-Location $repo
+    try { & $python tasks.py sandbox; if ($LASTEXITCODE) { throw 'tasks.py sandbox failed after the permission change' } } finally { Pop-Location }
+} elseif ($others.Count) {
+    Write-Warning ("Other accounts on this computer can change $repo ($($others -join ', ')). The core runs from this folder with YOUR rights and your API token, " +
+        "so anyone who can edit it can run code as you. On a computer only you use this does not matter; otherwise run this script again with -HardenAcl.")
+}
+
+# ---- stop what is running from the install folder (an upgrade) ----------------------------------------
 $stopped = @(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue | Where-Object {
-    $_.Path -and $_.Path.StartsWith($installFull, [System.StringComparison]::OrdinalIgnoreCase) })
+    $_.Path -and (Test-IsUnder $_.Path $installFull) })
 foreach ($p in $stopped) { Say "stopping the running agent ($($p.Id))"; & taskkill /PID $p.Id /T /F | Out-Null }
 if ($stopped.Count) { Start-Sleep -Seconds 2 }
 
@@ -115,12 +140,19 @@ if (-not $NoRegister) { Say 'registering start-at-logon and the browser bridge';
 # ---- start and wait -----------------------------------------------------------------------------------------
 if (-not $NoStart) {
     Say 'starting the agent'
+    $elsewhere = @(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and -not (Test-IsUnder $_.Path $installFull) })
+    if ($elsewhere.Count) {
+        throw "a MIRAGE agent is already running from $($elsewhere[0].Path). Only one agent can run at a time, and it is not this install: stop it (or run its uninstaller) and run this script again."
+    }
     Start-Process -FilePath $agentExe -WindowStyle Hidden
     $up = $false
     for ($i = 0; $i -lt 90 -and -not $up; $i++) {
         try { $up = (Invoke-WebRequest "http://127.0.0.1:$CorePort/health" -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200 } catch { Start-Sleep -Seconds 1 }
     }
     if (-not $up) { throw "the core did not answer on port $CorePort within 90 seconds; see $(Join-Path $home_ 'agent.log') and core.log" }
+    if (-not (Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and (Test-IsUnder $_.Path $installFull) })) {
+        throw "the core answers on port $CorePort, but no agent is running from ${installFull}: something else is serving that port"
+    }
     Say "the core answers on port $CorePort"
 }
 Say 'done.'

@@ -30,6 +30,57 @@ def link_of(html: str) -> dict[str, object]:
     return links[0]
 
 
+# ---- links a mail client would follow: what we analyse must be what it opens --------------------
+
+
+def test_a_repeated_attribute_uses_the_first_value_like_a_mail_client() -> None:
+    link = link_of('<a href="https://evil.test/x" href="https://www.paypal.com/y">paypal</a>')
+    assert link["url"] == "https://evil.test/x"
+
+
+def test_links_in_an_outlook_conditional_comment_are_read_and_marked() -> None:
+    html = '<p>hi</p><!--[if mso]><a href="https://evil.test/o">Verify</a><![endif]-->'
+    links = html_scan(html).links
+    assert [(x["url"], x["flags"]) for x in links] == [("https://evil.test/o", ["conditional"])]
+
+
+def test_outlooks_vml_button_link_is_read() -> None:
+    html = '<!--[if mso]><v:roundrect href="https://evil.test/v"><center>Go</center></v:roundrect><![endif]-->'
+    assert [x["url"] for x in html_scan(html).links] == ["https://evil.test/v"]
+
+
+def test_an_ordinary_comment_is_not_read_and_a_broken_conditional_does_not_crash() -> None:
+    assert html_scan('<!-- <a href="https://evil.test/c">x</a> -->').links == []
+    assert html_scan('<!--[if mso <a href="https://evil.test/c">x</a> -->').links == []
+    assert html_scan("<!--[if mso]>" + "<a href='https://e.test/a'>" * 3 + "<![endif]-->").links
+
+
+def test_conditional_content_cannot_nest_deeper_or_exhaust_the_link_budget() -> None:
+    inner = '<!--[if mso]><a href="https://deep.test/">x</a><![endif]-->'
+    # a conditional inside a conditional is not followed: one level only
+    outer = html_scan(f"<!--[if mso]>{inner}<![endif]-->")
+    assert all("deep.test" not in str(x["url"]) for x in outer.links)
+    many = html_scan(
+        "<!--[if mso]>"
+        + '<a href="https://e.test/x">y</a>' * (limits.MAX_LINKS + 50)
+        + "<![endif]-->"
+    )
+    assert len(many.links) <= limits.MAX_LINKS and "links" in many.hit
+
+
+def test_a_button_that_posts_elsewhere_and_embedded_documents_are_links() -> None:
+    posted = html_scan('<form><button formaction="https://evil.test/post">Go</button></form>')
+    assert [(x["kind"], x["url"]) for x in posted.links] == [("form", "https://evil.test/post")]
+    asinput = html_scan('<input type="image" formaction="https://evil.test/i">')
+    assert [x["kind"] for x in asinput.links] == ["form"]
+    embedded = html_scan(
+        '<embed src="https://evil.test/e"><object data="https://evil.test/o"></object>'
+    )
+    assert [(x["kind"], x["url"]) for x in embedded.links] == [
+        ("iframe", "https://evil.test/e"), ("iframe", "https://evil.test/o"),
+    ]  # fmt: skip
+
+
 # ---- headers and structure ---------------------------------------------------------------------
 
 

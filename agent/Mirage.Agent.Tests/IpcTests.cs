@@ -123,7 +123,7 @@ public sealed class AgentRig : IDisposable
     {
         Fake = fake ?? new FakeCore();
         PipeName = pipeName ?? "mirage-test-" + Guid.NewGuid().ToString("N");
-        var core = new CoreClient(new HttpClient(Fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t0k");
+        var core = new CoreClient(new HttpClient(Fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t0k", verifyCore: false);
         Server = new PipeServer(PipeName, Secret, new RequestHandler(core, () => new PipelineStats(0, 5, 0, 0, 0, 0, 0, 0, 2, 0)), new ListLogger());
         Run = Task.Run(() => Server.RunAsync(stop.Token));
     }

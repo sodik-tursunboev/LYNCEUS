@@ -5,8 +5,11 @@ send
 anything but a GET to Gmail."""
 
 import base64
+import http.client
 import json
+import socket
 import threading
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -135,6 +138,37 @@ def test_a_burst_larger_than_one_poll_is_queued_not_dropped(tmp_path: Path) -> N
     assert len(rig.stored) == MAX_PER_POLL + 30
     rig.box.poll()
     assert len(rig.stored) == MAX_PER_POLL + 30
+
+
+def test_a_burst_that_fits_on_one_page_is_still_queued_not_dropped(tmp_path: Path) -> None:
+    # the real client asks for 500 per page, so a mail bomb followed by a phishing mail is ONE page
+    rig = Rig(tmp_path, FakeGmail(page_size=500), lookback_days=0)
+    rig.box.poll()
+    for i in range(MAX_PER_POLL + 30):
+        rig.fake.add(f"b{i:04d}", OK_MAIL + f"\nn{i}".encode())
+    rig.fake.add("last", PHISH)
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL and rig.box.stats.backlog is True
+    for _ in range(3):
+        rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL + 31  # nothing lost, the phishing mail included
+    assert rig.box.stats.backlog is False
+    assert VerdictState.SUSPICIOUS in {a.report.verdict.state for a in rig.stored} or any(
+        a.report.verdict.state is VerdictState.MALICIOUS for a in rig.stored
+    )
+
+
+def test_a_look_back_larger_than_one_poll_is_finished_over_the_next_polls(tmp_path: Path) -> None:
+    fake = FakeGmail(page_size=500)
+    for i in range(MAX_PER_POLL + 50):
+        fake.add(f"o{i:04d}", OK_MAIL + f"\nn{i}".encode())
+    rig = Rig(tmp_path, fake, lookback_days=2)
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL and rig.box.state.history_id is None
+    assert rig.box.stats.backlog is True
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL + 50 and rig.box.state.history_id is not None
+    assert rig.box.stats.backlog is False
 
 
 def test_paged_history_is_followed_to_the_end(tmp_path: Path) -> None:
@@ -535,6 +569,31 @@ def _get(url: str) -> int:
         return e.code
 
 
+def test_an_idle_connection_cannot_hold_the_sign_in_hostage_and_an_odd_state_is_only_a_stray() -> (
+    None
+):
+    listener = oauth._Listener("st")  # noqa: SLF001
+    port = listener.server_address[1]
+    idle = socket.create_connection(("127.0.0.1", port))  # connects and says nothing
+    out: list[str] = []
+    thread = threading.Thread(target=lambda: out.append(oauth.wait_for_code(listener, 20)))
+    thread.start()
+    time.sleep(0.3)
+    for state in ("%C3%A9", "x" * 10):  # a non-ASCII state used to raise inside the handler
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+        conn.request("GET", f"/?code=EVIL&state={state}", headers={"Host": f"127.0.0.1:{port}"})
+        assert conn.getresponse().status == 400
+        conn.close()
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    conn.request("GET", "/?code=THECODE&state=st", headers={"Host": f"127.0.0.1:{port}"})
+    assert conn.getresponse().status == 200
+    conn.close()
+    thread.join(timeout=20)
+    idle.close()
+    listener.server_close()
+    assert out == ["THECODE"]
+
+
 def test_the_loopback_listener_takes_only_the_right_state_and_closes() -> None:
     listener, thread, out = _listener("good-state")
     base = listener.redirect_uri
@@ -621,11 +680,13 @@ def _api(tmp_path: Path, **over: Any):  # noqa: ANN202
     from core.api.app import create_app
     from core.config import Settings
 
-    settings = Settings(_env_file=None, api_token="t0k-for-tests", data_dir=tmp_path, **over)
+    settings = Settings(
+        _env_file=None, api_token="t0k-for-tests-0123456789", data_dir=tmp_path, **over
+    )
     return TestClient(create_app(settings), base_url="http://127.0.0.1")
 
 
-AUTH = {"Authorization": "Bearer t0k-for-tests"}
+AUTH = {"Authorization": "Bearer t0k-for-tests-0123456789"}
 
 
 def test_the_status_endpoint_needs_the_token_and_says_off_when_not_enabled(tmp_path: Path) -> None:

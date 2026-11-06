@@ -74,6 +74,25 @@ def test_free_text_secrets(emit: Emit) -> None:
         assert leaked not in raw
 
 
+def test_secrets_named_by_what_this_project_handles_are_redacted(emit: Emit) -> None:
+    log, buf = emit
+    lines = [
+        f"refresh_token={TOKEN}",
+        f"access_token: {TOKEN}",
+        f"client_secret={TOKEN}",
+        f"id_token={TOKEN}",
+        f"MIRAGE_API_TOKEN={TOKEN}",
+        f"POSTGRES_PASSWORD={TOKEN}",
+        f'{{"refresh_token": "{TOKEN}", "scope": "Mail.Read"}}',
+        f"x-api-key: {TOKEN}",
+    ]
+    for line in lines:
+        log.warning("failed with %s", line)
+        assert TOKEN not in buf.getvalue(), line
+    log.info("passed 3 tests, status code: 404, scope=Mail.Read")
+    assert "passed 3 tests, status code: 404, scope=Mail.Read" in str(last(buf)["msg"])
+
+
 def test_database_url_never_logged(emit: Emit) -> None:
     log, buf = emit
     dsn = f"postgresql+psycopg://mirage:{DB_PW}@localhost:5432/mirage"  # pragma: allowlist secret

@@ -17,8 +17,11 @@ from urllib.parse import urlsplit
 REDACTED = "[REDACTED]"
 
 _URL = re.compile(r"[a-zA-Z][a-zA-Z0-9+.\-]*://[^\s\"'<>]+")
+# The key may carry a prefix (refresh_token, client_secret, MIRAGE_API_TOKEN, POSTGRES_PASSWORD)
+# and may be quoted (JSON): a word boundary alone would let `refresh_token=...` through.
 _KV = re.compile(
-    r"(?i)\b(password|passwd|pwd|secret|token|api[_-]?key|authorization)(\s*[=:]\s*)(\S+)"
+    r"(?i)\b([\w.\-]*?(?:password|passwd|pwd|secret|token|api[_-]?key|authorization))"
+    r"(\"?\s*[=:]\s*\"?)([^\s\",;&]+)"
 )
 _BEARER = re.compile(r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=\-]{8,}")
 # Substring match on purpose: over-redacting `passed` is cheaper than leaking `passwd`.

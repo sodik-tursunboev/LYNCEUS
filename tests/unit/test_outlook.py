@@ -81,6 +81,19 @@ def test_first_connect_reads_the_last_days_once_and_then_follows_new_mail(rig: R
     assert rig.box.stats.flagged and "rules" in rig.box.stats.flagged[0]
 
 
+def test_a_duplicate_href_cannot_swap_the_analysed_link_for_a_harmless_one() -> None:
+    one = analyze(eml(subject="Verify now", html=f'<a href="{PHISH_LINK}">go</a>', text=None))
+    two = analyze(
+        eml(
+            subject="Verify now",
+            html=f'<a href="{PHISH_LINK}" href="https://www.paypal.com/signin">go</a>',
+            text=None,
+        )
+    )
+    assert two.report.verdict.state == one.report.verdict.state
+    assert two.report.verdict.risk_score == one.report.verdict.risk_score
+
+
 def test_lookback_zero_reads_no_old_mail_but_follows_new(tmp_path: Path) -> None:
     rig = Rig(tmp_path, lookback_days=0)
     rig.fake.add("old", OK_MAIL)
@@ -138,6 +151,29 @@ def test_deleted_mail_is_ignored_and_mail_that_vanishes_before_it_is_fetched_is_
     assert gets(rig, "gone1") == 0
     assert rig.box.stats.vanished == 1 and len(rig.stored) == 1
     assert rig.box.state.has(message_key("gone2"))
+
+
+def test_a_burst_that_fits_on_one_page_is_still_queued_not_dropped(tmp_path: Path) -> None:
+    rig = Rig(tmp_path, FakeGraph(page_size=500), lookback_days=0)
+    rig.box.poll()
+    for i in range(MAX_PER_POLL + 30):
+        rig.fake.add(f"b{i:04d}", OK_MAIL + f"\nn{i}".encode())
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL and rig.box.stats.backlog is True
+    for _ in range(3):
+        rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL + 30 and rig.box.stats.backlog is False
+
+
+def test_a_look_back_larger_than_one_poll_is_finished_over_the_next_polls(tmp_path: Path) -> None:
+    fake = FakeGraph(page_size=500)
+    for i in range(MAX_PER_POLL + 50):
+        fake.add(f"o{i:04d}", OK_MAIL + f"\nn{i}".encode())
+    rig = Rig(tmp_path, fake, lookback_days=2)
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL and rig.box.state.history_id is None
+    rig.box.poll()
+    assert len(rig.stored) == MAX_PER_POLL + 50 and rig.box.state.history_id is not None
 
 
 def test_paged_delta_is_followed_to_the_end_and_a_burst_is_queued(tmp_path: Path) -> None:
@@ -242,6 +278,8 @@ def test_malformed_pages_are_bad_responses(body: bytes) -> None:
         "https://login.microsoftonline.com/v1.0/x",
         "file:///etc/passwd",
         "//graph.microsoft.com/v1.0/x",
+        "https://[::1/v1.0/x",  # does not even parse
+        "https://graph.microsoft.com:notaport/v1.0/x",
         "",
     ],
 )
@@ -268,6 +306,16 @@ def test_a_link_that_does_not_lead_to_graph_is_never_followed(link: str) -> None
         client_for(handler).list_recent(2, page=link)
     assert {e1.value.kind, e2.value.kind, e3.value.kind} == {"bad_response"}
     assert [r.url.host for r in sent] == ["graph.microsoft.com"]  # only the first call went out
+
+
+def test_a_damaged_saved_position_is_a_stated_error_not_a_crash(tmp_path: Path) -> None:
+    (tmp_path / "state.json").write_text(
+        json.dumps({"history_id": "https://[::1/v1.0/x", "seen": []}), encoding="utf-8"
+    )
+    rig = Rig(tmp_path)
+    rig.fake.add("AAMk1", OK_MAIL)
+    rig.box.poll()  # must not raise
+    assert rig.box.stats.last_error == "bad_response" and rig.stored == []
 
 
 def test_a_delta_round_that_never_ends_is_cut_off() -> None:

@@ -45,7 +45,11 @@ def _server(url: object) -> str | None:
     """A base URL from the bootstrap file, or None if it is not safe to talk to."""
     if not isinstance(url, str):
         return None
-    parts = urlsplit(url)
+    try:
+        parts = urlsplit(url)
+        port = parts.port
+    except ValueError:
+        return None  # not a URL at all (a bad port, an unclosed bracket)
     host = parts.hostname or ""
     try:
         ipaddress.ip_address(host)
@@ -56,7 +60,7 @@ def _server(url: object) -> str | None:
         parts.scheme != "https"
         or parts.username
         or parts.password
-        or parts.port not in (None, 443)
+        or port not in (None, 443)
         or parts.query
         or parts.fragment
         or "." not in host

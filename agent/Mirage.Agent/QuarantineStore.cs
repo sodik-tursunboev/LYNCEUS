@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Microsoft.Win32.SafeHandles;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -20,8 +21,42 @@ public class RealFileSystem
 
     public virtual void Move(string source, string destination) => File.Move(source, destination, overwrite: false);
 
-    /// <summary>The only deletion in the agent that touches a user's path: see <see cref="QuarantineStore"/>.</summary>
+    /// <summary>Removes a file this program made (a half-written copy or temp). Never a user's file.</summary>
     public virtual void Delete(string path) => File.Delete(path);
+
+    /// <summary>
+    /// The only removal of a user's file in the agent (see <see cref="QuarantineStore"/>). The file is opened
+    /// once, with nobody else allowed to write, rename or delete it; its hash is checked through that handle and
+    /// the same handle is marked for deletion. The name cannot be pointed at another file in between. False
+    /// (nothing deleted) when the content is not the verified one or the path is a link.
+    /// </summary>
+    public virtual bool DeleteIfSame(string path, string sha256, Action beforeDelete)
+    {
+        using var handle = NativeDelete.OpenForVerifiedDelete(path);
+        if (NativeDelete.IsReparsePoint(handle))
+        {
+            return false;
+        }
+
+        using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var buffer = new byte[81920];
+        long offset = 0;
+        int read;
+        while ((read = RandomAccess.Read(handle, buffer, offset)) > 0)
+        {
+            sha.AppendData(buffer, 0, read);
+            offset += read;
+        }
+
+        if (!string.Equals(Convert.ToHexString(sha.GetHashAndReset()), sha256, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        beforeDelete();
+        NativeDelete.MarkForDeletion(handle); // deleted when this handle closes
+        return true;
+    }
 
     public virtual bool Exists(string path) => File.Exists(path);
 
@@ -32,6 +67,76 @@ public class RealFileSystem
     public virtual void WriteZone(string path, string content) => File.WriteAllText(path + ":Zone.Identifier", content);
 
     public virtual void Flush(FileStream stream) => stream.Flush(flushToDisk: true);
+}
+
+/// <summary>The two Win32 calls the verified removal needs.</summary>
+internal static partial class NativeDelete
+{
+    private const uint GenericRead = 0x80000000;
+    private const uint Delete = 0x00010000;
+    private const uint ShareRead = 0x1;
+    private const uint OpenExisting = 3;
+    private const uint OpenReparsePoint = 0x00200000;
+    private const uint SequentialScan = 0x08000000;
+    private const int FileDispositionInfo = 4;
+    private const uint ReparseAttribute = 0x400;
+
+    [LibraryImport("kernel32.dll", EntryPoint = "CreateFileW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial SafeFileHandle CreateFile(string name, uint access, uint share, nint security, uint disposition, uint flags, nint template);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetFileInformationByHandle(SafeFileHandle file, int infoClass, ref int info, int size);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetFileInformationByHandle(SafeFileHandle file, out ByHandleFileInformation info);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ByHandleFileInformation
+    {
+        public uint FileAttributes;
+        public long CreationTime;
+        public long LastAccessTime;
+        public long LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
+    }
+
+    /// <summary>Read and delete access, others may only read: no writer, rename or delete while it is held.</summary>
+    public static SafeFileHandle OpenForVerifiedDelete(string path)
+    {
+        var handle = CreateFile(path, GenericRead | Delete, ShareRead, 0, OpenExisting, OpenReparsePoint | SequentialScan, 0);
+        if (handle.IsInvalid)
+        {
+            var error = Marshal.GetLastWin32Error();
+            handle.Dispose();
+            if (error == 5)
+            {
+                throw new UnauthorizedAccessException("the file could not be opened for a verified removal");
+            }
+
+            throw new IOException("the file could not be opened for a verified removal", unchecked((int)0x80070000) | error);
+        }
+
+        return handle;
+    }
+
+    public static bool IsReparsePoint(SafeFileHandle handle) =>
+        !GetFileInformationByHandle(handle, out var info) || (info.FileAttributes & ReparseAttribute) != 0;
+
+    public static void MarkForDeletion(SafeFileHandle handle)
+    {
+        var flag = 1;
+        if (!SetFileInformationByHandle(handle, FileDispositionInfo, ref flag, sizeof(int)))
+        {
+            throw new IOException("the file could not be marked for removal", unchecked((int)0x80070000) | Marshal.GetLastWin32Error());
+        }
+    }
 }
 
 public sealed record QuarantineResult(bool Ok, string Reason, string? RestoredPath = null, long Size = 0, long ModifiedTicks = 0);
@@ -79,14 +184,14 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
             return Resume(dir, record);
         }
 
-        if (Inspect(path) is { } problem)
-        {
-            return Fail(problem);
-        }
-
-        Directory.CreateDirectory(dir);
         try
         {
+            if (Inspect(path) is { } problem)
+            {
+                return Fail(problem);
+            }
+
+            Directory.CreateDirectory(dir);
             return Begin(dir, actionId, path, expectedSha256.ToLowerInvariant());
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -158,8 +263,14 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
 
             if (fs.Exists(part) && HashOf(part) != record.Sha256)
             {
-                CleanTemp(part);
-                return fs.Exists(path) ? Fail("changed") : Fail("payload_changed"); // the original, if still there, is untouched
+                if (fs.Exists(path))
+                {
+                    CleanTemp(part); // the original is still there, so this was our own copy: a bad one
+                    return Fail("changed");
+                }
+
+                fs.Move(part, path); // the original is gone: the part is the renamed user file, not ours to delete
+                return Fail("payload_changed");
             }
 
             if (!fs.Exists(part) && !fs.Exists(payload))
@@ -190,9 +301,11 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
         {
             if (HashOf(part) != record.Sha256)
             {
-                if (sameVolume && !fs.Exists(path))
+                if (sameVolume)
                 {
-                    fs.Move(part, path); // what was moved is not what was judged: put it back
+                    // What was renamed is not what was judged (the name was swapped in a tiny window). It is
+                    // somebody's file, not ours to delete: put it back, under a free name if the old one is taken.
+                    fs.Move(part, fs.Exists(path) ? Unique(path) : path);
                     return Fail("changed");
                 }
 
@@ -207,16 +320,23 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
         {
             // another volume: the verified copy is in place; now, and only now, the original may go
             var now = fs.Info(path);
-            if (now.Length != record.Size || now.LastWriteTimeUtc.Ticks != record.ModifiedTicks || HashOf(path) != record.Sha256)
+            if (now.Length != record.Size || now.LastWriteTimeUtc.Ticks != record.ModifiedTicks)
             {
                 return Fail("changed"); // it changed after it was judged: leave it alone, the copy stays
             }
 
-            record.State = "copied";
-            Save(dir, record);
             try
             {
-                RemoveVerifiedOriginal(path);
+                // the hash is checked through the very handle that is then marked for deletion; "copied" is
+                // recorded just before, so a crash at any point can be resumed
+                if (!RemoveVerifiedOriginal(path, record.Sha256, () =>
+                    {
+                        record.State = "copied";
+                        Save(dir, record);
+                    }))
+                {
+                    return Fail("changed"); // not the file that was judged (or a link): leave it, the copy stays
+                }
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
@@ -230,7 +350,7 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
     }
 
     /// <summary>The single place a user's file is removed: its copy in quarantine has been verified byte for byte.</summary>
-    private void RemoveVerifiedOriginal(string path) => fs.Delete(path);
+    private bool RemoveVerifiedOriginal(string path, string sha256, Action recordIntent) => fs.DeleteIfSame(path, sha256, recordIntent);
 
     // ---- restore ----------------------------------------------------------------------------
 
@@ -267,7 +387,7 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
             }
 
             var original = PathCodec.Decode(record.OriginalB64) ?? string.Empty;
-            if (!Path.IsPathRooted(original) || original.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            if (!Path.IsPathRooted(original) || InsideStore(original) || original.StartsWith(@"\\", StringComparison.Ordinal))
             {
                 return Fail("bad_path");
             }
@@ -297,21 +417,40 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
             }
 
             fs.Move(temp, target); // never overwrites
+            // From here the file is back, so this is recorded first: a failure below must never make a
+            // retry put a second copy next to it.
+            record.State = "restored";
+            record.RestoredB64 = PathCodec.Encode(target);
+            Save(dir, record);
+
+            var marked = true;
             if (!string.IsNullOrEmpty(record.Zone))
             {
-                fs.WriteZone(target, record.Zone);
+                try
+                {
+                    fs.WriteZone(target, record.Zone);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    marked = false; // the file is back but without its download mark: said, not hidden
+                }
             }
 
             // last: writing the mark changes the file time, and the time is what keeps the agent from
             // judging the restored file as a new one
-            File.SetLastWriteTimeUtc(target, new DateTime(record.ModifiedTicks, DateTimeKind.Utc));
+            try
+            {
+                File.SetLastWriteTimeUtc(target, new DateTime(record.ModifiedTicks, DateTimeKind.Utc));
+                var keep = (FileAttributes)(record.Attributes & (int)(FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System | FileAttributes.Archive));
+                File.SetAttributes(target, keep == 0 ? FileAttributes.Normal : keep);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // time and attributes are cosmetic next to having the file back
+            }
 
-            var keep = (FileAttributes)(record.Attributes & (int)(FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System | FileAttributes.Archive));
-            File.SetAttributes(target, keep == 0 ? FileAttributes.Normal : keep);
-            record.State = "restored";
-            record.RestoredB64 = PathCodec.Encode(target);
-            Save(dir, record);
-            return new QuarantineResult(true, target == original ? "ok" : "renamed", target, record.Size, record.ModifiedTicks);
+            var reason = target == original ? "ok" : "renamed";
+            return new QuarantineResult(true, marked ? reason : reason + "_unmarked", target, record.Size, record.ModifiedTicks);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -333,9 +472,9 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
         }
 
         var full = Path.GetFullPath(path);
-        if (full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+        if (InsideStore(full) || full.StartsWith(@"\\", StringComparison.Ordinal))
         {
-            return "bad_path";
+            return "bad_path"; // inside our own folder, or a network / device path (also spells \\localhost\C$\...)
         }
 
         var info = fs.Info(full);
@@ -365,6 +504,13 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
         }
 
         return null;
+    }
+
+    /// <summary>True for the store folder itself or anything under it (a folder named like it, such as "quarantine-x", is not).</summary>
+    private bool InsideStore(string fullPath)
+    {
+        var folder = root.EndsWith(Path.DirectorySeparatorChar) ? root : root + Path.DirectorySeparatorChar;
+        return fullPath.StartsWith(folder, StringComparison.OrdinalIgnoreCase) || string.Equals(fullPath, root, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Sharing violation, access denied, or an antivirus block (ERROR_VIRUS_INFECTED / _DELETED).</summary>
@@ -475,7 +621,12 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
     {
         Directory.CreateDirectory(dir);
         var temp = Path.Combine(dir, RecordFile + ".tmp");
-        File.WriteAllText(temp, JsonSerializer.Serialize(record, Json));
+        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
+        {
+            stream.Write(JsonSerializer.SerializeToUtf8Bytes(record, Json));
+            stream.Flush(flushToDisk: true); // on disk before it replaces the old record (a power cut keeps one good copy)
+        }
+
         File.Move(temp, Path.Combine(dir, RecordFile), overwrite: true);
     }
 

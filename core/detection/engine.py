@@ -21,6 +21,7 @@ from core.contracts import (
 from core.risk.scoring import Scored, score
 from core.urls.parse import HostKind, ParsedUrl, ParseFailure, UrlFlag, parse_url
 from rules.url import RULES
+from rules.url.content import hands_over_control
 from rules.url.data import lists, official_domains, ruleset_version, scoring
 
 ENGINE_VERSION = "1.0.0"
@@ -65,6 +66,8 @@ def _allowlisted(u: ParsedUrl) -> bool:
         return False
     if u.private_suffix or u.registered_domain not in official_domains():
         return False
+    if hands_over_control(u):
+        return False  # google.com/url?q=https://elsewhere is Google's redirector, not Google's site
     return not any(u.host == h or u.host.endswith("." + h) for h in lists()["shared_hosts"])
 
 

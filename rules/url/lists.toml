@@ -22,7 +22,7 @@ login_words = [
 redirect_params = [
   "url", "uri", "redirect", "redirect_uri", "redirect_url", "redirecturl", "redir", "next",
   "continue", "dest", "destination", "goto", "go", "return", "return_to", "returnurl", "r", "u",
-  "target", "to", "link", "out",
+  "target", "to", "link", "out", "q",
 ]
 
 # Query parameters that prefill a victim's identity on a fake login page.
@@ -44,4 +44,7 @@ not_typos = ["apply", "ample", "maple", "stream", "paypay", "adore", "abode", "g
 shared_hosts = [
   "sites.google.com", "docs.google.com", "drive.google.com", "forms.office.com", "sharepoint.com",
   "onedrive.live.com", "1drv.ms", "storage.googleapis.com",
+  # added after the independent review: official hosts that serve whatever a user uploads or scripts
+  "script.google.com", "forms.gle", "firebasestorage.googleapis.com", "dropbox.com", "github.com",
+  "githubusercontent.com", "sway.office.com", "notion.so", "blob.core.windows.net", "amazonaws.com",
 ]

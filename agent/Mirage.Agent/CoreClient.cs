@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -48,10 +49,18 @@ public sealed record MailboxStatus(string State, IReadOnlyList<FlaggedMail> Flag
 
 public sealed record OverrideResult(CoreStatus Status, DateTimeOffset? ExpiresAt = null, string Detail = "");
 
-/// <summary>The agent's side of POST /v1/files/analyze and /v1/files/check.</summary>
-public sealed class CoreClient(HttpClient http, Func<string?> token)
+/// <summary>
+/// The agent's side of POST /v1/files/analyze and /v1/files/check. Before it sends the API token, a URL or a
+/// file to whatever listens on the core's port, that program must prove it is the core: it answers a fresh
+/// nonce with an HMAC keyed by the token (only a program that knows the token can). Any local program can
+/// bind a port the real core has left, so without this the token and everything the user browses or
+/// downloads could go to an impostor. The proof is trusted for a short time and forgotten on any failure.
+/// </summary>
+public sealed class CoreClient(HttpClient http, Func<string?> token, bool verifyCore = true)
 {
     private const int MaxResponseBytes = 1024 * 1024;
+    private const long ProofValidMillis = 30_000;
+    private long verifiedUntil;
     private static readonly HashSet<string> States = ["MALICIOUS", "SUSPICIOUS", "BENIGN", "UNKNOWN", "ERROR"];
 
     /// <summary>The file's bytes go to the core, which opens them in its sandbox.</summary>
@@ -130,7 +139,7 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
     /// <summary>The responses in these states (PENDING, APPROVED, RESTORE_REQUESTED, ...), newest first.</summary>
     public async Task<(CoreStatus Status, IReadOnlyList<ActionInfo> Actions)> ListActionsAsync(string states, CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/actions?limit=100&state=" + Uri.EscapeDataString(states));
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/v1/actions?limit=100&kind=FILE_QUARANTINE&state=" + Uri.EscapeDataString(states));
         var (status, body, _) = await SendRawAsync(request, ct).ConfigureAwait(false);
         if (status != CoreStatus.Ok)
         {
@@ -143,6 +152,13 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
             var list = new List<ActionInfo>();
             foreach (var item in document.RootElement.EnumerateArray().Take(100))
             {
+                // this agent moves files and nothing else: an action of any other kind (email, which only the core
+                // handles) is not its business, whatever the core sends. A core that does not say is an older one: files.
+                if (Text(item, "kind", 24) is { } kind && kind != "FILE_QUARANTINE")
+                {
+                    continue;
+                }
+
                 if (Guid.TryParse(Text(item, "id", 40), out var id) && Text(item, "state", 24) is { } state
                     && Text(item, "file_ref", 32) is { } fileRef && Text(item, "sha256", 64) is { } sha)
                 {
@@ -295,19 +311,81 @@ public sealed class CoreClient(HttpClient http, Func<string?> token)
             return (CoreStatus.Unauthorized, null, "no API token is configured");
         }
 
+        if (verifyCore && !await IsTheCoreAsync(secret, ct).ConfigureAwait(false))
+        {
+            // nothing secret is sent: not the token, not the URL, not the file
+            return (CoreStatus.Unavailable, null, "core_identity");
+        }
+
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", secret);
         try
         {
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-            return await ReadAsync(response, ct).ConfigureAwait(false);
+            var read = await ReadAsync(response, ct).ConfigureAwait(false);
+            if (read.Status is CoreStatus.Unavailable or CoreStatus.Unauthorized)
+            {
+                Interlocked.Exchange(ref verifiedUntil, 0); // prove it again before the next secret goes out
+            }
+
+            return read;
         }
         catch (HttpRequestException e)
         {
+            Interlocked.Exchange(ref verifiedUntil, 0);
             return (CoreStatus.Unavailable, null, e.GetType().Name + (e.InnerException is { } inner ? "/" + inner.GetType().Name : string.Empty));
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             return (CoreStatus.Unavailable, null, "timeout");
+        }
+    }
+
+    /// <summary>GET /health?nonce=...: the answer must carry HMAC-SHA256(token, nonce). No token is sent to find out.</summary>
+    private async Task<bool> IsTheCoreAsync(string secret, CancellationToken ct)
+    {
+        if (Environment.TickCount64 < Interlocked.Read(ref verifiedUntil))
+        {
+            return true;
+        }
+
+        var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/health?nonce=" + nonce);
+            using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+                return false;
+            }
+
+            var body = await ReadLimitedAsync(response.Content, ct).ConfigureAwait(false);
+            if (body is null)
+            {
+                return false;
+            }
+
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("proof", out var proof)
+                || proof.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            var expected = HMACSHA256.HashData(Encoding.UTF8.GetBytes(secret), Encoding.ASCII.GetBytes(nonce));
+            var given = Convert.FromHexString(proof.GetString()!);
+            if (!CryptographicOperations.FixedTimeEquals(expected, given))
+            {
+                return false;
+            }
+
+            Interlocked.Exchange(ref verifiedUntil, Environment.TickCount64 + ProofValidMillis);
+            return true;
+        }
+        catch (Exception e) when (e is HttpRequestException or JsonException or FormatException or InvalidOperationException
+            || (e is OperationCanceledException && !ct.IsCancellationRequested))
+        {
+            return false;
         }
     }
 

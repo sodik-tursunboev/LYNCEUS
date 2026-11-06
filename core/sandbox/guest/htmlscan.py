@@ -128,9 +128,13 @@ class Budget:
 
 
 class Scanner(HTMLParser):
-    def __init__(self, part: str, budget: Budget) -> None:
+    def __init__(self, part: str, budget: Budget, depth: int = 0) -> None:
         super().__init__(convert_charrefs=True)
-        self.part, self.b = part, budget
+        self.part, self.b, self.depth = (
+            part,
+            budget,
+            depth,
+        )  # depth > 0: inside a conditional comment
         self.stack: list[tuple[str, bool, dict[str, Any] | None]] = []
         self.anchors: list[dict[str, Any]] = []
         self.tags = 0
@@ -139,6 +143,33 @@ class Scanner(HTMLParser):
         self.script: list[str] = []
         self.script_len = 0
         self.stopped = False
+
+    def _add(self, kind: str, url: str, flags: list[str]) -> dict[str, Any] | None:
+        """Links only some clients see (Outlook for Windows reads `<!--[if mso]>`) are marked."""
+        return self.b.add_link(
+            self.part, kind, url, [*flags, "conditional"] if self.depth else flags
+        )
+
+    def handle_comment(self, data: str) -> None:
+        """A downlevel-hidden conditional comment is a comment to this parser but real HTML to
+        Outlook for Windows: its links are read too (one level deep), so they cannot hide a
+        destination."""
+        if self.stopped or self.depth >= 1:
+            return
+        body = data.lstrip()
+        if body[:3].lower() != "[if":
+            return
+        end = body.find("]>")
+        if end < 0:
+            return
+        inner = re.sub(r"<!\[endif\]\s*$", "", body[end + 2 :], flags=re.I)
+        nested = Scanner(self.part, self.b, self.depth + 1)
+        try:
+            nested.feed(inner)
+            nested.close()
+        except Exception:  # noqa: BLE001  (a hostile comment must not abort the message)
+            self.b.hit.add("html_error")
+        nested.finish()
 
     @property
     def hidden(self) -> bool:
@@ -152,36 +183,47 @@ class Scanner(HTMLParser):
             self.b.hit.add("html_tags")
             self.stopped = True
             return
-        a = {k.lower(): (v or "") for k, v in attrs}
+        a: dict[str, str] = {}
+        for (
+            k,
+            v,
+        ) in attrs:  # the first of a repeated attribute wins, as in browsers and mail clients
+            a.setdefault(k.lower(), v or "")
         hidden = self.hidden or "hidden" in a or style_hides(a.get("style", ""))
         anchor: dict[str, Any] | None = None
         href = a.get("href") or a.get("xlink:href", "")
-        if tag in ("a", "area") and href:
+        if tag in ("button", "input") and a.get("formaction"):
+            self._add("form", a["formaction"], ["hidden"] if hidden else [])  # a click posts there
+        if (tag in ("a", "area") or tag.startswith("v:")) and href:  # v:* is Outlook
             flags = ["hidden"] if hidden else []
             if href.strip().lower().startswith("javascript:"):
                 flags.append("javascript")
             if "download" in a and href.strip().lower().startswith(("data:", "blob:")):
                 self.b.stats["data_downloads"] += 1
-            rec = self.b.add_link(self.part, "a" if tag == "a" else "area", href, flags)
+            rec = self._add("area" if tag == "area" else "a", href, flags)
             if rec is not None:
                 anchor = {"rec": rec, "text": [], "has_image": False}
                 self.anchors.append(anchor)
         elif tag == "form":
             self.b.stats["forms"] += 1
             if a.get("action"):
-                self.b.add_link(self.part, "form", a["action"], ["hidden"] if hidden else [])
+                self._add("form", a["action"], ["hidden"] if hidden else [])
         elif tag in ("iframe", "frame"):
             self.b.stats["iframes"] += 1
             if a.get("src"):
-                self.b.add_link(self.part, "iframe", a["src"], ["hidden"] if hidden else [])
+                self._add("iframe", a["src"], ["hidden"] if hidden else [])
+        elif tag == "embed" and a.get("src"):
+            self._add("iframe", a["src"], ["hidden"] if hidden else [])  # embedded document
+        elif tag == "object" and a.get("data"):
+            self._add("iframe", a["data"], ["hidden"] if hidden else [])
         elif tag == "script":
             self.b.stats["scripts"] += 1
             if a.get("src"):
-                self.b.add_link(self.part, "script", a["src"], [])
+                self._add("script", a["src"], [])
         elif tag == "meta" and a.get("http-equiv", "").lower() == "refresh":
             m = _REFRESH_URL.search(a.get("content", ""))
             if m:
-                self.b.add_link(self.part, "meta_refresh", m.group(1), [])
+                self._add("meta_refresh", m.group(1), [])
         elif tag == "base" and a.get("href") and self.b.base is None:
             self.b.base = a["href"].strip()[:MAX_LINK_URL]
         elif tag == "input" and a.get("type", "").lower() == "password":

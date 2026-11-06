@@ -44,22 +44,43 @@ describe("the service worker wiring", () => {
     expect((chromeFake.tabs.update.mock.calls[0] as unknown[])[1]).toMatchObject({ url: expect.stringContaining("warning.html?k=") });
   });
 
-  it("an override is accepted only from the warning page of this extension", async () => {
+  it("an override is accepted only from the top frame of the warning page of this extension", async () => {
     const { listeners, port } = installChrome();
     await import("../src/background");
-    const handler = listeners.onMessage![0]!;
-    const msg = { type: "override", url: "https://x.test/", state: "MALICIOUS" };
-    expect(handler(msg, { id: "otherext", url: "chrome-extension://otherext/warning.html" }, vi.fn())).toBe(false);
-    expect(handler(msg, { id: "testid", url: "https://evil.test/" }, vi.fn())).toBe(false);
-    expect(handler(msg, { id: "testid", url: "chrome-extension://testid/popup.html" }, vi.fn())).toBe(false);
-    expect(handler({ ...msg, state: "SAFE" }, { id: "testid", url: "chrome-extension://testid/warning.html?x" }, vi.fn())).toBe(false);
-    expect(handler({ ...msg, url: 5 }, { id: "testid", url: "chrome-extension://testid/warning.html?x" }, vi.fn())).toBe(false);
-    expect(handler("text", { id: "testid", url: "chrome-extension://testid/warning.html" }, vi.fn())).toBe(false);
-    expect(port.sent).toHaveLength(0);
-    const respond = vi.fn();
-    expect(handler(msg, { id: "testid", url: "chrome-extension://testid/warning.html?k=1" }, respond)).toBe(true);
+    // the extension itself judges the page bad first: only then can an override exist
+    listeners.onBeforeNavigate![0]!({ tabId: 5, frameId: 0, url: "https://x.test/" });
     await vi.waitFor(() => expect(port.sent).toHaveLength(1));
-    expect(port.sent[0]).toMatchObject({ type: "override", url: "https://x.test/", state: "MALICIOUS", minutes: 15 });
+    port.deliver({ v: 1, type: "verdict", id: (port.sent[0] as { id: string }).id, state: "MALICIOUS", score: 90, recommended: null, explanation: null, reasons: [] });
+    await vi.waitFor(() => expect(port.sent).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 20));
+
+    const handler = listeners.onMessage![0]!;
+    const msg = { type: "override", url: "https://x.test/" };
+    const page = "chrome-extension://testid/warning.html?k=1";
+    const top = { id: "testid", url: page, frameId: 0, tab: { id: 5 } };
+    expect(handler(msg, { ...top, id: "otherext" }, vi.fn())).toBe(false);
+    expect(handler(msg, { ...top, url: "https://evil.test/" }, vi.fn())).toBe(false);
+    expect(handler(msg, { ...top, url: "chrome-extension://testid/popup.html" }, vi.fn())).toBe(false);
+    expect(handler({ ...msg, url: 5 }, top, vi.fn())).toBe(false);
+    expect(handler("text", top, vi.fn())).toBe(false);
+    // a copy of the warning page framed inside another site (clickjacking): a sub-frame, refused
+    expect(handler(msg, { ...top, frameId: 3 }, vi.fn())).toBe(false);
+    expect(handler(msg, { id: "testid", url: page, tab: { id: 5 } }, vi.fn())).toBe(false); // no frame id
+    expect(handler(msg, { id: "testid", url: page, frameId: 0 }, vi.fn())).toBe(false); // not in a tab
+    expect(port.sent).toHaveLength(1); // still only the original check
+    expect(handler(msg, top, vi.fn())).toBe(true);
+    await vi.waitFor(() => expect(port.sent).toHaveLength(2));
+    expect(port.sent[1]).toMatchObject({ type: "override", url: "https://x.test/", state: "MALICIOUS", minutes: 15 });
+  });
+
+  it("a top-frame warning page cannot override a URL the extension never judged bad", async () => {
+    const { listeners, port } = installChrome();
+    await import("../src/background");
+    const respond = vi.fn();
+    const top = { id: "testid", url: "chrome-extension://testid/warning.html?k=1", frameId: 0, tab: { id: 5 } };
+    expect(listeners.onMessage![0]!({ type: "override", url: "https://never-seen.test/" }, top, respond)).toBe(true);
+    await vi.waitFor(() => expect(respond).toHaveBeenCalledWith({ ok: false }));
+    expect(port.sent).toHaveLength(0); // the agent was never asked, so no override record exists
   });
 
   it("unknown message types are ignored", async () => {

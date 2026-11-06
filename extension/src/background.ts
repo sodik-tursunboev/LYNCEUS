@@ -2,7 +2,6 @@
 // so a worker the browser stopped is woken by the next event and reconnects to the agent.
 import { Guard } from "./guard";
 import { NativeLink } from "./native";
-import { STATES, type State } from "./protocol";
 import { Overrides, RuleBook, sessionKV, VerdictCache } from "./store";
 
 const kv = sessionKV(chrome.storage.session);
@@ -38,18 +37,25 @@ chrome.webNavigation.onBeforeNavigate.addListener(onNav);
 chrome.webNavigation.onCommitted.addListener(onNav); // the page a redirect ended on
 chrome.tabs.onRemoved.addListener((tabId) => guard?.forgetTab(tabId));
 
-/** Messages come only from this extension's own pages; the warning page alone may ask for an override. */
+/**
+ * Messages come only from this extension's own pages. Only the warning page may ask for an override, and
+ * only when it is the top frame of a tab: warning.html is reachable by any website, so a copy framed
+ * inside an attacker's page (to catch a click) has a sub-frame sender and is refused.
+ */
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || typeof message !== "object" || message === null) return false;
-  const m = message as { type?: unknown; url?: unknown; state?: unknown };
+  const m = message as { type?: unknown; url?: unknown };
   if (m.type === "status") {
     void guard?.status().then(sendResponse);
     return true;
   }
-  const fromWarningPage = typeof sender.url === "string" && sender.url.startsWith(chrome.runtime.getURL("warning.html"));
-  const state = STATES.find((s): s is State => s === m.state);
-  if (m.type === "override" && fromWarningPage && typeof m.url === "string" && state !== undefined) {
-    void guard?.override(m.url, state).then(sendResponse);
+  const fromWarningPage =
+    typeof sender.url === "string" &&
+    sender.url.startsWith(chrome.runtime.getURL("warning.html")) &&
+    sender.frameId === 0 &&
+    typeof sender.tab?.id === "number";
+  if (m.type === "override" && fromWarningPage && typeof m.url === "string") {
+    void guard?.override(m.url).then(sendResponse);
     return true;
   }
   return false;

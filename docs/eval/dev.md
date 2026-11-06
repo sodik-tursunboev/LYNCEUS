@@ -1,12 +1,12 @@
 # Eval report (url)
 
-Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+a01a3baf2dc5`. 2026-11-05 17:56Z.
+Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+960efe1e20f7`. 2026-11-06 07:21Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
 | TP | FP | FN | TN | abstain (malicious / benign) | error (malicious / benign) |
 |---|---|---|---|---|---|
-| 84 | 0 | 3 | 18 | 3 / 45 | 0 / 0 |
+| 84 | 0 | 3 | 16 | 3 / 47 | 0 / 0 |
 
 | Metric | Value | Wilson 95% interval |
 |---|---|---|
@@ -15,10 +15,10 @@ Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+a01a3baf2dc5`. 2026-11-05 17:
 | Recall (answered only) | 1.000 | |
 | F1 | 0.982 | |
 | Flag rate on benign (UNKNOWN is not flagged) | 0.000 | 0.000 to 0.057 |
-| Abstain rate | 0.320 | 0.251 to 0.398 |
+| Abstain rate | 0.333 | 0.263 to 0.412 |
 | Error rate | 0.000 | |
 
-Latency per URL: p50 0.891 ms, p95 1.535 ms, max 19.946 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per URL: p50 1.399 ms, p95 2.717 ms, max 33.006 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 

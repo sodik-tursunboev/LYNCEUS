@@ -49,13 +49,17 @@ class _Page(_M):
 
 def safe_link(url: str) -> str:
     """Only an https link to Graph's own v1.0 API: anything else a server hands back is refused."""
-    p = urlparse(url)
-    if (
-        p.scheme != "https"
-        or p.hostname != GRAPH_HOST
-        or p.port not in (None, 443)
-        or not p.path.startswith("/v1.0/")
-    ):
+    try:
+        p = urlparse(url)
+        secure = (
+            p.scheme == "https"
+            and p.hostname == GRAPH_HOST
+            and p.port in (None, 443)
+            and p.path.startswith("/v1.0/")
+        )
+    except ValueError:  # e.g. "https://[::1" or a port that is not a number
+        secure = False
+    if not secure:
         raise GmailError("bad_response")
     return url
 

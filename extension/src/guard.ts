@@ -65,9 +65,16 @@ export class Guard {
     }
   }
 
-  /** From the warning page: the user clicked "continue anyway". Allowed only if the agent recorded it. */
-  async override(url: string, state: State): Promise<{ ok: boolean }> {
+  /**
+   * From the warning page: the user clicked "continue anyway". Allowed only for a URL this extension
+   * itself judged bad (the cached verdict decides the state, never the caller), and only if the agent
+   * recorded it. A page cannot invent an override by sending its own URL and state.
+   */
+  async override(url: string): Promise<{ ok: boolean }> {
     if (!isCheckable(url)) return { ok: false };
+    const entry = await this.cache.get(await keyOf(url));
+    if (!entry || !isBad(entry.state)) return { ok: false };
+    const state = entry.state;
     const reply = await this.link.request({ type: "override", url, state, minutes: 15 });
     if (reply.type !== "override_ok") {
       this.afterFailure(reply.type === "error" ? reply.error : "unexpected");

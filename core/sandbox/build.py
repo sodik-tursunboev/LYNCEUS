@@ -8,6 +8,7 @@ registers one per user (a registry key and %LOCALAPPDATA%\\Packages\\mirage.pars
 `python -m core.sandbox.build --remove`, which deletes the profile and the .sandbox folder.
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -45,6 +46,21 @@ def _install_parsers() -> None:
         video_plugin.unlink()  # 29 MB of media decoders that QR detection never calls
 
 
+def _drop_profile_grant(sid: str) -> None:
+    """Windows gives the container full control of its own profile folder (Packages\\<name>\\AC).
+    The worker needs nothing there, and a compromised worker could leave state in it for the next
+    message's worker, with no quota. Take the grant away: the container then can write nowhere."""
+    local = os.environ.get("LOCALAPPDATA")
+    if not local:
+        return
+    profile = Path(local) / "Packages" / CONTAINER / "AC"
+    if profile.exists():
+        subprocess.run(  # noqa: S603
+            ["icacls", str(profile), "/remove:g", f"*{sid}", "/T", "/C", "/Q"],  # noqa: S607
+            capture_output=True, text=True, check=False,
+        )  # fmt: skip
+
+
 def build() -> None:
     if sys.platform != "win32":
         raise SandboxUnavailable("the sandbox is implemented for Windows only (ADR-008)")
@@ -69,6 +85,7 @@ def build() -> None:
     )  # fmt: skip
     if done.returncode != 0:
         raise SandboxUnavailable(f"could not grant the sandbox read access: {done.stderr.strip()}")
+    _drop_profile_grant(sid)
     print(f"sandbox built: {SANDBOX_DIR} (container {CONTAINER}, read-only grant to {sid})")
 
 

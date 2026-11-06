@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Guard, MAX_RULES } from "../src/guard";
 import type { NativeLink } from "../src/native";
 import type { Reply } from "../src/protocol";
@@ -159,7 +159,7 @@ describe("continuing anyway", () => {
     const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: until(900_000) } : ok("MALICIOUS")));
     await t.guard.onNavigation(nav(BAD));
     expect(t.browser.rules).toHaveLength(1);
-    expect(await t.guard.override(BAD, "MALICIOUS")).toEqual({ ok: true });
+    expect(await t.guard.override(BAD)).toEqual({ ok: true });
     expect(t.link.calls.at(-1)).toMatchObject({ type: "override", url: BAD, state: "MALICIOUS", minutes: 15 });
     expect(t.browser.rules).toHaveLength(0);
 
@@ -173,7 +173,7 @@ describe("continuing anyway", () => {
   it("blocks again once the time is up", async () => {
     const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: until(900_000) } : ok("MALICIOUS")));
     await t.guard.onNavigation(nav(BAD));
-    await t.guard.override(BAD, "MALICIOUS");
+    await t.guard.override(BAD);
     t.tick(901_000);
     const before = t.browser.tabs.length;
     await t.guard.onNavigation(nav(BAD));
@@ -181,21 +181,41 @@ describe("continuing anyway", () => {
   });
 
   it.each(["override_not_recorded", "agent_unavailable", "agent_timeout"])("is refused if the agent says %s", async (code) => {
-    const t = setup(() => err(code));
-    expect(await t.guard.override(BAD, "MALICIOUS")).toEqual({ ok: false });
+    const t = setup((r) => (r.type === "override" ? err(code) : ok("MALICIOUS")));
     await t.guard.onNavigation(nav(BAD));
-    expect(t.link.calls.filter((c) => c.type === "check_url")).toHaveLength(1);
+    expect(await t.guard.override(BAD)).toEqual({ ok: false });
+    const before = t.browser.tabs.length;
+    await t.guard.onNavigation(nav(BAD));
+    expect(t.browser.tabs.length).toBe(before + 1); // still blocked
   });
 
   it.each([until(-1000), "not a date", ""])("is refused if the recorded deadline is %j", async (when) => {
-    const t = setup(() => ({ type: "override_ok", id: "1", expires_at: when }));
-    expect(await t.guard.override(BAD, "MALICIOUS")).toEqual({ ok: false });
+    const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: when } : ok("MALICIOUS")));
+    await t.guard.onNavigation(nav(BAD));
+    expect(await t.guard.override(BAD)).toEqual({ ok: false });
   });
 
   it.each(["chrome://settings", "file:///C:/a", "javascript:1", ""])("is refused for %j", async (url) => {
     const t = setup(() => ({ type: "override_ok", id: "1", expires_at: until(900_000) }));
-    expect(await t.guard.override(url, "MALICIOUS")).toEqual({ ok: false });
+    expect(await t.guard.override(url)).toEqual({ ok: false });
     expect(t.link.calls).toHaveLength(0);
+  });
+
+  it("is refused for a URL the extension has no bad verdict for, without asking the agent (a forged warning page)", async () => {
+    const t = setup(() => ({ type: "override_ok", id: "1", expires_at: until(900_000) }));
+    expect(await t.guard.override(BAD)).toEqual({ ok: false }); // never judged
+    expect(t.link.calls).toHaveLength(0);
+    const good = setup((r) => (r.type === "check_url" ? ok("BENIGN") : { type: "override_ok", id: "1", expires_at: until(900_000) }));
+    await good.guard.onNavigation(nav("https://fine.test/"));
+    expect(await good.guard.override("https://fine.test/")).toEqual({ ok: false }); // judged fine: nothing to override
+    expect(good.link.calls.filter((c) => c.type === "override")).toHaveLength(0);
+  });
+
+  it("tells the agent the state the extension cached, whatever the page claims", async () => {
+    const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: until(900_000) } : ok("SUSPICIOUS")));
+    await t.guard.onNavigation(nav(BAD));
+    await t.guard.override(BAD);
+    expect(t.link.calls.at(-1)).toMatchObject({ type: "override", state: "SUSPICIOUS" });
   });
 });
 

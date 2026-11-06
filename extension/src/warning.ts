@@ -24,6 +24,13 @@ function text(id: string, value: string): void {
 }
 
 async function main(): Promise<void> {
+  if (window.top !== window) {
+    // Framed inside another page (any website can do that): show nothing it could be clicked through.
+    text("title", "MIRAGE warning page");
+    text("lead", "This warning is only shown on its own, not inside another page.");
+    document.getElementById("actions")?.setAttribute("hidden", "");
+    return;
+  }
   const params = readParams(location.search);
   if (!params) {
     text("title", "MIRAGE warning page");
@@ -53,7 +60,7 @@ async function main(): Promise<void> {
   document.getElementById("continue")?.addEventListener("click", (event) => {
     if (!event.isTrusted) return; // only a real click counts
     text("status", "Recording your decision…");
-    chrome.runtime.sendMessage({ type: "override", url: params.url, state: params.state }).then(
+    chrome.runtime.sendMessage({ type: "override", url: params.url }).then(
       (answer: { ok?: boolean } | undefined) => {
         if (answer?.ok) location.replace(params.url);
         else text("status", "The decision could not be recorded, so the page stays blocked. Is the MIRAGE agent running?");

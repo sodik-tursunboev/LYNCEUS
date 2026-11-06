@@ -202,7 +202,7 @@ public class CoreHttpTests
             }
         });
         using var http = CoreHttp.Create(new Uri($"http://127.0.0.1:{port}"), TimeSpan.FromSeconds(5));
-        var core = new CoreClient(http, () => "wire-token");
+        var core = new CoreClient(http, () => "wire-token", verifyCore: false);
         var first = await core.AnalyzeAsync("a.pdf", new string('a', 64), "origin.test", new byte[] { 1, 2, 3 }, CancellationToken.None);
         var second = await core.AnalyzeAsync("a.pdf", new string('a', 64), null, new byte[] { 1 }, CancellationToken.None);
         await server;
@@ -221,7 +221,7 @@ public class CoreClientTests
     private static (CoreClient Client, FakeCore Fake) Make(Func<string?>? token = null)
     {
         var fake = new FakeCore();
-        return (new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, token ?? (() => "t0k")), fake);
+        return (new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, token ?? (() => "t0k"), verifyCore: false), fake);
     }
 
     [Fact]

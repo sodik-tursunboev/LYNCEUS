@@ -53,6 +53,7 @@ class Stats:
     too_large: int = 0
     gave_up: int = 0
     recoveries: int = 0
+    backlog: bool = False  # the last poll stopped at its limit with mail still to read
     polls: int = 0
     last_poll: float | None = None
     last_error: str | None = None
@@ -129,6 +130,7 @@ class Mailbox:
         self._deferred = (
             False  # a message must be tried again, so the history position must not move on
         )
+        self._truncated = False  # the per-poll limit left unread mail: same rule, position stays
 
     def poll(self) -> None:
         """One round. Never raises for a Gmail problem: it records it and waits."""
@@ -158,6 +160,8 @@ class Mailbox:
             self.client.profile_history_id()
         )  # before listing, so mail arriving meanwhile is not missed
         self._deferred = False
+        self._truncated = False
+        self.stats.backlog = False
         self._relist()
         if self._deferred:
             return  # stay "not connected": the next poll lists again and skips what is done
@@ -170,6 +174,8 @@ class Mailbox:
         page: str | None = None
         done = 0
         self._deferred = False
+        self._truncated = False
+        self.stats.backlog = False
         while True:
             try:
                 h = self.client.history(self.state.history_id, page)
@@ -185,10 +191,15 @@ class Mailbox:
                 self._connect()
                 return
             done += self._process(h.ids, MAX_PER_POLL - done)
+            if self._truncated:
+                # unread mail is left on this very page: moving the position now would lose it
+                self.stats.backlog = True
+                return
             if h.next_page and done < MAX_PER_POLL:
                 page = h.next_page
                 continue
             if h.next_page:
+                self.stats.backlog = True
                 return  # keep the old position; the rest is read next poll (seen ids are skipped)
             if self._deferred:
                 self._deferred = False
@@ -202,9 +213,15 @@ class Mailbox:
             return
         page: str | None = None
         done = 0
-        while done < MAX_PER_POLL:
+        while True:
             listing = self.client.list_recent(self.lookback_days, page)
             done += self._process(listing.ids, MAX_PER_POLL - done)
+            if self._truncated or (listing.next_page and done >= MAX_PER_POLL):
+                # mail is left over: do not call this connected yet; the next poll lists again
+                # and skips what is already done
+                self._deferred = True
+                self.stats.backlog = True
+                return
             if not listing.next_page:
                 return
             page = listing.next_page
@@ -218,6 +235,7 @@ class Mailbox:
             if self.state.has(key):
                 continue
             if taken >= budget:
+                self._truncated = True  # an unread message is left behind
                 break
             taken += 1
             self._one(mid, key)

@@ -118,12 +118,15 @@ def test_no_configured_token_means_no_service() -> None:
     assert c.post(PATH, content=eml(), headers=AUTH | RFC822).status_code == 503
 
 
-def test_the_rate_limit_is_shared_with_the_url_route() -> None:
-    c = client(rate_limit_per_minute=2)
-    assert (
-        c.post("/v1/urls/analyze", json={"url": "https://example.test/"}, headers=AUTH).status_code
-        == 200
-    )
+def test_a_flood_of_url_checks_does_not_use_up_the_email_budget() -> None:
+    # a web page that bounces through many URLs must not be able to starve the other checks
+    c = client(rate_limit_per_minute=2, url_rate_limit_per_minute=3)
+    urls = [
+        c.post("/v1/urls/analyze", json={"url": f"https://example.test/{i}"}, headers=AUTH)
+        for i in range(4)
+    ]
+    assert [r.status_code for r in urls] == [200, 200, 200, 429]  # the URL lane is full
+    assert post(c, eml()).status_code == 200  # the email lane is untouched
     assert post(c, eml()).status_code == 200
     r = post(c, eml())
     assert r.status_code == 429 and int(r.headers["retry-after"]) > 0

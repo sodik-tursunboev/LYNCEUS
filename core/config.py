@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +10,21 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MIRAGE_", env_file=".env", extra="ignore")
 
     log_level: str = "INFO"
+
+    @field_validator("api_token", mode="after")
+    @classmethod
+    def _token_is_not_a_placeholder(cls, value: SecretStr | None) -> SecretStr | None:
+        """A guessable token is no token: refuse the .env.example placeholder and short ones."""
+        if value is None or not value.get_secret_value().strip():
+            return None  # unset or empty: the analysis routes refuse to serve, as before
+        text = value.get_secret_value().strip()
+        if len(text) < 16 or text.upper().startswith("CHANGE_ME"):
+            raise ValueError(
+                "MIRAGE_API_TOKEN is too short or still the placeholder: use at least 16 random "
+                "characters (the installer generates one)"
+            )
+        return value
+
     database_url: SecretStr | None = None  # SecretStr: repr/logs show ********, not the password
     api_token: SecretStr | None = None  # analysis endpoints refuse to serve without one
     allowed_hosts: list[str] = ["127.0.0.1", "localhost"]  # Host header: stops DNS rebinding
@@ -17,7 +32,11 @@ class Settings(BaseSettings):
     max_message_bytes: int = 10 * 1024 * 1024  # the same cap for /v1/emails/analyze
     max_file_bytes: int = 16 * 1024 * 1024 - 4096  # a file body for /v1/files/analyze
     max_concurrent_parsers: int = 4  # sandboxes running at once; more get HTTP 503
-    rate_limit_per_minute: int = 120
+    rate_limit_per_minute: int = 120  # files, overrides and everything else
+    url_rate_limit_per_minute: int = (
+        1200  # the browser's URL checks: their own lane, so a page that
+    )
+    # bounces through many URLs cannot use up the budget the agent's file checks need
     resolve_redirects: bool = False  # operator opt-in only; needs ADR-011 signed off
 
     # Threat intelligence (M3, ADR-015). Everything is off until the operator names a provider.

@@ -13,6 +13,25 @@ from core.urls.parse import HostKind, ParsedUrl
 
 _LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _MAX_NAME = 253
+# Names the Public Suffix List knows but that are not on the public internet (RFC 6761, 7686, 8375,
+# 9476): a home printer is `printer.home.arpa`, an onion service is reachable only through Tor.
+_NOT_PUBLIC = (
+    "home.arpa",
+    "arpa",
+    "onion",
+    "alt",
+    "example",
+    "invalid",
+    "localhost",
+    "local",
+    "test",
+    "internal",
+    "lan",
+    "corp",
+    "home",
+    "intranet",
+    "private",
+)
 
 
 def public_name(u: ParsedUrl) -> str | None:
@@ -21,6 +40,8 @@ def public_name(u: ParsedUrl) -> str | None:
         return None
     host, name = u.host, u.registered_domain
     if not host or not name or len(name) > _MAX_NAME or not psl.known_suffix(host):
+        return None
+    if any(host == s or host.endswith("." + s) for s in _NOT_PUBLIC):
         return None
     labels = name.split(".")
     if len(labels) < 2 or not all(_LABEL.match(label) for label in labels):

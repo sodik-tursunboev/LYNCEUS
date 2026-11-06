@@ -100,6 +100,7 @@ class MailboxService:
             "too_large": s.too_large,
             "gave_up": s.gave_up,
             "recoveries": s.recoveries,
+            "backlog": s.backlog,
             "flagged": s.flagged[-20:],
         }
 

@@ -3,6 +3,8 @@ r"""The life of one response action, as a table. Nothing else decides what may h
     PENDING -approve-> APPROVED -applied-> APPLIED -restore-> RESTORE_REQUESTED -restored-> RESTORED
        |                    |  \-failed-> FAILED -approve (retry)-> APPROVED
        \-dismiss-> DISMISSED <-dismiss- (APPROVED, FAILED);  DISMISSED -approve-> APPROVED
+    DISMISSED -applied-> APPLIED (the agent had already moved the file: a fact, so it stays
+    restorable)
     RESTORE_REQUESTED -restore_failed-> APPLIED (the file is still in quarantine; reason kept)
 
 Every event is idempotent: asking again for something already true is a no-op that says so, and
@@ -32,6 +34,9 @@ NEXT: dict[tuple[str, Event], str] = {
     ("FAILED", Event.APPROVE): "APPROVED",
     ("FAILED", Event.DISMISS): "DISMISSED",
     ("DISMISSED", Event.APPROVE): "APPROVED",
+    # You dismissed while the agent was already moving the file. What the agent did is a fact, not a
+    # request: recording it keeps the file restorable (else it sits in quarantine with no way back).
+    ("DISMISSED", Event.APPLIED): "APPLIED",
     ("APPLIED", Event.RESTORE): "RESTORE_REQUESTED",
     ("RESTORE_REQUESTED", Event.RESTORED): "RESTORED",
     ("RESTORE_REQUESTED", Event.RESTORE_FAILED): "APPLIED",

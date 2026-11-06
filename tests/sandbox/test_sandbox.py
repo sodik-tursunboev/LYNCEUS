@@ -131,7 +131,12 @@ def test_can_read_what_it_was_granted() -> None:
 
 
 def test_cannot_write_anywhere(tmp_path: Path) -> None:
-    for target in (tmp_path / "w.txt", sandbox.APP / "w.txt", sandbox.RUNTIME / "w.txt"):
+    # ... and not even in the container's own profile folder, which Windows makes writable for it
+    profile = Path(os.environ["LOCALAPPDATA"]) / "Packages" / sandbox.CONTAINER / "AC"
+    for target in (
+        tmp_path / "w.txt", sandbox.APP / "w.txt", sandbox.RUNTIME / "w.txt",
+        profile / "w.txt", profile / "Temp" / "w.txt",
+    ):  # fmt: skip
         assert probe(cmd="write", path=str(target))["done"] is False
         assert not target.exists()
     mine = tmp_path / "control.txt"

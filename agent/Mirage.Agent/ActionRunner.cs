@@ -122,12 +122,9 @@ public sealed class ActionRunner(
 {
     public async Task PollOnceAsync(CancellationToken ct)
     {
-        if (mode == "off")
-        {
-            return;
-        }
-
-        var (status, actions) = await core.ListActionsAsync("PENDING,APPROVED,RESTORE_REQUESTED", ct).ConfigureAwait(false);
+        // "off" never moves a file into quarantine, but a restore is something you asked for: it always runs.
+        var wanted = mode == "off" ? "RESTORE_REQUESTED" : "PENDING,APPROVED,RESTORE_REQUESTED";
+        var (status, actions) = await core.ListActionsAsync(wanted, ct).ConfigureAwait(false);
         if (status != CoreStatus.Ok)
         {
             return;
@@ -136,17 +133,35 @@ public sealed class ActionRunner(
         foreach (var action in actions.OrderBy(a => a.State))
         {
             ct.ThrowIfCancellationRequested();
-            switch (action.State)
+            try
             {
-                case "PENDING":
-                    await HandlePendingAsync(action, ct).ConfigureAwait(false);
-                    break;
-                case "APPROVED":
-                    await QuarantineAsync(action, ct).ConfigureAwait(false);
-                    break;
-                case "RESTORE_REQUESTED":
-                    await RestoreAsync(action, ct).ConfigureAwait(false);
-                    break;
+                switch (action.State)
+                {
+                    case "PENDING" when mode != "off":
+                        await HandlePendingAsync(action, ct).ConfigureAwait(false);
+                        break;
+                    case "APPROVED" when mode != "off":
+                        await QuarantineAsync(action, ct).ConfigureAwait(false);
+                        break;
+                    case "RESTORE_REQUESTED":
+                        await RestoreAsync(action, ct).ConfigureAwait(false);
+                        break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                // One action that cannot be handled must not stop the others, restores included, and the
+                // core must be told: a stated failure, never silence.
+                log.LogWarning("action {Id} could not be handled ({Type})", Short(action), e.GetType().Name);
+                var outcome = action.State == "RESTORE_REQUESTED" ? "restore_failed" : action.State == "APPROVED" ? "failed" : null;
+                if (outcome is not null)
+                {
+                    await core.ReportAsync(action.Id, outcome, "io", ct).ConfigureAwait(false);
+                }
             }
         }
     }
@@ -241,7 +256,8 @@ public sealed class ActionRunner(
             if (await core.ReportAsync(action.Id, "restored", null, ct).ConfigureAwait(false) == CoreStatus.Ok
                 && flagged.FirstAnnouncement(action.Id, "restored"))
             {
-                notify(("MIRAGE: file restored", result.Reason == "renamed" ? "It was put back under a new name because the old one is in use." : "It is back where it was."));
+                var message = result.Reason.StartsWith("renamed", StringComparison.Ordinal) ? "It was put back under a new name because the old one is in use." : "It is back where it was.";
+                notify(("MIRAGE: file restored", result.Reason.EndsWith("unmarked", StringComparison.Ordinal) ? message + " Windows could not re-apply its download mark." : message));
             }
 
             return;

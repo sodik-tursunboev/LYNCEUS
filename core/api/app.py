@@ -6,6 +6,7 @@ a fetch option: analysis is offline.
 """
 
 import asyncio
+import hmac
 import json
 import logging
 import math
@@ -22,7 +23,7 @@ from pathlib import Path
 from typing import Annotated
 from urllib.parse import unquote
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
@@ -238,6 +239,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 log.warning("could not write the intelligence audit record")
     bearer = HTTPBearer(auto_error=False)
     limiter = RateLimit(settings.rate_limit_per_minute)
+    url_limiter = RateLimit(settings.url_rate_limit_per_minute)
     parser_slots = asyncio.Semaphore(settings.max_concurrent_parsers)
 
     def require_token(
@@ -259,10 +261,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     @app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
+    def health(
+        nonce: Annotated[str | None, Query(pattern=r"^[0-9a-f]{16,64}$")] = None,
+    ) -> dict[str, str]:
+        """Open to anyone, but it can prove who it is: given a nonce it also returns an HMAC of it
+        keyed with the API token. The agent checks that before it sends the token, URLs or files to
+        whatever is listening on the port (any local program can bind a port the real core left)."""
+        body = {"status": "ok"}
+        if nonce is not None and token is not None:
+            body["proof"] = hmac.new(token, nonce.encode(), "sha256").hexdigest()
+        return body
 
-    @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(limiter)])
+    @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(url_limiter)])
     async def analyze(
         request: AnalyzeRequest,
         x_mirage_source: Annotated[str | None, Header()] = None,

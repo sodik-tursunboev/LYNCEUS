@@ -135,7 +135,7 @@ public sealed class Rig : IDisposable
         Fake = fake ?? new FakeCore();
         Spool = new Spool(System.IO.Path.Combine(data, "spool.jsonl"), Config.MaxSpoolRecords, Config.MaxKnownIds);
         var http = new HttpClient(Fake) { BaseAddress = new Uri("http://127.0.0.1:8765") };
-        Pipeline = new FilePipeline(Config, Config.WatchFolders, Spool, new CoreClient(http, () => "test-token"), Log);
+        Pipeline = new FilePipeline(Config, Config.WatchFolders, Spool, new CoreClient(http, () => "test-token", verifyCore: false), Log);
         Pipeline.Judged += o =>
         {
             lock (Outcomes)

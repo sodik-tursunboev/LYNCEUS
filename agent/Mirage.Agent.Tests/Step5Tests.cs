@@ -176,7 +176,7 @@ public class RequestHandlerAnnounceTests
         var fake = new FakeCore { Respond = _ => FakeCore.Json(FakeCore.Verdict(state)) };
         var seen = new List<(string, string)>();
         var handler = new RequestHandler(
-            new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t"),
+            new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t", verifyCore: false),
             () => new PipelineStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
             (host, st) =>
             {

@@ -83,7 +83,7 @@ public sealed class CoreSupervisor(AgentConfig config, string token, ILogger log
         child = null;
     }
 
-    private void Start()
+    internal ProcessStartInfo BuildStartInfo()
     {
         var start = new ProcessStartInfo(config.CoreCommand!)
         {
@@ -98,8 +98,22 @@ public sealed class CoreSupervisor(AgentConfig config, string token, ILogger log
             start.ArgumentList.Add(argument);
         }
 
+        // Nothing the agent inherited may change what the core imports or runs first (PYTHONPATH, PYTHONSTARTUP, ...),
+        // and the core ignores per-user site-packages: it runs with the user's rights and the user's token.
+        foreach (var name in start.Environment.Keys.Where(k => k.StartsWith("PYTHON", StringComparison.OrdinalIgnoreCase)).ToList())
+        {
+            start.Environment.Remove(name);
+        }
+
+        start.Environment["PYTHONNOUSERSITE"] = "1";
         start.Environment["MIRAGE_API_TOKEN"] = token;
         start.Environment["MIRAGE_INTEL_DEADLINE"] = config.CoreIntelDeadlineSeconds.ToString(CultureInfo.InvariantCulture);
+        return start;
+    }
+
+    private void Start()
+    {
+        var start = BuildStartInfo();
         try
         {
             child?.Dispose();

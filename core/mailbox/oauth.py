@@ -59,6 +59,7 @@ def authorize_url(client_id: str, redirect_uri: str, challenge: str, state: str)
 
 class _Handler(http.server.BaseHTTPRequestHandler):
     server: "_Listener"
+    timeout = 3  # seconds: an idle connection (a speculative browser socket) must not block sign-in
 
     def do_GET(self) -> None:  # noqa: N802
         url = urlparse(self.path)
@@ -67,7 +68,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         ok = url.path == "/" and host.split(":")[0] in self.server.hosts
         if (
             ok
-            and secrets.compare_digest(q.get("state", ""), self.server.state)
+            and secrets.compare_digest(q.get("state", "").encode(), self.server.state.encode())
             and ("code" in q or "error" in q)
         ):
             self.server.result = q

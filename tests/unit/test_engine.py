@@ -63,6 +63,49 @@ def test_the_allowlist_never_silences_an_open_redirect() -> None:
 @pytest.mark.parametrize(
     "url",
     [
+        "https://www.google.com/url?q=https%3A%2F%2Fevil-login.test%2Fverify",  # a redirector
+        "https://www.google.com/url?sa=t&foo=https://evil-login.test/verify",  # any parameter name
+        "https://www.google.com/amp/s/evil-login.test/verify",  # AMP cache path embedding a host
+        "https://www.youtube.com/redirect?q=https%3A%2F%2Fevil-login.test%2Fx",
+        "https://script.google.com/macros/s/AKfycbxyz/exec",  # serves anyone's HTML
+        "https://www.dropbox.com/s/abc/invoice.html",
+        "https://github.com/someone/phish/raw/main/index.html",
+        "https://sway.office.com/AbCdEf",
+    ],
+)
+def test_an_official_host_that_hands_you_to_another_site_or_serves_user_content_is_never_benign(
+    url: str,
+) -> None:
+    v = analyze_url(url).verdict
+    assert v.state is not V.BENIGN and v.risk_score != 0
+    assert "Official domain" not in v.explanation
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        # no other rule fires: only the "hands you to another site" check stops the allowlist
+        "https://www.google.com/search?foo=https://example.org/page",
+        "https://www.google.com/amp/s/example.org/page",
+    ],
+)
+def test_a_link_that_passes_you_on_is_not_called_official_even_when_nothing_else_fires(
+    url: str,
+) -> None:
+    v = analyze_url(url).verdict
+    assert v.state is V.UNKNOWN and v.risk_score is None
+    assert "Official domain" not in v.explanation
+
+
+def test_q_is_a_redirect_parameter_on_an_official_host() -> None:
+    a = analyze_url("https://www.google.com/url?q=https://example.org/page")
+    assert a.verdict.state is V.SUSPICIOUS
+    assert [s.rule_id for s in a.verdict.signals] == ["url.open_redirect"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
         "https://sites.google.com/view/anything",  # official domain, anyone can publish
         "https://someone.github.io/paypal-login",  # shared hosting (PSL private section)
         "ftp://www.paypal.com/",  # not a web scheme

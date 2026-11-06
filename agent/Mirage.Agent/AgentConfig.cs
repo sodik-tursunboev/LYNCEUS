@@ -142,6 +142,17 @@ public sealed record AgentConfig
             throw new ConfigException("CoreCommand and CoreWorkingDir must be full paths");
         }
 
+        for (var i = 0; i < CoreArgs.Length; i++)
+        {
+            // the core carries the user's token and sees every URL and file: it may only listen on this machine
+            var host = CoreArgs[i] == "--host" && i + 1 < CoreArgs.Length ? CoreArgs[i + 1]
+                : CoreArgs[i].StartsWith("--host=", StringComparison.Ordinal) ? CoreArgs[i][7..] : null;
+            if (host is not null && host is not ("127.0.0.1" or "localhost" or "::1"))
+            {
+                throw new ConfigException("CoreArgs: --host must be 127.0.0.1, localhost or ::1");
+            }
+        }
+
         if (CoreIntelDeadlineSeconds is < 0.05 or > 30)
         {
             throw new ConfigException("CoreIntelDeadlineSeconds must be between 0.05 and 30");

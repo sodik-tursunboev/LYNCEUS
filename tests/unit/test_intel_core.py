@@ -69,6 +69,11 @@ def test_a_public_name_is_the_registered_domain_and_nothing_else(url: str, name:
         "https://[2001:db8::1]/",
         "http://localhost:8080/",
         "https://app.internal/",
+        "https://printer.home.arpa/",  # private home-network names the suffix list still knows
+        "https://hidden.onion/",
+        "https://thing.alt/",
+        "https://5.0.0.127.in-addr.arpa/",
+        "https://my.example/",
         "ftp://files.example.com/",
         "javascript:alert(1)",
         "data:text/html,x",

@@ -15,7 +15,7 @@ public class MailboxWatcherTests
     {
         var fake = new FakeCore();
         var shown = new List<(string, string)>();
-        var core = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t");
+        var core = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t", verifyCore: false);
         return (new MailboxWatcher(core, shown.Add, new ListLogger()), fake, shown);
     }
 
@@ -106,7 +106,7 @@ public class MailboxWatcherTests
     public async Task A_notification_that_fails_does_not_stop_the_watcher()
     {
         var fake = new FakeCore { Respond = _ => FakeCore.Json(Status("connected")) };
-        var core = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t");
+        var core = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t", verifyCore: false);
         var watcher = new MailboxWatcher(core, _ => throw new InvalidOperationException("toast"), new ListLogger());
         await watcher.PollOnceAsync(CancellationToken.None);
         fake.Respond = _ => FakeCore.Json(Status("connected", (5, "MALICIOUS", 90, ["email.a"])));

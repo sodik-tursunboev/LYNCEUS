@@ -1559,7 +1559,27 @@
   "paths": {
     "/health": {
       "get": {
+        "description": "Open to anyone, but it can prove who it is: given a nonce it also returns an HMAC of it\nkeyed with the API token. The agent checks that before it sends the token, URLs or files to\nwhatever is listening on the port (any local program can bind a port the real core left).",
         "operationId": "health_health_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "nonce",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{16,64}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nonce"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -1574,6 +1594,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Health"

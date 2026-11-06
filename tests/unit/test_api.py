@@ -1,3 +1,4 @@
+import hmac
 import json
 from collections.abc import Iterator
 from pathlib import Path
@@ -30,6 +31,33 @@ def post(c: TestClient, url: object) -> Any:
 def test_health_is_open_and_says_nothing_else() -> None:
     r = client().get("/health")
     assert r.status_code == 200 and r.json() == {"status": "ok"}
+
+
+def test_health_proves_who_it_is_with_a_nonce_without_revealing_the_token() -> None:
+    nonce = "0123456789abcdef0123456789abcdef"  # pragma: allowlist secret
+    body = client().get("/health", params={"nonce": nonce}).json()
+    assert body == {
+        "status": "ok",
+        "proof": hmac.new(TOKEN.encode(), nonce.encode(), "sha256").hexdigest(),
+    }
+    assert TOKEN not in json.dumps(body)
+    other = Settings(
+        _env_file=None, api_token="another-token-of-16+chars"
+    )  # pragma: allowlist secret
+    impostor = TestClient(create_app(other), base_url="http://127.0.0.1")
+    assert impostor.get("/health", params={"nonce": nonce}).json()["proof"] != body["proof"]
+    no_token = TestClient(create_app(Settings(_env_file=None)), base_url="http://127.0.0.1")
+    assert no_token.get("/health", params={"nonce": nonce}).json() == {"status": "ok"}
+    for bad in ("short", "G" * 32, "0" * 65, "../x", "A" * 32):
+        assert client().get("/health", params={"nonce": bad}).status_code == 422
+
+
+@pytest.mark.parametrize("value", ["CHANGE_ME", "change_me_to_something_long", "short", "x" * 15])
+def test_a_placeholder_or_short_token_is_refused(value: str) -> None:
+    with pytest.raises(ValueError, match="MIRAGE_API_TOKEN"):
+        Settings(_env_file=None, api_token=value)
+    assert Settings(_env_file=None, api_token="").api_token is None  # empty means not set
+    assert Settings(_env_file=None, api_token="x" * 16).api_token is not None
 
 
 def test_full_verdict_comes_back() -> None:
@@ -153,14 +181,14 @@ def test_unknown_host_header_is_refused() -> None:
 
 
 def test_rate_limit() -> None:
-    c = client(rate_limit_per_minute=2)
+    c = client(rate_limit_per_minute=2, url_rate_limit_per_minute=2)
     assert [post(c, "https://example.test/").status_code for _ in range(2)] == [200, 200]
     r = post(c, "https://example.test/")
     assert r.status_code == 429 and int(r.headers["retry-after"]) > 0
 
 
 def test_a_failed_login_does_not_use_up_the_limit() -> None:
-    c = client(rate_limit_per_minute=1)
+    c = client(rate_limit_per_minute=1, url_rate_limit_per_minute=1)
     assert c.post(PATH, json={"url": "x"}).status_code == 401
     assert post(c, "https://example.test/").status_code == 200
 

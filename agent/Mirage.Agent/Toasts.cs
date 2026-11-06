@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security;
 using Microsoft.Win32;
 using Windows.Data.Xml.Dom;
@@ -53,7 +54,9 @@ public static class ToastText
             ? (state == "MALICIOUS" ? "MIRAGE stopped a phishing page" : "MIRAGE warned about a suspicious page", Cut(Clean(host), 120))
             : null;
 
-    internal static string Clean(string text) => new(text.Select(c => char.IsControl(c) || c is '‮' or '‭' or '⁦' or '⁧' or '⁨' or '⁩' ? '?' : c).ToArray());
+    /// <summary>Control and format characters (every bidi override and mark, zero-width and joiner) become "?": a name cannot reorder or hide what the toast says.</summary>
+    internal static string Clean(string text) =>
+        new(text.Select(c => char.IsControl(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.Format ? '?' : c).ToArray());
 
     internal static string Cut(string text, int max) => text.Length <= max ? text : text[..(max - 1)] + "…";
 }

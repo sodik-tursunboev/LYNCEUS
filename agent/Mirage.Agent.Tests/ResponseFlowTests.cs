@@ -24,6 +24,9 @@ public sealed class FakeActionsCore
 
     public bool FailReports { get; set; }
 
+    /// <summary>Actions the fake core reports as email: the agent must never touch these.</summary>
+    public HashSet<Guid> MailActions { get; } = [];
+
     public FakeCore Handler { get; } = new();
 
     public FakeActionsCore() => Handler.Respond = Route;
@@ -41,7 +44,7 @@ public sealed class FakeActionsCore
         {
             var wanted = Uri.UnescapeDataString(s.Query.Split("state=")[1].Split('&')[0]).Split(',');
             var items = Actions.Where(a => wanted.Contains(a.Value.State))
-                .Select(a => new { id = a.Key, state = a.Value.State, file_ref = a.Value.FileRef, sha256 = a.Value.Sha });
+                .Select(a => new { id = a.Key, kind = MailActions.Contains(a.Key) ? "MAIL_QUARANTINE" : "FILE_QUARANTINE", state = a.Value.State, file_ref = a.Value.FileRef, sha256 = a.Value.Sha });
             return FakeCore.Json(JsonSerializer.Serialize(items));
         }
 
@@ -97,11 +100,17 @@ public sealed class ResponseFlowTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private (ActionRunner Runner, FlaggedStore Flagged, QuarantineStore Quarantine) Make(string mode)
+    private sealed class PoisonFs(string poison) : RealFileSystem
     {
-        var client = new CoreClient(new HttpClient(core.Handler) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t");
+        public override FileStream OpenRead(string path) =>
+            string.Equals(path, poison, StringComparison.OrdinalIgnoreCase) ? throw new InvalidOperationException("an unexpected failure") : base.OpenRead(path);
+    }
+
+    private (ActionRunner Runner, FlaggedStore Flagged, QuarantineStore Quarantine) Make(string mode, RealFileSystem? fs = null)
+    {
+        var client = new CoreClient(new HttpClient(core.Handler) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t", verifyCore: false);
         var flagged = new FlaggedStore(Path.Combine(data, "flagged.json"));
-        var quarantine = new QuarantineStore(Path.Combine(data, "quarantine"));
+        var quarantine = new QuarantineStore(Path.Combine(data, "quarantine"), fs);
         return (new ActionRunner(client, flagged, quarantine, mode, toasts.Add, (p, s, t) => restores.Add((p, s, t)), new ListLogger()), flagged, quarantine);
     }
 
@@ -252,14 +261,87 @@ public sealed class ResponseFlowTests : IDisposable
         Assert.True(File.Exists(path));
     }
 
+    [Theory]
+    [InlineData("APPROVED")]
+    [InlineData("PENDING")]
+    [InlineData("RESTORE_REQUESTED")]
+    public async Task An_email_action_is_never_touched_by_the_agent_in_any_mode(string state)
+    {
+        foreach (var mode in new[] { "ask", "auto" })
+        {
+            var (runner, _, _) = Make(mode);
+            var mail = core.Add(state, new string('c', 64));
+            core.MailActions.Add(mail);
+            await runner.PollOnceAsync(CancellationToken.None);
+            await runner.PollOnceAsync(CancellationToken.None);
+            Assert.Equal(state, core.Actions[mail].State); // not approved by "policy", not failed, not applied
+            Assert.Empty(core.Reports);
+            Assert.DoesNotContain(core.Handler.Requests, r => r.Method == "POST");
+            Assert.All(core.Handler.Requests, r => Assert.Contains("kind=FILE_QUARANTINE", r.Query, StringComparison.Ordinal));
+        }
+    }
+
     [Fact]
-    public async Task In_off_mode_the_agent_does_not_even_ask()
+    public async Task In_off_mode_nothing_is_quarantined_and_nothing_is_approved_or_reported()
     {
         var (runner, flagged, _) = Make("off");
-        var (_, path) = Flag(flagged, "APPROVED");
+        var (id, path) = Flag(flagged, "APPROVED");
+        var pending = Flag(flagged, "PENDING", "other.exe");
         await runner.PollOnceAsync(CancellationToken.None);
-        Assert.Empty(core.Handler.Requests);
+        Assert.DoesNotContain(core.Handler.Requests, r => r.Method == "POST");
         Assert.True(File.Exists(path));
+        Assert.True(File.Exists(pending.Path));
+        Assert.Equal("APPROVED", core.Actions[id].State);
+        Assert.Equal("PENDING", core.Actions[pending.Id].State);
+    }
+
+    [Fact]
+    public async Task In_off_mode_a_restore_you_asked_for_still_happens()
+    {
+        var (ask, flagged, _) = Make("ask");
+        var (id, path) = Flag(flagged, "APPROVED");
+        await ask.PollOnceAsync(CancellationToken.None);
+        Assert.False(File.Exists(path));
+        core.Actions[id] = core.Actions[id] with { State = "RESTORE_REQUESTED" };
+
+        var (off, _, _) = Make("off"); // the owner switched the response mode to off afterwards
+        await off.PollOnceAsync(CancellationToken.None);
+        Assert.Equal(Content, File.ReadAllBytes(path));
+        Assert.Equal("RESTORED", core.Actions[id].State);
+    }
+
+    [Fact]
+    public async Task One_action_that_throws_does_not_stop_the_others_and_the_core_is_told()
+    {
+        var poisonPath = Path.Combine(downloads, "poison.exe");
+        var (runner, flagged, _) = Make("ask", new PoisonFs(poisonPath)); // opening this one throws, unexpectedly
+        var (poisonId, _) = Flag(flagged, "APPROVED", "poison.exe");
+        var (goodId, goodPath) = Flag(flagged, "APPROVED", "good.exe", Encoding.ASCII.GetBytes("MZ other " + new string('q', 3000)));
+
+        await runner.PollOnceAsync(CancellationToken.None);
+
+        Assert.True(File.Exists(poisonPath)); // untouched
+        Assert.Equal("FAILED", core.Actions[poisonId].State);
+        Assert.Contains("failed:io", core.Reports);
+        Assert.False(File.Exists(goodPath)); // the other action was carried out in the same round
+        Assert.Equal("APPLIED", core.Actions[goodId].State);
+    }
+
+    [Fact]
+    public async Task A_restore_still_runs_in_a_round_where_another_action_throws()
+    {
+        var poisonPath = Path.Combine(downloads, "poison.exe");
+        var (runner, flagged, _) = Make("ask", new PoisonFs(poisonPath));
+        var (doneId, donePath) = Flag(flagged, "APPROVED", "done.exe");
+        await runner.PollOnceAsync(CancellationToken.None);
+        core.Actions[doneId] = core.Actions[doneId] with { State = "RESTORE_REQUESTED" };
+        var (poisonId, _) = Flag(flagged, "APPROVED", "poison.exe", Encoding.ASCII.GetBytes("MZ poison " + new string('p', 3000)));
+
+        await runner.PollOnceAsync(CancellationToken.None);
+
+        Assert.True(File.Exists(donePath));
+        Assert.Equal("RESTORED", core.Actions[doneId].State);
+        Assert.Equal("FAILED", core.Actions[poisonId].State);
     }
 
     [Fact]
@@ -336,7 +418,7 @@ public sealed class ResponseFlowTests : IDisposable
         var fake = new FakeCore();
         var action = Guid.NewGuid();
         fake.Respond = _ => FakeCore.Json($$"""{"verdict":{"state":"MALICIOUS","risk_score":96,"signals":[]},"inspected":true,"persisted":true,"action_id":"{{action}}","allow_listed":false}""");
-        var client = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t");
+        var client = new CoreClient(new HttpClient(fake) { BaseAddress = new Uri("http://127.0.0.1:8765") }, () => "t", verifyCore: false);
         var result = await client.AnalyzeAsync("a.exe", new string('a', 64), null, new byte[] { 1 }, CancellationToken.None, new string('f', 32));
         Assert.Equal((action, false), (result.Verdict!.ActionId, result.Verdict.AllowListed));
         Assert.Equal(new string('f', 32), Assert.Single(fake.Requests).FileId);

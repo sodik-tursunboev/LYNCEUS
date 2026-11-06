@@ -210,6 +210,20 @@ def test_a_top_level_domain_with_no_server_is_unavailable_not_clean() -> None:
         ask_rdap(rdap_server(), "shop.invalidtld")
 
 
+def test_one_malformed_bootstrap_entry_is_skipped_and_does_not_break_the_others() -> None:
+    odd = {
+        "version": "1.0",
+        "services": [
+            [["bad"], ["https://x.example.com:abc/"]],  # a port that is not a number
+            [["worse"], ["https://[::1/"]],  # an unclosed bracket
+            [["com"], ["https://rdap.registry.example.com/v1/"]],
+        ],
+    }
+    assert parse_bootstrap(json.dumps(odd).encode()) == {
+        "com": "https://rdap.registry.example.com/v1/"
+    }
+
+
 def test_unsafe_servers_in_the_bootstrap_file_are_never_used() -> None:
     table = parse_bootstrap(json.dumps(BOOTSTRAP).encode())
     assert set(table) == {"com", "net", "uk", "co.uk"}

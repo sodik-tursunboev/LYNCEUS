@@ -20,6 +20,11 @@ public sealed class FaultFs : RealFileSystem
 
     public Action<string>? BeforeDelete { get; set; }
 
+    /// <summary>Runs while the verified removal holds the file: whatever it tries on the file must fail.</summary>
+    public Action<string>? WhileDeleting { get; set; }
+
+    public Action<string>? OnWriteZone { get; set; }
+
     public Action<string>? OnCreate { get; set; }
 
     public Action<FileStream>? OnFlush { get; set; }
@@ -55,6 +60,23 @@ public sealed class FaultFs : RealFileSystem
         BeforeDelete?.Invoke(path);
         Ops.Add("delete");
         base.Delete(path);
+    }
+
+    public override bool DeleteIfSame(string path, string sha256, Action beforeDelete)
+    {
+        BeforeDelete?.Invoke(path);
+        Ops.Add("delete");
+        return base.DeleteIfSame(path, sha256, () =>
+        {
+            WhileDeleting?.Invoke(path);
+            beforeDelete();
+        });
+    }
+
+    public override void WriteZone(string path, string content)
+    {
+        OnWriteZone?.Invoke(path);
+        base.WriteZone(path, content);
     }
 
     public override void Flush(FileStream stream)
@@ -426,6 +448,154 @@ public class QuarantineTests : IDisposable
         Assert.False(File.Exists(path));
     }
 
+    // ---- reviewer findings: races, retries, durability -------------------------------------------
+
+    [Fact]
+    public void The_original_cannot_be_swapped_while_it_is_being_verified_and_removed()
+    {
+        var (path, sha) = Drop();
+        var intruder = Path.Combine(downloads, "intruder.bin");
+        File.WriteAllText(intruder, "somebody else's newer file");
+        var attempts = new List<string>();
+        var fs = new FaultFs { CrossVolume = true };
+        fs.WhileDeleting = p =>
+        {
+            foreach (var (name, act) in new (string, Action)[]
+            {
+                ("replace", () => File.Move(intruder, p, overwrite: true)),
+                ("delete", () => File.Delete(p)),
+                ("rename away", () => File.Move(p, p + ".moved")),
+                ("write", () => File.AppendAllText(p, "x")),
+            })
+            {
+                try
+                {
+                    act();
+                    attempts.Add(name + ": SUCCEEDED");
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    attempts.Add(name + ": refused");
+                }
+            }
+        };
+        Assert.True(Store(fs).Quarantine(NewId(), path, sha).Ok);
+        Assert.Equal(["replace: refused", "delete: refused", "rename away: refused", "write: refused"], attempts);
+        Assert.False(File.Exists(path)); // the verified original went
+        Assert.Equal("somebody else's newer file", File.ReadAllText(intruder)); // the other file is untouched
+    }
+
+    [Fact]
+    public void A_same_size_same_time_substitute_is_caught_by_the_hash_and_nothing_is_deleted()
+    {
+        var (path, sha) = Drop();
+        var time = File.GetLastWriteTimeUtc(path);
+        var fs = new FaultFs { CrossVolume = true };
+        fs.AfterMove = (_, _) =>
+        {
+            File.WriteAllBytes(path, new string('Q', Content.Length).Select(c => (byte)c).ToArray());
+            File.SetLastWriteTimeUtc(path, time); // same length, same time: only the content differs
+        };
+        var result = Store(fs).Quarantine(NewId(), path, sha);
+        Assert.Equal((false, "changed"), (result.Ok, result.Reason));
+        Assert.True(File.Exists(path) && File.ReadAllText(path).StartsWith("QQQ", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_file_swapped_in_just_before_the_rename_is_put_back_not_deleted_even_if_its_name_is_taken_again()
+    {
+        var (path, sha) = Drop();
+        var fs = new FaultFs();
+        var swapped = false;
+        fs.BeforeMove = (_, _) =>
+        {
+            if (swapped)
+            {
+                return; // only the first move is the one being raced; the put-back must not be
+            }
+
+            swapped = true;
+            File.Move(path, path + ".orig");
+            File.WriteAllText(path, "Y: the user's other file");
+        };
+        fs.AfterMove = (_, _) =>
+        {
+            if (!File.Exists(path))
+            {
+                File.WriteAllText(path, "Z: created at the old name afterwards");
+            }
+        };
+        var result = Store(fs).Quarantine(NewId(), path, sha);
+        Assert.Equal((false, "changed"), (result.Ok, result.Reason));
+        var everything = Directory.GetFiles(downloads).Select(File.ReadAllText).ToList();
+        Assert.Contains("Y: the user's other file", everything);
+        Assert.Contains("Z: created at the old name afterwards", everything);
+        Assert.Equal(3, everything.Count); // the original (renamed away), Y and Z: nothing was deleted
+    }
+
+    [Fact]
+    public void After_a_crash_a_swapped_part_is_put_back_at_the_original_name_not_deleted()
+    {
+        var (path, sha) = Drop();
+        var id = NewId();
+        var fs = new FaultFs();
+        fs.BeforeMove = (_, _) =>
+        {
+            File.Move(path, path + ".orig");
+            File.WriteAllText(path, "Y: the user's other file");
+        };
+        fs.AfterMove = (_, _) => throw new SimulatedCrashException();
+        Assert.Throws<SimulatedCrashException>(() => Store(fs).Quarantine(id, path, sha));
+        var result = Store().Quarantine(id, path, sha);
+        Assert.False(result.Ok);
+        Assert.Equal("Y: the user's other file", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void A_restore_whose_finishing_touches_fail_leaves_one_file_and_says_so_and_a_retry_adds_no_copy()
+    {
+        var (path, sha) = Drop();
+        File.WriteAllText(path + ":Zone.Identifier", "[ZoneTransfer]\r\nZoneId=3\r\n");
+        var id = NewId();
+        Store().Quarantine(id, path, sha);
+        var fs = new FaultFs { OnWriteZone = _ => throw new IOException("the mark could not be written") };
+        var first = Store(fs).Restore(id);
+        Assert.Equal((true, "ok_unmarked"), (first.Ok, first.Reason));
+        var again = Store().Restore(id);
+        Assert.Equal((true, "already"), (again.Ok, again.Reason));
+        Assert.Equal([Path.GetFileName(path)], Directory.GetFiles(downloads).Select(Path.GetFileName)); // no "(restored n)" copies
+        Assert.Equal(Content, File.ReadAllBytes(path));
+    }
+
+    [Fact]
+    public void A_quarantine_folder_that_cannot_be_made_is_a_stated_failure_not_an_exception()
+    {
+        var (path, sha) = Drop();
+        var id = NewId();
+        File.WriteAllText(Path.Combine(quarantine, id), "in the way");
+        var result = Store().Quarantine(id, path, sha);
+        Assert.Equal((false, "io"), (result.Ok, result.Reason));
+        AssertUntouched(path, Content);
+    }
+
+    [Fact]
+    public void Inside_the_store_means_inside_the_folder_a_sibling_folder_is_fine_and_a_network_spelling_is_refused()
+    {
+        var sibling = dir.Sub("quarantine-sibling");
+        var inSibling = Path.Combine(sibling, "a.exe");
+        File.WriteAllBytes(inSibling, Content);
+        Assert.True(Store().Quarantine(NewId(), inSibling, Sha(Content)).Ok); // not mistaken for the store
+
+        var id = NewId();
+        var (path, sha) = Drop();
+        Store().Quarantine(id, path, sha);
+        var payload = Path.Combine(quarantine, id, "payload.quar");
+        Assert.Equal("bad_path", Store().Quarantine(NewId(), payload, sha).Reason); // the store itself
+        var drive = Path.GetPathRoot(payload)![..1];
+        var unc = @"\\localhost\" + drive + "$" + payload[2..]; // the same file spelled as a network path
+        Assert.Equal("bad_path", Store().Quarantine(NewId(), unc, sha).Reason);
+    }
+
     // ---- nothing deletes a user's file except the verified-original removal --------------------
 
     [Fact]
@@ -446,8 +616,15 @@ public class QuarantineTests : IDisposable
             .OrderBy(x => x.File)
             .ToList();
         // Installer: our own host manifest on uninstall. QuarantineStore: the file system wrapper (1), the stale
-        // record of an attempt that moved nothing (1), a half-written copy this class made (1), and the verified
-        // original after a copy to another volume (1). Nothing else may delete.
-        Assert.Equal([("Installer.cs", 1), ("QuarantineStore.cs", 4)], found);
+        // record of an attempt that moved nothing (1) and a half-written copy this class made (1). The verified
+        // original after a copy to another volume goes through DeleteIfSame (checked below). Nothing else may delete.
+        Assert.Equal([("Installer.cs", 1), ("QuarantineStore.cs", 3)], found);
+        // ... and the one place a user's file goes: the verified removal through a pinned handle
+        var verified = sources
+            .Select(f => (File: Path.GetFileName(f), Count: Regex.Count(File.ReadAllText(f), @"\b(DeleteIfSame|MarkForDeletion)\(")))
+            .Where(x => x.Count > 0)
+            .OrderBy(x => x.File)
+            .ToList();
+        Assert.Equal([("QuarantineStore.cs", 4)], verified);
     }
 }

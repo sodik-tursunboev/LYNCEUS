@@ -26,7 +26,9 @@ PartFlag = Literal[
     "long_filename",
 ]
 LinkKind = Literal["a", "area", "form", "iframe", "script", "meta_refresh", "text", "pdf_uri", "qr"]
-LinkFlag = Literal["hidden", "javascript", "invisible_text", "image_link", "empty_text"]
+LinkFlag = Literal[
+    "hidden", "javascript", "invisible_text", "image_link", "empty_text", "conditional"
+]
 LimitHit = Literal[
     "parts", "depth", "headers", "part_bytes", "decoded_bytes", "links", "text_urls", "html_tags",
     "html_depth", "html_error",

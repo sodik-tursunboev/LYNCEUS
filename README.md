@@ -1,6 +1,6 @@
 # MIRAGE
 
-A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail or Outlook, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes anything.
+A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail or Outlook, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes your files or email: quarantine moves a file (on another drive it copies first and removes the original only after the copy is verified byte for byte) and you can always restore it. Uninstalling with `-RemoveData` is the one way to delete the quarantine folder, and it refuses while quarantined files remain unless you force it.
 
 **Status:** built and verified on one Windows 11 machine with Edge, as one person's local tool. Several parts have never been run against a real outside service (Gmail, Outlook, the threat-intelligence providers) and CI has never run. The honest list is in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 

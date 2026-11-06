@@ -8,9 +8,9 @@ Prerequisites: Python 3.14, .NET 10 SDK, Node 24, PostgreSQL (`python tasks.py u
 
 | Do | Command |
 |---|---|
-| Install or upgrade | `.\deploy\install.ps1` (options: `-InstallDir`, `-CorePort`, `-NoRegister`, `-NoStart`, `-ResetConfig`, `-SkipMigrate`) |
+| Install or upgrade | `.\deploy\install.ps1` (options: `-InstallDir`, `-CorePort`, `-NoRegister`, `-NoStart`, `-ResetConfig`, `-SkipMigrate`, `-HardenAcl`, `-Force`). It refuses a drive root, your profile folder or a non-empty folder that is not a MIRAGE install, and fails if another MIRAGE agent is already running from somewhere else. It **warns when other accounts on the computer can change the checkout** (the core runs from it with your rights); `-HardenAcl` restricts the checkout to you, SYSTEM and Administrators |
 | Uninstall, keep your data | `.\deploy\uninstall.ps1` |
-| Uninstall and delete your data | `.\deploy\uninstall.ps1 -RemoveData` (**also deletes the quarantine folder: those files are gone for good**) |
+| Uninstall and delete your data | `.\deploy\uninstall.ps1 -RemoveData` (**also deletes the quarantine folder: those files are gone for good**). It refuses while quarantined files have not been restored (restore them in the console first, or add `-Force`), and it refuses a folder that does not look like MIRAGE's. `-RemoveSandbox` also removes the parser sandbox |
 | See what is registered | `Mirage.Agent.exe --status` |
 | Register / unregister only | `Mirage.Agent.exe --install` / `--uninstall` |
 | Open the console, signed in | `Mirage.Agent.exe --open-console` |
@@ -49,7 +49,7 @@ Files in the data folder: `agent.json` (settings), `agent.log` and `core.log` (r
 | `DataDir` | the data folder | where state lives |
 | `MaxPendingPaths`, `MaxSpoolRecords`, `MaxKnownIds`, `MaxRescanFiles`, `MaxAttempts`, `RetryBaseMillis`, `RetryMaxMillis`, `TickMillis`, `WatcherBufferBytes` | see `AgentConfig.cs` | limits and timings |
 
-**The core** reads `MIRAGE_*` variables and `.env` (see `.env.example` and `core/config.py`): `MIRAGE_API_TOKEN`, `MIRAGE_DATABASE_URL`, `MIRAGE_RATE_LIMIT_PER_MINUTE` (120), `MIRAGE_MAX_CONCURRENT_PARSERS` (4), `MIRAGE_MAX_MESSAGE_BYTES`, `MIRAGE_MAX_FILE_BYTES`, `MIRAGE_INTEL_PROVIDERS` (off), `MIRAGE_GMAIL_*` (off), `MIRAGE_CONSOLE_DIR`. The agent passes its own token and a short intelligence deadline to the core it starts, which override `.env`.
+**The core** reads `MIRAGE_*` variables and `.env` (see `.env.example` and `core/config.py`): `MIRAGE_API_TOKEN` (at least 16 characters; the `CHANGE_ME` placeholder is refused), `MIRAGE_DATABASE_URL`, `MIRAGE_RATE_LIMIT_PER_MINUTE` (120; files, overrides and the rest), `MIRAGE_URL_RATE_LIMIT_PER_MINUTE` (1200; the browser's URL checks have their own lane), `MIRAGE_MAX_CONCURRENT_PARSERS` (4), `MIRAGE_MAX_MESSAGE_BYTES`, `MIRAGE_MAX_FILE_BYTES`, `MIRAGE_INTEL_PROVIDERS` (off), `MIRAGE_GMAIL_*` (off), `MIRAGE_CONSOLE_DIR`. The agent passes its own token and a short intelligence deadline to the core it starts, which override `.env`.
 
 ## Day to day
 

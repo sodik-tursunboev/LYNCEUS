@@ -77,6 +77,16 @@ def _targets(u: ParsedUrl) -> Iterator[tuple[str, str, ParsedUrl]]:
             yield name.lower(), hidden, target
 
 
+def hands_over_control(u: ParsedUrl) -> bool:
+    """True when the URL passes the visitor on to another site: an off-site URL in ANY query
+    parameter (not only the well-known redirect names), or an AMP-style path that embeds a host.
+    Such a link on an official domain is not "the official site", so the allowlist must not vouch
+    for it (independent review R1)."""
+    if next(_targets(u), None) is not None:
+        return True
+    return re.match(r"^/amp/s/[^/]+\.[^/]+", u.path, re.I) is not None
+
+
 @rule("url.shortener", "obfuscation")
 def shortener(u: ParsedUrl) -> str | None:
     """Destination unknown, and that is all it means: too weak to flag anything alone."""

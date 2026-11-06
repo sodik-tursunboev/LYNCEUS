@@ -115,7 +115,7 @@ def test_a_file_can_only_be_applied_after_it_was_approved_and_restored_after_it_
     None
 ):
     assert not step("PENDING", Event.APPLIED).legal
-    assert not step("DISMISSED", Event.APPLIED).legal
+    assert step("DISMISSED", Event.APPLIED) == ("APPLIED", True, True)  # a fact, see the race test
     assert not step("PENDING", Event.RESTORE).legal
     assert not step("APPROVED", Event.RESTORE).legal
     assert not step("RESTORED", Event.APPROVE).changed
@@ -222,13 +222,23 @@ def test_a_state_cannot_be_forced(world: World) -> None:
     assert world.act(a, "restore").status_code == 409
     world.act(a, "approve")
     assert world.act(a, "dismiss").json()["state"] == "DISMISSED"
-    assert world.result(a, "applied").status_code == 409
     assert world.act(a, "approve").json()["state"] == "APPROVED"  # a change of mind is allowed
     world.result(a, "applied")
     assert (
         world.act(a, "dismiss").status_code == 409
     )  # a quarantined file is restored, not dismissed
     assert world.state(a) == "APPLIED"
+
+
+def test_a_file_the_agent_had_already_moved_when_you_dismissed_can_still_be_restored(
+    world: World,
+) -> None:
+    a = world.pending()
+    world.act(a, "approve")
+    assert world.act(a, "dismiss").json()["state"] == "DISMISSED"  # you changed your mind ...
+    # ... but the agent had already moved the file: its report is a fact and must not be lost
+    assert world.result(a, "applied").json()["state"] == "APPLIED"
+    assert world.act(a, "restore").json()["state"] == "RESTORE_REQUESTED"
 
 
 def test_a_failure_is_stated_and_can_be_retried_and_a_failed_restore_keeps_the_file_quarantined(
