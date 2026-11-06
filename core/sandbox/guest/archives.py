@@ -7,6 +7,7 @@ names, types and sizes; the host's rules decide what is dangerous.
 """
 
 import bz2
+import hashlib
 import io
 import lzma
 import re
@@ -15,12 +16,16 @@ import zipfile
 import zlib
 from typing import Any
 
+import contentscan
 from filetype import detect_magic
 from limits import (
     MAX_ARCHIVE_BUDGET,
     MAX_ARCHIVE_DEPTH,
     MAX_ENTRIES,
     MAX_EXTS,
+    MAX_MEMBER_BYTES,
+    MAX_MEMBER_TOTAL,
+    MAX_MEMBERS,
     MAX_NAME_CHARS,
     MAX_NESTED_BYTES,
     MAX_SNIFF,
@@ -31,6 +36,28 @@ _DRIVE = re.compile(r"^[A-Za-z]:")
 _SPLIT = re.compile(r"[\\/]")
 _ARCHIVES = {"zip", "gz", "bz2", "xz", "tar"}
 _MAX_PAIRS = 10
+_LOOK_INSIDE = {
+    None,
+    "lnk",
+    "ole",
+    "exe",
+    "rtf",
+    "html",
+    "svg",
+}  # kinds whose contents are searched
+_REL = re.compile(r"<Relationship\b[^>]*>", re.IGNORECASE)
+_REL_TARGET = re.compile(r'Target\s*=\s*"(https?://[^"]{4,1000})"', re.IGNORECASE)
+_REL_TYPE = re.compile(r'Type\s*=\s*"[^"]*/(\w+)"', re.IGNORECASE)
+_DDE = re.compile(rb"(?i)\bddeauto\b|>\s*dde\s|<[\w:]*ddelink\b")
+_OFFICE_ROOTS = (("word/", "word"), ("xl/", "excel"), ("ppt/", "powerpoint"))
+_EXTERNAL_TYPES = {
+    "attachedtemplate",
+    "oleobject",
+    "frame",
+    "externallinkpath",
+    "subdocument",
+    "package",
+}
 
 
 class _State:
@@ -47,6 +74,35 @@ class _State:
         self.pairs: list[list[str]] = []
         self.limits: set[str] = set()
         self.left: int = MAX_ARCHIVE_BUDGET
+        self.members: list[dict[str, Any]] = []
+        self.member_left: int = MAX_MEMBER_TOTAL
+        self.office: str | None = None
+        self.vba_project = False
+        self.remote_template = False
+        self.dde = False
+        self.external_refs: list[str] = []
+
+    def member(self, name: str, body: bytes, magic: str | None) -> None:
+        """Hash one entry and, for the kinds that can hold code, look inside it."""
+        if len(self.members) >= MAX_MEMBERS:
+            self.limits.add("members")
+            return
+        pieces = name[:MAX_NAME_CHARS].strip().lower().split(".")
+        ext = pieces[-1].strip() if len(pieces) > 1 else ""
+        content = None
+        if magic in _LOOK_INSIDE and self.member_left >= len(body):
+            self.member_left -= len(body)
+            found = contentscan.scan_content(body, magic)
+            content = None if found.get("kind") == "none" else found
+        self.members.append(
+            {
+                "sha256": hashlib.sha256(body).hexdigest(),
+                "size": len(body),
+                "ext": ext if _EXT.match(ext) else None,
+                "magic": magic,
+                "content": content,
+            }
+        )
 
     def charge(self, n: int) -> None:
         self.left -= n
@@ -138,6 +194,7 @@ def _zip(data: bytes, depth: int, st: _State) -> None:
         if len(infos) > MAX_ENTRIES:
             st.limits.add("entries")
             infos = infos[:MAX_ENTRIES]
+        _office_facts(zf, infos, st)
         for info in infos:
             if st.spent:
                 break
@@ -155,6 +212,58 @@ def _zip(data: bytes, depth: int, st: _State) -> None:
             magic = st.sniff(head)
             if magic in _ARCHIVES:
                 _open_nested(st, depth, info.file_size, lambda i=info: zf.open(i))
+            elif info.file_size <= MAX_MEMBER_BYTES and not st.spent:
+                try:
+                    with zf.open(info) as f:
+                        body = _safe_read(f, MAX_MEMBER_BYTES + 1, st)
+                except (MemoryError, RecursionError):
+                    raise
+                except Exception:  # noqa: BLE001, S112
+                    continue
+                if len(body) <= MAX_MEMBER_BYTES:
+                    st.member(info.filename, body, magic)
+
+
+def _read_part(zf: zipfile.ZipFile, info: zipfile.ZipInfo, cap: int) -> bytes:
+    try:
+        with zf.open(info) as f:
+            return bytes(f.read(cap))
+    except (MemoryError, RecursionError):
+        raise
+    except Exception:  # noqa: BLE001
+        return b""
+
+
+def _office_facts(zf: zipfile.ZipFile, infos: list[zipfile.ZipInfo], st: _State) -> None:
+    """A zip that is really an Office document: does it carry a macro project, a template or object
+    fetched from the Internet, or a DDE field? Read from the package structure, never opened."""
+    names = {i.filename.replace("\\", "/"): i for i in infos}
+    if "[Content_Types].xml" not in names:
+        return
+    st.office = next(
+        (kind for root, kind in _OFFICE_ROOTS if any(n.startswith(root) for n in names)), "other"
+    )
+    st.vba_project = any(n.lower().endswith("vbaproject.bin") for n in names)
+    rels = [i for n, i in names.items() if n.lower().endswith(".rels")][:40]
+    for info in rels:
+        xml = _read_part(zf, info, 65_536).decode("utf-8", "replace")
+        for tag in _REL.findall(xml):
+            target = _REL_TARGET.search(tag)
+            kind = _REL_TYPE.search(tag)
+            if not target or "external" not in tag.lower():
+                continue
+            what = (kind.group(1) if kind else "").lower()
+            if what in _EXTERNAL_TYPES and len(st.external_refs) < 20:
+                st.external_refs.append(target.group(1))
+                if what == "attachedtemplate":
+                    st.remote_template = True
+    for name, info in names.items():
+        low = name.lower()
+        wanted = low in ("word/document.xml", "word/footnotes.xml")
+        if (wanted or low.startswith("xl/externallinks/")) and _DDE.search(
+            _read_part(zf, info, 524_288)
+        ):
+            st.dde = True
 
 
 def _tar(data: bytes, depth: int, st: _State) -> None:
@@ -185,6 +294,11 @@ def _tar(data: bytes, depth: int, st: _State) -> None:
                 magic = st.sniff(head)
                 if magic in _ARCHIVES:
                     _open_nested(st, depth, member.size, lambda m=member: tf.extractfile(m))
+                elif member.size <= MAX_MEMBER_BYTES and not st.spent:
+                    again = tf.extractfile(member)
+                    body = _safe_read(again, MAX_MEMBER_BYTES + 1, st) if again else b""
+                    if len(body) <= MAX_MEMBER_BYTES:
+                        st.member(member.name, body, magic)
         except (MemoryError, RecursionError):
             raise
         except Exception:  # noqa: BLE001  (truncated or corrupt tar)
@@ -229,6 +343,8 @@ def _walk(data: bytes, depth: int, st: _State) -> str | None:
             else:
                 st.entry("(stream)", len(inner), len(data), False)
                 st.sniff(inner[:MAX_SNIFF])
+                if inner_magic not in _ARCHIVES and len(inner) <= MAX_MEMBER_BYTES:
+                    st.member("(stream)", inner, inner_magic)
                 if inner_magic in _ARCHIVES:
                     if depth + 1 > MAX_ARCHIVE_DEPTH:
                         st.limits.add("depth")
@@ -257,4 +373,10 @@ def scan_archive(data: bytes) -> dict[str, Any]:
         "magics": dict(sorted(st.magics.items())),
         "double_pairs": st.pairs,
         "limits": sorted(st.limits),
+        "office": st.office,
+        "vba_project": st.vba_project,
+        "remote_template": st.remote_template,
+        "dde": st.dde,
+        "external_refs": st.external_refs,
+        "members": st.members,
     }

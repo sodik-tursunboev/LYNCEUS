@@ -8,7 +8,6 @@ the same scoring applies. Bytes are parsed only in the sandbox (`inspect_bytes`)
 verdict rests on the name and the type the agent reported. A file is never BENIGN.
 """
 
-import hashlib
 import logging
 import re
 from collections.abc import Callable
@@ -17,6 +16,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from core import hashlists as hashes
 from core import sandbox
 from core.contracts import Confidence, Evidence, ResponseAction, Signal, Verdict, VerdictState
 from core.detection.engine import analyze_url
@@ -24,10 +24,10 @@ from core.email import engine as mail
 from core.email.engine import ExtractedRef, FileSummary, LinkSummary
 from core.email.models import FileBytesReply, HtmlStats, Magic, MessageScan, Part
 from core.risk.scoring import Scored, score
-from rules.email import Ctx, FileInfo
+from rules.email import Ctx, FileInfo, LinkInfo
 from rules.email.data import ruleset_version, scoring
 
-ENGINE_VERSION = "file-1.0.0"
+ENGINE_VERSION = "file-1.1.0"
 MAX_FILE_BYTES = sandbox.MAX_INPUT_BYTES - 4096  # the sandbox request also carries a small header
 NOT_EXAMINED = "This is not evidence of safety: only the name, type and structure were examined."
 MAGICS = frozenset(get_args(Magic))
@@ -61,6 +61,14 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
+class HashMatch(_Frozen):
+    """A hash that is on a known-bad list: which kind, which list, and what it matched."""
+
+    algorithm: str
+    source: str
+    where: str  # "file" or "archive entry"
+
+
 class FileReport(_Frozen):
     verdict: Verdict
     evidence: tuple[Evidence, ...]
@@ -68,6 +76,9 @@ class FileReport(_Frozen):
     inspected: bool  # True when its contents were opened in the sandbox
     files: tuple[FileSummary, ...]
     links: tuple[LinkSummary, ...]
+    hashes: dict[str, str] = {}  # noqa: RUF012  (sha256, sha1 and md5 of the file, when its bytes were given)
+    hash_matches: tuple[HashMatch, ...] = ()
+    hash_lists: int = 0  # how many known-bad lists were consulted (the built-in one included)
 
 
 class FileAnalysis(_Frozen):
@@ -176,8 +187,10 @@ def analyze_file(
     digest = sha256.lower() if _SHA256.match(sha256.lower()) else ""
     trimmed = (origin_host or "").lower().rstrip(".")
     host = trimmed if _HOST.match(trimmed) else None
+    found = {"sha256": digest} if digest else {}
     if data is not None:
-        actual = hashlib.sha256(data).hexdigest()
+        found = hashes.digests(data)
+        actual = found["sha256"]
         if digest and actual != digest:
             why = "The file changed between hashing and sending."
             return _unscored(aid, actual, VerdictState.UNKNOWN, why, "changed_while_reading", host)
@@ -186,67 +199,94 @@ def analyze_file(
         return _unscored(
             aid, "0" * 64, VerdictState.UNKNOWN, "No usable hash was given.", "no_hash", host
         )
-    if data is not None and len(data) > MAX_FILE_BYTES:
-        why = f"The file is over the {MAX_FILE_BYTES}-byte limit for opening."
-        return _unscored(aid, digest, VerdictState.UNKNOWN, why, "too_large", host)
-
+    # An exact hash match decides on its own, so it is looked up before anything can go wrong: a
+    # file too large to open, or a sandbox that is down, must not hide a known-bad file.
+    known = hashes.hits_for_file("1", found)
     clean, flags = _flags(name)
     magic: str | None = claimed_magic if claimed_magic in MAGICS else None
     info: FileInfo | None = None
     html: dict[str, int] | None = None
     inspected = False
+
+    def decide() -> FileAnalysis:
+        try:
+            files = (info,) if info else ()
+            scan = _scan(clean, flags, size, digest, magic, html)
+            links, _ = mail.resolve_links(scan, 100, mail.file_links(files), analyze_url)
+            inside = [h for h in mail.known_bad(scan, files) if h.where == "archive entry"]
+            hits = tuple(dict.fromkeys([*known, *inside]))
+            ctx = Ctx(scan, tuple(links), None, None, files, hits)
+            return _report(aid, digest, found, ctx, links, files, inspected, host)
+        except Exception:  # an engine bug is an explicit ERROR, never a silent pass
+            log.exception("file analysis failed")
+            return _unscored(aid, digest, VerdictState.ERROR, "Analysis failed.", "error", host)
+
+    def stopped(state: VerdictState, why: str, reason: str) -> FileAnalysis:
+        """The file could not be opened: UNKNOWN or ERROR, unless its hash already identifies it."""
+        return decide() if known else _unscored(aid, digest, state, why, reason, host)
+
+    if data is not None and len(data) > MAX_FILE_BYTES:
+        why = f"The file is over the {MAX_FILE_BYTES}-byte limit for opening."
+        return stopped(VerdictState.UNKNOWN, why, "too_large")
     if data is not None:
         try:
             result = run(data)
         except sandbox.SandboxUnavailable:
             why = "The parser sandbox is not available, so the file was not opened."
-            return _unscored(aid, digest, VerdictState.ERROR, why, "sandbox_unavailable", host)
+            return stopped(VerdictState.ERROR, why, "sandbox_unavailable")
         except Exception:  # noqa: BLE001  (a launcher bug is an explicit ERROR, never a pass)
             log.exception("sandbox launch failed")
             why = "The parser sandbox failed to run, so the file was not opened."
-            return _unscored(aid, digest, VerdictState.ERROR, why, "sandbox_error", host)
+            return stopped(VerdictState.ERROR, why, "sandbox_error")
         if not result.ok:
             why = f"The sandboxed parser stopped ({result.reason})."
-            return _unscored(
-                aid, digest, VerdictState.UNKNOWN, why, f"parser_{result.reason}", host
-            )
+            return stopped(VerdictState.UNKNOWN, why, f"parser_{result.reason}")
         try:
             reply = FileBytesReply.model_validate_json(result.output)
         except ValidationError:
             why = "The parser's reply failed validation and was discarded."
-            return _unscored(aid, digest, VerdictState.ERROR, why, "worker_output_invalid", host)
+            return stopped(VerdictState.ERROR, why, "worker_output_invalid")
         if reply.file is None:
             why = f"The parser could not read the file ({reply.error})."
-            return _unscored(aid, digest, VerdictState.UNKNOWN, why, str(reply.error), host)
+            return stopped(VerdictState.UNKNOWN, why, str(reply.error))
         magic, inspected = reply.magic, True
         if reply.file.kind != "none":
             info = FileInfo("1", magic, reply.file, None)
         html = reply.html.model_dump() if reply.html else None
     elif magic in INSPECTABLE and magic not in ("html", "svg"):
         info = FileInfo("1", magic, None, "skipped")  # known to be openable, but not opened
+    return decide()
 
-    try:
-        files = (info,) if info else ()
-        scan = _scan(clean, flags, size, digest, magic, html)
-        links, _ = mail.resolve_links(scan, 100, mail.file_links(files), analyze_url)
-        ctx = Ctx(scan, tuple(links), None, None, files)
-        signals, evidence = mail.rule_signals(ctx, digest)
-        scored = score(signals, False, scoring())
-        if scored.state is VerdictState.MALICIOUS:
-            scored = scored._replace(recommended_response=ResponseAction.QUARANTINE)
-        verdict = mail.build_verdict(
-            aid, scored, signals, evidence, _explain(scored, signals, inspected)
-        )
-        verdict = verdict.model_copy(
-            update={"engine_version": ENGINE_VERSION, "ruleset_version": ruleset_version()}
-        )
-        report = FileReport(
-            verdict=verdict, evidence=tuple(evidence), reason=None, inspected=inspected,
-            files=tuple(mail.describe_file(f) for f in files), links=mail.link_report(links),
-        )  # fmt: skip
-        return FileAnalysis(
-            sha256=digest, report=report, urls=mail.referenced_urls(links), origin_host=host
-        )
-    except Exception:  # an engine bug is an explicit ERROR, never a silent pass
-        log.exception("file analysis failed")
-        return _unscored(aid, digest, VerdictState.ERROR, "Analysis failed.", "error", host)
+
+def _report(
+    aid: UUID,
+    digest: str,
+    found: dict[str, str],
+    ctx: Ctx,
+    links: list[LinkInfo],
+    files: tuple[FileInfo, ...],
+    inspected: bool,
+    host: str | None,
+) -> FileAnalysis:
+    """Rules, score and report for one file whose facts are in `ctx`."""
+    signals, evidence = mail.rule_signals(ctx, digest)
+    scored = score(signals, False, scoring())
+    if scored.state is VerdictState.MALICIOUS:
+        scored = scored._replace(recommended_response=ResponseAction.QUARANTINE)
+    verdict = mail.build_verdict(
+        aid, scored, signals, evidence, _explain(scored, signals, inspected)
+    )
+    verdict = verdict.model_copy(
+        update={"engine_version": ENGINE_VERSION, "ruleset_version": ruleset_version()}
+    )
+    matches = tuple(
+        HashMatch(algorithm=h.algorithm, source=h.source, where=h.where) for h in ctx.known_bad
+    )
+    report = FileReport(
+        verdict=verdict, evidence=tuple(evidence), reason=None, inspected=inspected,
+        files=tuple(mail.describe_file(f) for f in files), links=mail.link_report(links),
+        hashes=found, hash_matches=matches, hash_lists=len(hashes.current().status()),
+    )  # fmt: skip
+    return FileAnalysis(
+        sha256=digest, report=report, urls=mail.referenced_urls(links), origin_host=host
+    )

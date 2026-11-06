@@ -16,11 +16,13 @@ from uuid import UUID, uuid4
 import ada_url
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from core import hashlists as hashes
 from core import sandbox
 from core.contracts import Confidence, Evidence, ResponseAction, Signal, Verdict, VerdictState
 from core.detection.engine import UrlAnalysis, analyze_url
 from core.email.models import (
     ArchiveScan,
+    ContentScan,
     FileReply,
     ImageScan,
     Link,
@@ -31,10 +33,10 @@ from core.email.models import (
 )
 from core.risk.scoring import Scored, score
 from core.urls.parse import ParsedUrl, parse_url
-from rules.email import RULES, Ctx, FileInfo, LinkInfo
+from rules.email import RULES, Ctx, FileInfo, HashHit, LinkInfo
 from rules.email.data import ruleset_version, scoring
 
-ENGINE_VERSION = "email-1.1.0"
+ENGINE_VERSION = "email-1.2.0"
 MAX_MESSAGE_BYTES = 10 * 1024 * 1024
 _NOT_SAFE = (
     "This is not evidence of safety: only the message structure and its links were examined."
@@ -46,8 +48,14 @@ INSPECT_LIMITS = sandbox.Limits(memory_mb=1024, cpu_seconds=20, wall_seconds=40)
 INSPECT_CAP = 8  # attachments opened per message; the rest are reported as skipped
 INSPECT_WORKERS = 3  # sandboxes running at once for one message
 _INSPECTABLE = frozenset(
-    ["pdf", "zip", "gz", "bz2", "xz", "tar", "png", "jpeg", "gif", "bmp", "tiff", "webp"]
-)
+    [
+        "pdf", "zip", "gz", "bz2", "xz", "tar", "png", "jpeg", "gif", "bmp", "tiff", "webp",
+        "exe", "lnk", "ole", "rtf", "html", "svg",
+    ]
+)  # fmt: skip
+_MAX_LOOK_INSIDE = (
+    1024 * 1024
+)  # an attachment with no known magic is searched as possible script text
 _UNSUPPORTED = frozenset(["7z", "rar", "iso"])  # named, not opened: no safe parser yet
 log = logging.getLogger(__name__)
 InspectRun = Callable[[bytes, str], sandbox.Result]
@@ -181,11 +189,13 @@ def _inspect_files(raw: bytes, scan: MessageScan, run: InspectRun) -> tuple[File
     infos: dict[str, FileInfo] = {}
     jobs: list[Part] = []
     for part in scan.parts:
-        if not part.attachment or part.magic is None:
+        if not part.attachment:
             continue
         if part.magic in _UNSUPPORTED:
             infos[part.path] = FileInfo(part.path, part.magic, None, "unsupported")
-        elif part.magic in _INSPECTABLE:
+        elif part.magic in _INSPECTABLE or (
+            part.magic is None and 0 < part.size <= _MAX_LOOK_INSIDE
+        ):
             if len(jobs) < INSPECT_CAP:
                 jobs.append(part)
             else:
@@ -221,7 +231,43 @@ def _file_links(files: tuple[FileInfo, ...]) -> list[Link]:
             for payload in f.scan.qr:
                 if url := _qr_url(payload):
                     out.append(Link(part=f.part, kind="qr", url=url, text="", flags=[]))
+        elif isinstance(f.scan, ContentScan):
+            out += [Link(part=f.part, kind="code", url=u, text="", flags=[]) for u in f.scan.urls]
+        elif isinstance(f.scan, ArchiveScan):
+            found = list(f.scan.external_refs)
+            for m in f.scan.members:
+                if m.content:
+                    found += m.content.urls
+            out += [Link(part=f.part, kind="code", url=u, text="", flags=[]) for u in found[:100]]
     return out
+
+
+def _known_bad(scan: MessageScan, files: tuple[FileInfo, ...]) -> tuple[HashHit, ...]:
+    """Attachments and archive entries whose SHA-256 is on a known-bad list on this machine."""
+    hits: list[HashHit] = []
+    for p in scan.parts:
+        if p.attachment:
+            hits += hashes.hits_for_file(p.path, {"sha256": p.sha256})
+    for f in files:
+        if isinstance(f.scan, ArchiveScan):
+            hits += hashes.hits_for_members(f.part, [m.sha256 for m in f.scan.members])
+    return tuple(hits)
+
+
+def _content_facts(s: ContentScan) -> list[str]:
+    """Fixed words and numbers about what was found inside (never the code)."""
+    facts = [f"{n}x {name.replace('_', ' ')}" if n > 1 else name.replace("_", " ")
+             for name, n in sorted(s.indicators.items())]  # fmt: skip
+    if s.layers:
+        facts.append(f"{s.layers} hidden layer(s) unwrapped")
+    facts += [f"hidden {name} program" for name, n in sorted(s.embedded.items()) if n]
+    if s.urls:
+        facts.append(f"{len(s.urls)} address(es) in the code")
+    if s.eicar:
+        facts.append("EICAR test file")
+    if s.truncated:
+        facts.append("search stopped at a size limit")
+    return facts
 
 
 def _describe(f: FileInfo) -> FileSummary:
@@ -249,12 +295,24 @@ def _describe(f: FileInfo) -> FileSummary:
         facts = [f"{s.format or '?'} {s.width}x{s.height}", f"parse {s.parse}"]
         if s.qr:
             facts.append(f"{len(s.qr)} QR code(s)")
+    elif isinstance(s, ContentScan):
+        facts = [f"{s.family} content"] + _content_facts(s)
+    if isinstance(s, ArchiveScan):
+        facts += [f"office document ({s.office})" if s.office else ""]
+        facts += [name for name, on in (
+            ("macro project", s.vba_project), ("remote template", s.remote_template),
+            ("DDE field", s.dde),
+        ) if on]  # fmt: skip
+        facts = [x for x in facts if x]
+        inside = [m for m in s.members if m.content and m.content.indicators]
+        facts += [f"{len(s.members)} entries hashed"] if s.members else []
+        facts += [f"{len(inside)} entries with code indicators"] if inside else []
     return FileSummary(part=f.part, kind=s.kind, status="ok", facts=tuple(facts))
 
 
 def _absolute(url: str, kind: str, base: str | None) -> str | None:
     """The URL a browser would load, or None for a relative link we cannot resolve."""
-    if kind in ("text", "pdf_uri", "qr") or _ABSOLUTE.match(url):
+    if kind in ("text", "pdf_uri", "qr", "code") or _ABSOLUTE.match(url):
         return url
     if base is None:
         return None
@@ -445,7 +503,7 @@ def analyze_message(
         cap = int(scoring()["thresholds"]["link_cap"])
         links, relative = _links(scan, cap, _file_links(files), analyze_link)
         sender, from_domain = _sender(scan)
-        ctx = Ctx(scan, tuple(links), sender, from_domain, files)
+        ctx = Ctx(scan, tuple(links), sender, from_domain, files, _known_bad(scan, files))
         signals, evidence = _signals(ctx, raw_hash)
         scored = score(signals, False, scoring())
         if scored.state is VerdictState.MALICIOUS:
@@ -470,5 +528,6 @@ resolve_links = _links
 describe_file = _describe
 referenced_urls = _refs
 link_report = _link_report
+known_bad = _known_bad
 NOT_SAFE = _NOT_SAFE
 unscored = _unscored

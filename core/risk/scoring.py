@@ -44,6 +44,13 @@ def score(signals: Sequence[Signal], allowlisted: bool, cfg: Mapping[str, Any]) 
     strong = sum(max(ws) >= t["high_weight"] for ws in by_category.values())
     confidence = _CONFIDENCE.get(strong, Confidence.HIGH)
 
+    # Exact identification is not a "feature": the same bytes were already judged malicious by a
+    # list the operator chose (or are the harmless EICAR test file). Named in the config only.
+    certain = set(cfg.get("certain", {}).get("rules", ()))
+    if certain and any(s.rule_id in certain for s in signals):
+        state = VerdictState.MALICIOUS
+        return Scored(state, max(risk, 95), Confidence.HIGH, _RESPONSE[state])
+
     if risk >= t["malicious"] and strong >= t["min_categories"]:
         state = VerdictState.MALICIOUS
     elif risk >= t["suspicious"]:

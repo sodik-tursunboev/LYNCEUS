@@ -25,7 +25,9 @@ PartFlag = Literal[
     "path_in_filename",
     "long_filename",
 ]
-LinkKind = Literal["a", "area", "form", "iframe", "script", "meta_refresh", "text", "pdf_uri", "qr"]
+LinkKind = Literal[
+    "a", "area", "form", "iframe", "script", "meta_refresh", "text", "pdf_uri", "qr", "code"
+]  # "code": an address found inside a script, macro, shortcut or program
 LinkFlag = Literal[
     "hidden", "javascript", "invisible_text", "image_link", "empty_text", "conditional"
 ]
@@ -35,7 +37,9 @@ LimitHit = Literal[
 ]  # fmt: skip
 WorkerError = Literal["mime_too_deep", "memory", "unknown_op", "no_such_part"]
 ExtKey = Annotated[str, Field(pattern=r"^(?:[a-z0-9]{1,10}|\(odd\))$")]
-ArchiveLimit = Literal["entries", "depth", "nested_size", "decompressed_bytes", "bad_archive"]
+ArchiveLimit = Literal[
+    "entries", "depth", "nested_size", "decompressed_bytes", "bad_archive", "members"
+]
 PdfLimit = Literal["objects", "uris", "broken_objects", "page_tree"]
 
 
@@ -140,6 +144,49 @@ class WorkerReply(_Strict):
 Url = Annotated[str, Field(min_length=1, max_length=2048)]
 
 
+Family = Literal[
+    "vbscript", "jscript", "powershell", "batch", "hta", "wsf", "html", "lnk", "pe", "ole", "rtf",
+    "text", "binary",
+]  # fmt: skip
+# What a file or macro can be seen to do (a closed list: the sandbox cannot make up a new word).
+Indicator = Literal[
+    "exec_shell", "download", "execute_dynamic", "encoded_command", "base64_decode",
+    "hidden_window", "bypass_policy", "persistence", "lolbin_proxy", "defense_evasion",
+    "process_injection", "credential_access", "credential_prompt", "anti_analysis",
+    "string_obfuscation", "high_entropy_blob", "autoexec", "macro_code", "remote_template",
+    "dde", "ole_object", "equation_editor", "lnk_interpreter", "lnk_hidden_args", "lnk_icon_lure",
+    "pe_packed", "pe_rwx", "pe_injection_apis", "pe_downloader_apis", "pe_overlay",
+]  # fmt: skip
+Embedded = Literal["exe", "elf", "zip"]
+Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+
+
+class ContentScan(_Strict):
+    """What is INSIDE one file: its kind by content, what the text or code can be seen to do (after
+    common disguises and encoded layers were undone), and what was hidden in it. Counts of fixed
+    names only: never the code itself."""
+
+    kind: Literal["content"]
+    family: Family
+    truncated: bool  # a size or depth limit stopped the search early
+    indicators: Annotated[dict[Indicator, Count], Field(max_length=40)]
+    layers: Annotated[int, Field(ge=0, le=10)]  # encoded layers unwrapped to reach hidden code
+    embedded: Annotated[dict[Embedded, Count], Field(max_length=5)]  # programs found inside
+    urls: Annotated[list[Url], Field(max_length=50)]  # addresses found in the code: attacker text
+    entropy: Annotated[float, Field(ge=0, le=8.01)]
+    eicar: bool  # the industry's harmless antivirus test string
+
+
+class MemberScan(_Strict):
+    """One entry of an archive: its hash, its real type and, if it can hold code, a look inside."""
+
+    sha256: Sha256
+    size: Count
+    ext: ExtKey | None
+    magic: Magic | None
+    content: ContentScan | None
+
+
 class ArchiveScan(_Strict):
     kind: Literal["archive"]
     format: Literal["zip", "gz", "bz2", "xz", "tar"]
@@ -154,6 +201,13 @@ class ArchiveScan(_Strict):
     magics: Annotated[dict[Magic, Count], Field(max_length=30)]  # what the entries really are
     double_pairs: Annotated[list[tuple[ExtKey, ExtKey]], Field(max_length=10)]
     limits: Annotated[list[ArchiveLimit], Field(max_length=10)]
+    # an Office document is a zip: facts read from its package structure
+    office: Literal["word", "excel", "powerpoint", "other"] | None = None
+    vba_project: bool = False  # carries a macro project, whatever its file name says
+    remote_template: bool = False  # loads a template from the Internet when opened
+    dde: bool = False  # a DDE field (runs a command when the document is opened)
+    external_refs: Annotated[list[Url], Field(max_length=20)] = []  # noqa: RUF012
+    members: Annotated[list[MemberScan], Field(max_length=64)] = []  # noqa: RUF012
 
 
 class PdfScan(_Strict):
@@ -189,7 +243,9 @@ class NoScan(_Strict):
     kind: Literal["none"]
 
 
-FileScan = Annotated[ArchiveScan | PdfScan | ImageScan | NoScan, Field(discriminator="kind")]
+FileScan = Annotated[
+    ArchiveScan | PdfScan | ImageScan | ContentScan | NoScan, Field(discriminator="kind")
+]
 
 
 class FileReply(_Strict):

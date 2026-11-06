@@ -34,3 +34,16 @@ MAX_PDF_OBJECTS = 100_000
 MAX_PDF_URIS = 100
 MAX_URI_CHARS = 2048
 MAX_SCRIPT_CHARS = 200_000  # script text examined for smuggling indicators
+
+# Deep content analysis (what a file or an archive member does inside; see contentscan.py)
+MAX_CONTENT_BYTES = 1024 * 1024  # one file's bytes examined
+MAX_CONTENT_CHARS = 400_000  # ... and its text
+MAX_MEMBER_BYTES = 512 * 1024  # one archive member read in full (to hash it and look inside)
+MAX_MEMBERS = 64  # archive members hashed and examined per archive
+MAX_MEMBER_TOTAL = 3 * 1024 * 1024  # all member bytes examined for one archive
+MAX_LAYERS = 4  # encoded layers unwrapped (base64 inside base64 inside ...)
+MAX_DECODED_TOTAL = 4 * 1024 * 1024  # all bytes produced by decoding, for one file
+MAX_BLOBS = 16  # encoded blocks tried per layer
+MAX_CONTENT_URLS = 50
+MAX_OLE_STREAMS = 400  # directory entries read from an OLE compound file
+MAX_VBA_CHARS = 300_000  # macro source examined

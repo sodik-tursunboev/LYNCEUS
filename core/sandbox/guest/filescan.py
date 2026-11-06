@@ -46,4 +46,7 @@ def inspect_data(data: bytes) -> dict[str, Any]:
 
         picture: dict[str, Any] = imagescan.scan_image(data)
         return picture
-    return {"kind": "none"}
+    import contentscan  # scripts, shortcuts, executables, Office and RTF files, saved pages
+
+    inside: dict[str, Any] = contentscan.scan_content(data, magic)
+    return inside

@@ -3,17 +3,22 @@
     python -m core.intel sync [--feed NAME ...] [--force]   download the enabled list feeds
     python -m core.intel status                              what is enabled, downloaded, stale
     python -m core.intel lookup <url>                        match a URL against downloaded lists
+    python -m core.intel hashes status|import|check|sync     known-bad file hashes (offline lookup)
 
-`sync` is the only command that touches the network, and only to download the lists the operator
-enabled in MIRAGE_INTEL_PROVIDERS. `lookup` is offline.
+`sync` and `hashes sync` are the only commands that touch the network, and only to download lists
+the operator asked for (the feeds enabled in MIRAGE_INTEL_PROVIDERS; MalwareBazaar's hashes with the
+operator's own abuse.ch key). `lookup` and the other `hashes` commands are offline.
 """
 
 import argparse
 import asyncio
 import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
+from core import hashlists
 from core.config import Settings
+from core.intel import hashfeed
 from core.intel.base import Subject
 from core.intel.feeds import FEEDS, FeedStore, ListFeed, sync
 from core.intel.http import make_client
@@ -81,9 +86,68 @@ async def _lookup(settings: Settings, url: str) -> int:
     return 0
 
 
+def _hashes(settings: Settings, args: argparse.Namespace) -> int:
+    directory = settings.data_dir / "hashes"
+    if args.action == "status":
+        hashlists.configure(directory)
+        print(f"folder: {directory}")
+        for info in hashlists.current().status():
+            print(f"{info.name:24} {info.hashes:>10} hashes")
+        return 0
+    if args.action == "import":
+        source = Path(args.file)
+        if not source.is_file():
+            print("no such file", file=sys.stderr)
+            return 2
+        try:
+            kept = hashlists.import_list(source, args.name, directory)
+        except ValueError as e:
+            print(str(e), file=sys.stderr)
+            return 2
+        print(f"kept {kept} hashes as {args.name.lower()} in {directory}")
+        return 0
+    if args.action == "check":
+        target = Path(args.file)
+        if not target.is_file():
+            print("no such file", file=sys.stderr)
+            return 2
+        hashlists.configure(directory)
+        found = hashlists.digests_of_file(target)
+        for algorithm, value in found.items():
+            print(f"{algorithm:7} {value}")
+        hits = hashlists.current().lookup(found)
+        for algorithm, list_name in hits:
+            print(f"KNOWN BAD: the {algorithm} is on the list '{list_name}'")
+        if not hits:
+            lists = len(hashlists.current().status())
+            print(f"no match in {lists} list(s) (that is not a sign of safety)")
+        return 1 if hits else 0
+    key = settings.urlhaus_auth_key.get_secret_value() if settings.urlhaus_auth_key else None
+
+    async def run() -> int:
+        async with make_client(timeout=60.0) as client:
+            status, count, detail = await hashfeed.sync(directory, client, key, force=args.force)
+        print(f"{hashfeed.NAME:14} {status:8} {count:>9} hashes  {detail}")
+        return 1 if status == "error" else 0
+
+    return asyncio.run(run())
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m core.intel")
     commands = ap.add_subparsers(dest="command", required=True)
+    h = commands.add_parser("hashes", help="known-bad file hash lists on this machine")
+    actions = h.add_subparsers(dest="action", required=True)
+    actions.add_parser("status", help="the lists loaded and how many hashes each holds")
+    imp = actions.add_parser("import", help="add a list of hashes (SHA-256, SHA-1 or MD5 per line)")
+    imp.add_argument("file")
+    imp.add_argument("--name", required=True, help="the list's name, shown in verdicts")
+    chk = actions.add_parser("check", help="hash a file here and look it up (offline)")
+    chk.add_argument("file")
+    snc = actions.add_parser(
+        "sync", help="download MalwareBazaar's recent hashes (needs your Auth-Key)"
+    )
+    snc.add_argument("--force", action="store_true", help="ignore the five-minute minimum")
     s = commands.add_parser("sync", help="download the enabled list feeds")
     s.add_argument("--feed", action="append", default=[], choices=sorted(FEEDS))
     s.add_argument("--force", action="store_true", help="download even if the list is recent")
@@ -92,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
     lk.add_argument("url")
     args = ap.parse_args(argv)
     settings = Settings()
+    if args.command == "hashes":
+        return _hashes(settings, args)
     if args.command == "sync":
         return asyncio.run(_sync(settings, args.feed, args.force))
     if args.command == "status":

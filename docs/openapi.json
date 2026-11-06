@@ -869,6 +869,27 @@
             "title": "Files",
             "type": "array"
           },
+          "hash_lists": {
+            "default": 0,
+            "title": "Hash Lists",
+            "type": "integer"
+          },
+          "hash_matches": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HashMatch"
+            },
+            "title": "Hash Matches",
+            "type": "array"
+          },
+          "hashes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Hashes",
+            "type": "object"
+          },
           "inspected": {
             "title": "Inspected",
             "type": "boolean"
@@ -955,6 +976,31 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HashMatch": {
+        "additionalProperties": false,
+        "description": "A hash that is on a known-bad list: which kind, which list, and what it matched.",
+        "properties": {
+          "algorithm": {
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "where": {
+            "title": "Where",
+            "type": "string"
+          }
+        },
+        "required": [
+          "algorithm",
+          "source",
+          "where"
+        ],
+        "title": "HashMatch",
         "type": "object"
       },
       "IntelHealth": {

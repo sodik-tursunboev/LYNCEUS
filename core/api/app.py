@@ -31,6 +31,7 @@ from sqlalchemy import create_engine
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from core import hashlists
 from core.api.console import mount_console
 from core.config import Settings
 from core.contracts import EventSource, VerdictState
@@ -256,6 +257,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if runner is not None:
         quarantine.append(runner)
     feed_store = FeedStore(settings.data_dir / "feeds")
+    hashlists.configure(settings.data_dir / "hashes")  # known-bad file hashes (offline lookup)
     if intel is not None and db is not None:
         for p in intel.providers:
             try:

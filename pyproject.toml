@@ -32,6 +32,10 @@ module = [
 ignore_missing_imports = true  # sandbox guest modules run with their own folder as the path
 
 [[tool.mypy.overrides]]
+module = ["contentscan", "lnkscan", "pescan", "olescan"]
+ignore_missing_imports = true  # more sandbox guest modules (deep content analysis)
+
+[[tool.mypy.overrides]]
 module = ["cv2", "cv2.*", "pikepdf", "pikepdf.*", "lxml", "lxml.*", "numpy", "numpy.*", "PIL", "PIL.*"]
 ignore_missing_imports = true  # sandbox-only libraries; the host never imports them
 ignore_errors = false

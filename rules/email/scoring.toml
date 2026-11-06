@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.1.0"
+version = "1.2.0"
 
 [thresholds]
 suspicious = 45
@@ -14,9 +14,18 @@ link_cap = 100      # distinct links sent through the URL engine; the rest are o
 archive_bomb_bytes = 268435456  # declared size from which an archive can count as a bomb (256 MiB)
 archive_bomb_ratio = 100        # ...if it also expands this many times beyond its own size
 
+# Exact identification (ADR-020): a signal named here makes the verdict MALICIOUS by itself.
+[certain]
+rules = ["intel.hash_known_bad", "content.eicar"]
+
 # Most a category can contribute, however many of its signals fire. "link.*" categories carry what
 # the URL engine found in the message's links.
 [category_caps]
+known_bad = 1.0
+code_behavior = 0.9
+obfuscation = 0.7
+evasion = 0.7
+persistence = 0.6
 sender = 0.8
 authentication = 0.6
 deception = 0.8
@@ -79,3 +88,29 @@ content = 0.3
 "email.image_bomb" = 0.3
 "email.html_smuggling" = 0.6
 "email.file_inspection_incomplete" = 0.3
+# What is inside a file (rules/email/deep.py)
+"intel.hash_known_bad" = 0.99
+"content.eicar" = 0.99
+"content.script_downloader" = 0.8
+"content.script_encoded" = 0.7
+"content.script_hidden_layers" = 0.5
+"content.script_evasive_launch" = 0.5
+"content.script_persistence" = 0.55
+"content.script_lolbin" = 0.7
+"content.defense_evasion" = 0.8
+"content.process_injection" = 0.75
+"content.credential_access" = 0.75
+"content.credential_prompt" = 0.5
+"content.embedded_executable" = 0.75
+"content.office_macro" = 0.45
+"content.office_macro_autoexec" = 0.85
+"content.office_remote_template" = 0.7
+"content.office_dde" = 0.65
+"content.equation_editor" = 0.7
+"content.ole_object" = 0.4
+"content.lnk_runs_interpreter" = 0.75
+"content.lnk_disguised" = 0.5
+"content.pe_packed" = 0.4
+"content.pe_injection_or_downloader" = 0.55
+"content.anti_analysis" = 0.35
+"content.disguised_program" = 0.75

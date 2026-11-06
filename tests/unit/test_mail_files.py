@@ -42,8 +42,8 @@ def image(data: bytes) -> ImageScan:
         (fh.make_tar({"a.txt": b"x"}), "archive"),
         (fh.PDF_PLAIN, "pdf"),
         (fh.blank_png(), "image"),
-        (b"MZ\x90\x00 an executable", "none"),
-        (b"plain words", "none"),
+        (b"MZ\x90\x00 an executable", "content"),  # looked inside (deep analysis, ADR-020)
+        (b"plain words", "content"),
         (b"", "none"),
     ],
 )
@@ -275,7 +275,7 @@ def test_a_format_outside_the_allowed_list_is_not_opened() -> None:
     Image.new("L", (8, 8)).save(
         buf, "PPM"
     )  # a format Pillow can read but this scanner does not allow
-    assert filescan.inspect_data(buf.getvalue())["kind"] == "none"
+    assert filescan.inspect_data(buf.getvalue())["kind"] != "image"  # never decoded as a picture
 
 
 @pytest.mark.parametrize("seed", range(6))
