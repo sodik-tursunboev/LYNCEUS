@@ -21,3 +21,8 @@ console/dist/
 # MSI build output
 deploy/msi/stage/
 deploy/msi/out/
+
+# native console window
+shell/node_modules/
+shell/src-tauri/target/
+shell/src-tauri/gen/

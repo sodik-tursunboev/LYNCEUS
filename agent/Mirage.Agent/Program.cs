@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Mirage.Agent;
 
-const string Usage = "MIRAGE agent. Without arguments it runs in the background.\n  --install     start at logon and register the browser bridge for Edge and Chrome\n  --uninstall   undo --install\n  --status      show what is registered\n  --set-token   read the core's API token from standard input and store it (DPAPI)\n  --open-console open the MIRAGE console in your browser, already signed in";
+const string Usage = "MIRAGE agent. Without arguments it runs in the background.\n  --install     start at logon and register the browser bridge for Edge and Chrome\n  --uninstall   undo --install\n  --status      show what is registered\n  --set-token   read the core's API token from standard input and store it (DPAPI)\n  --open-console open the MIRAGE console in your browser, already signed in\n  --console-link print the signed-in console address (used by the native console window)";
 
 [DllImport("kernel32.dll")]
 static extern bool AttachConsole(int processId);
@@ -50,6 +50,10 @@ switch (args.FirstOrDefault())
         var link = ConsoleLink.Build(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir));
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(link) { UseShellExecute = true });
         Console.WriteLine("Opened the console in your browser.");
+        return 0;
+    case "--console-link":
+        // for the native console window: the signed-in address on standard output, nothing opened
+        Console.WriteLine(ConsoleLink.Build(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir)));
         return 0;
     case "--set-token":
         var token = (Console.In.ReadLine() ?? string.Empty).Trim();

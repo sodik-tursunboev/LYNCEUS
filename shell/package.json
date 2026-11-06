@@ -1,0 +1,13 @@
+{
+  "name": "mirage-console-shell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A native window around the MIRAGE console (Tauri). The console itself is console/, served by the core.",
+  "scripts": {
+    "build": "tauri build --no-bundle",
+    "icons": "tauri icon ../console/static/favicon.svg"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.1"
+  }
+}

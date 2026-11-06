@@ -25,13 +25,16 @@
       <Directory Id="MenuDir" Name="MIRAGE" />
     </StandardDirectory>
 
-    <!-- agent\, extension\, engine\ (Python, the core, the console, the built sandbox), Setup.ps1, Cleanup.ps1 -->
+    <!-- agent\, shell\ (the native console window), extension\, engine\ (Python, the core, the console, the
+         built sandbox), Setup.ps1, Cleanup.ps1 -->
     <ComponentGroup Id="Payload" Directory="INSTALLFOLDER">
       <Files Include="$(StageDir)\**" />
     </ComponentGroup>
 
     <Component Id="MenuShortcut" Directory="MenuDir" Guid="*">
-      <Shortcut Id="ConsoleShortcut" Name="MIRAGE Console" Description="Open the MIRAGE console"
+      <Shortcut Id="ConsoleShortcut" Name="MIRAGE" Description="Open the MIRAGE console in its own window"
+                Target="[INSTALLFOLDER]shell\Mirage.Console.exe" WorkingDirectory="INSTALLFOLDER" />
+      <Shortcut Id="BrowserConsoleShortcut" Name="MIRAGE (in the browser)" Description="Open the MIRAGE console in your browser"
                 Target="[INSTALLFOLDER]agent\Mirage.Agent.exe" Arguments="--open-console"
                 WorkingDirectory="INSTALLFOLDER" />
       <RemoveFolder Id="RemoveMenuDir" On="uninstall" />

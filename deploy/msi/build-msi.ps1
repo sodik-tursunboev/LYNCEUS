@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS  Build deploy\msi\out\Mirage-<version>-x64.msi from this checkout.
 .DESCRIPTION
-  Stages the self-contained agent (no .NET needed on the target), the browser extension, and the
-  engine (a trimmed Python with only the libraries the core needs, the core, the console and the
+  Stages the self-contained agent (no .NET needed on the target), the browser extension, the native
+  console window (Tauri; needs Rust, see shell\), and the engine (a trimmed Python with only the libraries the core needs, the core, the console and the
   already built sandbox), then runs WiX. Needs: dotnet SDK, node/npm, this checkout's .venv with a
   current .sandbox (python tasks.py sandbox), and the WiX tool (dotnet tool install --global wix
   --version 5.0.2; WiX 7 asks you to accept a fee EULA first, 5.0.2 does not).
@@ -46,6 +46,19 @@ foreach ($app in 'extension', 'console') {
     } finally { Pop-Location }
 }
 Copy-Item (Join-Path $repo 'extension\dist') (Join-Path $stage 'extension') -Recurse
+
+Say 'building the native console window (Tauri; the first build compiles for several minutes)'
+$env:PATH += ";$env:USERPROFILE\.cargo\bin"
+Need cargo
+Push-Location (Join-Path $repo 'shell')
+$strict = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'   # Tauri and npm write progress to stderr; the exit code is what counts
+try {
+    if (-not (Test-Path 'node_modules')) { npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null; if ($LASTEXITCODE) { throw 'npm ci failed in shell' } }
+    npx tauri build --no-bundle 2>&1 | Out-Null; if ($LASTEXITCODE) { throw 'the Tauri build failed' }
+} finally { $ErrorActionPreference = $strict; Pop-Location }
+New-Item -ItemType Directory -Force (Join-Path $stage 'shell') | Out-Null
+Copy-Item (Join-Path $repo 'shell\src-tauri\target\release\mirage-console.exe') (Join-Path $stage 'shell\Mirage.Console.exe')
 
 Say 'staging the engine (Python, core, console, sandbox)'
 & $python (Join-Path $PSScriptRoot 'stage_engine.py') (Join-Path $stage 'engine') | Select-Object -Last 2
