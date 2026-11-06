@@ -79,6 +79,20 @@ New: a component that moves the user's files (the agent) and a UI that can ask i
 | Markup injection through rule names, hosts, reasons | everything is rendered as text by React; a test scans the source for every injection route and inline style | |
 | The agent acts on an unapproved action | the core refuses an `applied` report for anything not APPROVED; the agent acts only on APPROVED actions | |
 
+## Email quarantine (M6b)
+
+New asset: a second refresh token per provider that can **change** the mailbox (Gmail `gmail.modify`, Google's words: read, compose and send; Outlook `Mail.ReadWrite`: can delete, cannot send). New code path: the core moves one message at a time, only after your click.
+
+| Threat | Control | Residual |
+|---|---|---|
+| MIRAGE's own code deletes or sends mail | a second HTTP client with an allow-list guard: only the exact label/folder/move requests, bodies limited to the label lists or `destinationId`; DELETE, PUT, PATCH, send, drafts, trash refused before sending; tests try each | the guard limits MIRAGE, not the token |
+| The wider token is stolen or misused | separate consent with a typed YES; own DPAPI file; the reading poller never loads it; granted scopes checked against an allow list (send, compose, full access, `Mail.Send`, files refused, nothing stored); `disconnect --write` removes it and asks Google to revoke | any program running as you can decrypt the file and then send mail (Gmail) or delete mail (Graph) |
+| A wrong or forged verdict hides a good message | only MALICIOUS; always your click (`auto` mode and the `policy` actor are refused for mail); reversible (a label or folder, nothing deleted); restore is one click | a mis-judged message is out of your inbox until you restore it |
+| Something other than you approves a move | the agent never receives mail actions; `/result` refuses to finish one; approval needs the API token | a local process holding the API token can approve, like for files |
+| A repeated or crashed run does the wrong thing | check-then-act, verify the reply; one action per message; stated outcomes; Outlook's new id saved with the outcome | a crash between Outlook's reply and the commit leaves the message in the folder with the action FAILED (`message_gone`) |
+| The message id leaks | kept only in `actions.mail_ref`; not in the API, audit log or logs (exception class only); cleared on restore; tests plant an id and search | a database dump taken while an action is APPLIED contains the id |
+| A hostile answer steers the movers | ids and names validated before they enter a URL or body; a reply that does not match (wrong labels, other folder) is a failure, not success | a compromised provider endpoint can still lie |
+
 ## Hardening pass (M7)
 
 The new doors (native-messaging protocol, pipe, response routes, console route) were attacked with seeded random and mutated input; see `tests/adversarial/test_response_fuzz.py` and `agent/Mirage.Agent.Tests/FuzzTests.cs`. Two defects were found and fixed: a protocol parser that threw on invalid UTF-8 (a hostile frame closed the connection instead of being refused) and an audit log that could record an unknown actor name. **Residual:** the fuzzing is bounded (fixed seeds, thousands of cases, not coverage-guided); the sandbox's escape resistance has been tested with bomb and malformed-input fixtures only, never with a real exploit; nothing has been reviewed by anyone but the author.

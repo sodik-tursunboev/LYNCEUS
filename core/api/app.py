@@ -44,8 +44,9 @@ from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.registry import build_intel
 from core.log import configure
+from core.mailbox.quarantine import MailQuarantineRunner
 from core.mailbox.service import MailboxService, combined_status
-from core.mailbox.wiring import build_mailboxes
+from core.mailbox.wiring import build_mailboxes, build_quarantine
 from core.response import service as response_service
 from core.response.routes import build_router as response_router
 from core.urls.parse import ParsedUrl, parse_url
@@ -209,12 +210,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
 
     mailboxes: list[MailboxService] = []  # filled below, once the database exists
+    quarantine: list[MailQuarantineRunner] = []  # M6b: at most one, carries out approved mail moves
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         for service in mailboxes:
             service.start()
+        for runner in quarantine:
+            runner.start()
         yield
+        for runner in quarantine:
+            await run_in_threadpool(runner.stop)
         for service in mailboxes:
             await run_in_threadpool(service.stop)
         if intel is not None:
@@ -246,6 +252,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         else None
     )
     mailboxes.extend(build_mailboxes(settings, db, intel))  # only what the operator enabled
+    runner = build_quarantine(mailboxes, db)
+    if runner is not None:
+        quarantine.append(runner)
     feed_store = FeedStore(settings.data_dir / "feeds")
     if intel is not None and db is not None:
         for p in intel.providers:

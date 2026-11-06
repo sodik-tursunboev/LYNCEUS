@@ -21,6 +21,7 @@ for _noisy in ("httpx", "httpcore"):
 
 API = "https://gmail.googleapis.com/gmail/v1/users/me"
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+SCOPE_WRITE = "https://www.googleapis.com/auth/gmail.modify"  # M6b: separate, explicit consent
 GMAIL_HOST = "gmail.googleapis.com"
 GRAPH_HOST = "graph.microsoft.com"
 READ_ONLY_HOSTS = frozenset({GMAIL_HOST, GRAPH_HOST})  # GET and nothing else, ever

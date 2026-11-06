@@ -3,6 +3,7 @@
 import logging
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -24,8 +25,11 @@ class MailboxService:
         poll_seconds: float,
         wait: Callable[[float], bool] | None = None,
         name: str = "gmail",
+        write_tokens: TokenFile | None = None,
+        write_source: TokenSource | None = None,
     ) -> None:
         self.name = name
+        self.write_tokens, self.write_source = write_tokens, write_source  # M6b, separate consent
         self.mailbox, self.tokens, self.source, self.poll_seconds = (
             mailbox,
             tokens,
@@ -49,10 +53,18 @@ class MailboxService:
         poll_seconds: float,
         fetch_gap: float = 0.7,
         name: str = "gmail",
+        on_malicious: Callable[[str, uuid.UUID], None] | None = None,
+        write_tokens: TokenFile | None = None,
+        write_source: TokenSource | None = None,
     ) -> "MailboxService":
         state = State(directory / f"{name}-state.json")
-        mailbox = Mailbox(client, analyze, store, state, lookback_days, fetch_gap)
-        return cls(mailbox, tokens, source, poll_seconds, name=name)
+        mailbox = Mailbox(
+            client, analyze, store, state, lookback_days, fetch_gap, on_malicious=on_malicious
+        )
+        return cls(
+            mailbox, tokens, source, poll_seconds, name=name,
+            write_tokens=write_tokens, write_source=write_source,
+        )  # fmt: skip
 
     def start(self) -> None:
         self._thread = threading.Thread(target=self._run, name="mailbox", daemon=True)
@@ -77,6 +89,14 @@ class MailboxService:
             if self._wait(self.poll_seconds):
                 return
 
+    def quarantine_state(self) -> str:
+        """Whether you gave the separate write permission: none | ready | reauth_needed."""
+        if self.write_tokens is None or self.write_tokens.load() is None:
+            return "none"
+        if self.write_source is not None and self.write_source.last_error == "revoked":
+            return "reauth_needed"
+        return "ready"
+
     def status(self) -> dict[str, object]:
         s = self.mailbox.stats
         connected = self.tokens.load() is not None
@@ -91,6 +111,7 @@ class MailboxService:
         return {
             "provider": self.name,
             "state": state,
+            "quarantine": self.quarantine_state(),
             "last_poll": datetime.fromtimestamp(s.last_poll, UTC).isoformat()
             if s.last_poll
             else None,

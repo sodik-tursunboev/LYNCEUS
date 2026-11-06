@@ -233,7 +233,7 @@ class AuditLog(Base):
     detail: Mapped[dict[str, object] | None] = mapped_column(JSON)  # redacted before storing
 
 
-ACTION_KINDS = ("FILE_QUARANTINE",)
+ACTION_KINDS = ("FILE_QUARANTINE", "MAIL_QUARANTINE")
 ACTION_STATES = (
     "PENDING", "APPROVED", "APPLIED", "DISMISSED", "FAILED", "RESTORE_REQUESTED", "RESTORED",
 )  # fmt: skip
@@ -248,6 +248,10 @@ class Action(Base):
 
     Holds ids, states and reason codes only: never a path or a file name (those stay with the agent,
     in its quarantine folder). One row follows a file from PENDING through APPLIED to RESTORED.
+
+    For email (M6b, kind MAIL_QUARANTINE) it also holds the provider and the provider's own opaque
+    message id (`mail_ref`), which is needed to find the message again: never returned by the API,
+    never logged, cleared when the message is restored. No address, subject or body, ever.
     """
 
     __tablename__ = "actions"
@@ -255,6 +259,12 @@ class Action(Base):
         CheckConstraint(f"kind IN ({_quoted(ACTION_KINDS)})", name="kind_valid"),
         CheckConstraint(f"state IN ({_quoted(ACTION_STATES)})", name="state_valid"),
         CheckConstraint("decided_by IS NULL OR decided_by IN ('user', 'policy')", name="decider"),
+        CheckConstraint(
+            "(kind = 'FILE_QUARANTINE' AND provider IS NULL AND mail_ref IS NULL) "
+            "OR (kind = 'MAIL_QUARANTINE' AND provider IS NOT NULL "
+            "AND provider IN ('gmail', 'outlook'))",  # NULL would otherwise pass a CHECK
+            name="provider_valid",
+        ),
     )
 
     id: Mapped[UuidPk]
@@ -270,6 +280,10 @@ class Action(Base):
     created_at: Mapped[CreatedAt]
     decided_at: Mapped[datetime | None]
     finished_at: Mapped[datetime | None]
+    provider: Mapped[str | None] = mapped_column(String(16))  # gmail or outlook (email only)
+    mail_ref: Mapped[str | None] = mapped_column(
+        String(512)
+    )  # the provider's message id (email only)
 
 
 class Allow(Base):

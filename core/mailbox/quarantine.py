@@ -74,6 +74,9 @@ class MailQuarantineRunner:
             if mover is None:
                 done += self._finish(work.id, restoring, "no_write_access")
                 continue
+            if work.mail_ref is None:  # the id is gone: nothing to find the message with
+                done += self._finish(work.id, restoring, "message_gone")
+                continue
             try:
                 new_ref = (
                     mover.restore(work.mail_ref) if restoring else mover.quarantine(work.mail_ref)
@@ -95,10 +98,8 @@ class MailQuarantineRunner:
             self.last_error = None
             event = Event.RESTORED if restoring else Event.APPLIED
             # the new id (Outlook changes it on a move) is saved in the same commit as the outcome;
-            # after a restore the id is no longer needed and is cleared
-            service.transition(
-                self._engine, work.id, event, "core", mail_ref=None if restoring else new_ref
-            )
+            # a restore clears it (the service does that, in the same commit)
+            service.transition(self._engine, work.id, event, "core", mail_ref=new_ref)
             self.handled += 1
             done += 1
         return done

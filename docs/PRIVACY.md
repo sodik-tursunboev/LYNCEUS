@@ -10,6 +10,7 @@ Written from the code (database models, the agent's file formats, the log statem
 | A bare registered domain (no path, query, user name, port or IP) or a hash | only for a threat-intelligence provider **you name** in `MIRAGE_INTEL_PROVIDERS`: RDAP and VirusTotal get one public domain; list feeds (PhishTank, OpenPhish, URLhaus) are *downloaded* and matched here, so nothing about your URL is sent | that provider. Links inside email only reach list feeds unless `MIRAGE_INTEL_EMAIL_LINKS=true`. See ADR-015 |
 | Requests to read your mail | only after you connect Gmail | `gmail.googleapis.com`, `oauth2.googleapis.com`, `accounts.google.com`, read-only, GET only (enforced in code) |
 | Requests to read your mail | only after you connect Outlook | `graph.microsoft.com` (GET only, enforced in code), `login.microsoftonline.com` (sign-in and token refresh), read-only `Mail.Read` |
+| Requests that move a message in your mail | only after you give the **separate write permission** (`connect --write`) **and** click Approve on a MALICIOUS message | the same hosts as above. Gmail: list or create the label `MIRAGE-Quarantine`, change one message's labels. Outlook: list or create the folder `MIRAGE Quarantine`, read one message's folder, move it. Nothing else (no delete, send, draft, trash: refused in code before sending). The message id goes to the provider, because that is how the message is named |
 | A Windows toast, a browser warning page | always, but local | your screen |
 
 The agent talks to the core only over loopback (no proxy, no redirects, the resolved address is checked on every connection). The extension makes no network requests of its own.
@@ -23,7 +24,7 @@ Hashes, hosts, states, scores, rule names and counts. **Never**: a URL, a file n
 | `events`, `artifacts` | when and from which source (browser, agent, email, API); kind; SHA-256 of the URL/file/message; the host (at most 253 characters) |
 | `domains`, `extracted_urls` | host names seen, SHA-256 of each extracted link (the link text itself is NULL) |
 | `verdicts`, `detections`, `evidence`, `provider_results` | the state, score, confidence, recommended and applied response; the rules that fired with their description; redacted evidence summaries (hosts, types, counts); what each provider said, when, and its provenance |
-| `actions`, `allowlist` | a response's state, the agent's opaque file id, the file's SHA-256, who decided, a reason code, times; allow-listed hashes with expiry |
+| `actions`, `allowlist` | a response's state, the agent's opaque file id, the file's SHA-256, who decided, a reason code, times; allow-listed hashes with expiry. For an email action also the provider (`gmail` or `outlook`) and **the provider's message id (`mail_ref`)**, the one place a message id is kept in the clear: it is needed to find the message again, never returned by the API, never written to the audit log or any log, and cleared when the action is restored (a test plants an id and searches the API output, audit log, logs and every other column) |
 | `audit_logs` | who did what and when: action names, states, hash prefixes (12 characters); for a "continue anyway" override the host and a hash of the URL, never the URL |
 
 There is no encryption of the database (ADR-007 is unsigned) because nothing in it is content. There is no automatic deletion: it grows until you clear it.
@@ -43,7 +44,7 @@ These are the places where **local** names and paths do exist, because the agent
 | `core.token` | the API token, encrypted with Windows DPAPI for your user | other users and other machines cannot read it |
 | `pipe.secret` | the password the native host uses to talk to the agent, plain text | any program running as you can read it (same trust level as anything you run) |
 
-The core's own folder (`.data/`) holds downloaded list feeds and, if Gmail is connected, `mailbox\gmail.token` (DPAPI-encrypted refresh token) and `gmail-state.json` (a history position, SHA-256 of message ids already analysed, retry counts; no address, subject or body). Outlook has its own pair, `outlook.token` and `outlook-state.json`, with the same contents (the position is Microsoft's opaque change link).
+The core's own folder (`.data/`) holds downloaded list feeds and, if Gmail is connected, `mailbox\gmail.token` (DPAPI-encrypted refresh token) and `gmail-state.json` (a history position, SHA-256 of message ids already analysed, retry counts; no address, subject or body). Outlook has its own pair, `outlook.token` and `outlook-state.json`, with the same contents (the position is Microsoft's opaque change link). If you gave the email-quarantine permission there is a third file per provider, `gmail-write.token` / `outlook-write.token` (DPAPI-encrypted refresh token for the wider permission; the reading poller never uses it).
 
 ## In the browser extension
 
@@ -55,4 +56,4 @@ The verdict cache lives in `chrome.storage.session` (memory, gone when the brows
 
 ## What you control
 
-Turn providers and Gmail off by leaving their settings empty; `python -m core.mailbox disconnect` revokes Google's access and deletes the token (`--provider outlook` deletes the local token and state; remove the app in your Microsoft account's app-permissions page to end its access); `deploy\uninstall.ps1 -RemoveData` deletes the data folder (including the quarantine); clearing the database tables removes the history.
+Turn providers and Gmail off by leaving their settings empty; `python -m core.mailbox disconnect` revokes Google's access and deletes the tokens (`--provider outlook` deletes the local tokens and state; remove the app in your Microsoft account's app-permissions page to end its access); `disconnect --write` withdraws only the wider email-quarantine permission; `deploy\uninstall.ps1 -RemoveData` deletes the data folder (including the quarantine); clearing the database tables removes the history.

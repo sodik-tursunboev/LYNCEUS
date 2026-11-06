@@ -20,7 +20,7 @@ from urllib.parse import parse_qs, urlencode, urlparse
 
 import httpx
 
-from core.mailbox.gmail import SCOPE, GmailError, make_client
+from core.mailbox.gmail import SCOPE, SCOPE_WRITE, GmailError, make_client
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105  (a public endpoint, not a secret)
@@ -48,10 +48,12 @@ def pkce() -> tuple[str, str]:
     return verifier, challenge.decode()
 
 
-def authorize_url(client_id: str, redirect_uri: str, challenge: str, state: str) -> str:
+def authorize_url(
+    client_id: str, redirect_uri: str, challenge: str, state: str, scope: str = SCOPE
+) -> str:
     query = {
         "client_id": client_id, "redirect_uri": redirect_uri, "response_type": "code",
-        "scope": SCOPE, "code_challenge": challenge, "code_challenge_method": "S256",
+        "scope": scope, "code_challenge": challenge, "code_challenge_method": "S256",
         "state": state,
     }  # fmt: skip
     return AUTH_URL + "?" + urlencode(query)
@@ -122,7 +124,7 @@ def wait_for_code(
 
 def exchange_code(
     http: httpx.Client, client_id: str, client_secret: str | None, code: str, verifier: str,
-    redirect_uri: str, now: Callable[[], float] = time.time,
+    redirect_uri: str, now: Callable[[], float] = time.time, *, write: bool = False,
 ) -> Tokens:  # fmt: skip
     form = {
         "grant_type": "authorization_code", "code": code, "client_id": client_id,
@@ -130,17 +132,23 @@ def exchange_code(
     }  # fmt: skip
     if client_secret:
         form["client_secret"] = client_secret
-    return _token_request(http, form, now, require_refresh=True)
+    return _token_request(
+        http, form, now, require_refresh=True,
+        scope_ok=google_write_scope_ok if write else _google_scope_ok,
+    )  # fmt: skip
 
 
 def refresh_access(
     http: httpx.Client, client_id: str, client_secret: str | None, refresh_token: str,
-    now: Callable[[], float] = time.time,
+    now: Callable[[], float] = time.time, *, write: bool = False,
 ) -> Tokens:  # fmt: skip
     form = {"grant_type": "refresh_token", "refresh_token": refresh_token, "client_id": client_id}
     if client_secret:
         form["client_secret"] = client_secret
-    return _token_request(http, form, now, require_refresh=False)
+    return _token_request(
+        http, form, now, require_refresh=False,
+        scope_ok=google_write_refresh_ok if write else _google_scope_ok,
+    )  # fmt: skip
 
 
 def revoke(http: httpx.Client, token: str) -> bool:
@@ -152,6 +160,24 @@ def revoke(http: httpx.Client, token: str) -> bool:
 
 def _google_scope_ok(scope: object) -> bool:
     return scope is None or set(str(scope).split()) == {SCOPE}
+
+
+_WRITE_EXTRAS = frozenset({SCOPE, "openid", "email", "profile"})
+
+
+def google_write_scope_ok(scope: object) -> bool:
+    """The write consent (M6b): gmail.modify must be granted and nothing wider. Sending
+    (gmail.send, gmail.compose), full access (mail.google.com), settings and any other scope are
+    refused, and so is a missing scope list."""
+    if not isinstance(scope, str):
+        return False
+    granted = set(scope.split())
+    return SCOPE_WRITE in granted and granted <= ({SCOPE_WRITE} | _WRITE_EXTRAS)
+
+
+def google_write_refresh_ok(scope: object) -> bool:
+    """A refresh answer may leave the scope out; if it names scopes they must still pass."""
+    return scope is None or google_write_scope_ok(scope)
 
 
 def _token_request(
@@ -232,18 +258,20 @@ class TokenSource:
 
 def connect(
     client_id: str, client_secret: str | None, open_browser: Callable[[str], object],
-    http: httpx.Client | None = None, timeout: float = 300.0,
+    http: httpx.Client | None = None, timeout: float = 300.0, *, write: bool = False,
 ) -> str:  # fmt: skip
-    """Run the whole sign-in and return the refresh token (the caller stores it)."""
+    """Run the whole sign-in and return the refresh token (the caller stores it). With `write` it
+    asks for the separate write permission (M6b) instead of the read-only one."""
     http = http or make_client()
     verifier, challenge = pkce()
     state = secrets.token_urlsafe(24)
     listener = _Listener(state)
     try:
-        open_browser(authorize_url(client_id, listener.redirect_uri, challenge, state))
+        scope = SCOPE_WRITE if write else SCOPE
+        open_browser(authorize_url(client_id, listener.redirect_uri, challenge, state, scope))
         code = wait_for_code(listener, timeout)
         tokens = exchange_code(
-            http, client_id, client_secret, code, verifier, listener.redirect_uri
+            http, client_id, client_secret, code, verifier, listener.redirect_uri, write=write
         )
     finally:
         listener.server_close()

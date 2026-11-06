@@ -57,6 +57,7 @@ Files in the data folder: `agent.json` (settings), `agent.log` and `core.log` (r
 - **Decide on a flagged file:** the console, Responses page. Nothing moves until you confirm (in `ask` mode).
 - **Gmail:** `python -m core.mailbox connect` once (needs your own Google OAuth client, see `docs/milestones/M5.md`), set `MIRAGE_GMAIL_ENABLED=true`, restart the agent. While the Google project is in "Testing" the connection lapses after 7 days and the agent tells you.
 - **Outlook / Microsoft 365** (never run live, see `docs/milestones/M5b.md`): register an app in your own Azure tenant (public client, redirect `http://localhost`, delegated `Mail.Read`), put its id in `MIRAGE_OUTLOOK_CLIENT_ID`, run `python -m core.mailbox connect --provider outlook`, set `MIRAGE_OUTLOOK_ENABLED=true`, restart the agent. `--provider outlook` also works with `status`, `poll` and `disconnect`. Both providers can run at once.
+- **Email quarantine (optional, never run live, see `docs/milestones/M6b.md`):** a wider permission, given separately. First connect the normal read-only sign-in above, then `python -m core.mailbox connect --write` (add `--provider outlook` for Outlook; Outlook's app registration also needs delegated `Mail.ReadWrite`, Google's consent screen needs `gmail.modify`). It shows what the permission can do and wants you to type `YES`. After that a MALICIOUS message appears in the console's Responses page as an email action; **Approve** moves it out of the inbox (Gmail: label `MIRAGE-Quarantine`; Outlook: folder `MIRAGE Quarantine`), **Restore** moves it back. Nothing is deleted or sent, and `auto` mode never moves mail. `python -m core.mailbox status` shows `quarantine`: `none`, `ready` or `reauth_needed`. Withdraw the permission with `python -m core.mailbox disconnect --write`. Mail judged before you gave the permission is not proposed afterwards.
 - **Threat-intelligence lists:** off until you name providers; `python -m core.intel sync` downloads the lists.
 
 ## Back up
@@ -75,6 +76,8 @@ Back up the PostgreSQL database and the data folder (`%LOCALAPPDATA%\Mirage`, wh
 | The console asks for a token | open it with `Mirage.Agent.exe --open-console`, or type the token |
 | Gmail says `reauth_needed` | `python -m core.mailbox connect` again |
 | Outlook says `reauth_needed` | `python -m core.mailbox connect --provider outlook` again (Microsoft no longer accepts the saved sign-in) |
+| An email action ends FAILED | the console shows the reason: `message_gone` (the message is not where it was; check the label/folder by hand), `mail_auth` (connect `--write` again), `mail_forbidden` (the provider refused: is the write permission still granted?), `mail_unavailable` (throttled or down for ten tries: approve again later), `no_write_access` (that provider is off or has no write permission), `mail_bad_reply`/`mail_error` (unexpected answer; nothing was claimed done). Approve again to retry |
+| Mail quarantine says `reauth_needed` | `python -m core.mailbox connect --write` again (add `--provider outlook` for Outlook) |
 | A test or build fails with a locked file | the running agent holds its own DLLs: stop it, or build in Release |
 
 ## Limits worth knowing

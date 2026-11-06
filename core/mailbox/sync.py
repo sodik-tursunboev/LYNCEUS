@@ -120,8 +120,10 @@ class Mailbox:
         fetch_gap: float = 0.7,  # a raw fetch costs 60 of 6,000 units a minute
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.time,
+        on_malicious: Callable[[str, uuid.UUID], None] | None = None,
     ) -> None:
         self.client, self.analyze, self.store, self.state = client, analyze, store, state
+        self.on_malicious = on_malicious  # M6b: proposes (never performs) a quarantine
         self.lookback_days, self.fetch_gap, self._sleep, self._clock = (
             lookback_days, fetch_gap, sleep, clock,
         )  # fmt: skip
@@ -286,3 +288,10 @@ class Mailbox:
                 }
             )
             del self.stats.flagged[:-50]
+        if verdict.state is VerdictState.MALICIOUS and self.on_malicious is not None:
+            try:
+                self.on_malicious(mid, verdict.id)
+            except Exception as e:  # noqa: BLE001  (a proposal must never stop the poll)
+                # only the class is logged: a database error can carry the statement's parameters,
+                # and the message id must never reach a log
+                log.warning("proposing a quarantine failed: %s", type(e).__name__)

@@ -2,6 +2,7 @@
 compare-and-set on the old state, so two callers cannot both win and an action is never unaudited.
 No path or file name is stored here: only ids, hashes, states and reason codes."""
 
+import hashlib
 import re
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -14,6 +15,15 @@ from core.db import models as db
 from core.response.machine import Event, step
 
 _REASON = re.compile(r"^[a-z0-9_]{1,64}$")
+_MAIL_REF = re.compile(r"^[A-Za-z0-9_=+\-]{1,512}$")  # what a Gmail or Graph message id looks like
+MAIL_PROVIDERS = ("gmail", "outlook")
+
+
+class _Keep:
+    """ "Leave the stored mail reference as it is" (None would mean "clear it")."""
+
+
+KEEP = _Keep()
 _FINISHED = {Event.APPLIED, Event.FAILED, Event.RESTORED}
 _AUDIT = {
     Event.APPROVE: "action.approve", Event.DISMISS: "action.dismiss",
@@ -31,8 +41,8 @@ class Transition(NamedTuple):
 
 
 def _known(actor: str) -> str:
-    """Only the three real actors reach the audit log; anything else is recorded as the user."""
-    return actor if actor in ("user", "policy", "agent") else "user"
+    """Only the real actors reach the audit log; anything else is recorded as the user."""
+    return actor if actor in ("user", "policy", "agent", "core") else "user"
 
 
 def _now() -> datetime:
@@ -78,15 +88,25 @@ def create_pending(
 
 
 def transition(
-    engine: Engine, action_id: uuid.UUID, event: Event, actor: str, reason: str | None = None
+    engine: Engine,
+    action_id: uuid.UUID,
+    event: Event,
+    actor: str,
+    reason: str | None = None,
+    mail_ref: str | None | _Keep = KEEP,
 ) -> Transition:
+    """Move one action along the state machine. For email, `mail_ref` sets (a string) or clears
+    (None) the stored message id in the same commit that records the outcome; a restore always
+    clears it."""
     actor = _known(actor)
     if reason is not None and not _REASON.match(reason):
         reason = "invalid_reason"
     for _ in range(3):
         with engine.begin() as c:
             row = c.execute(
-                select(db.Action.state, db.Action.sha256).where(db.Action.id == action_id)
+                select(db.Action.state, db.Action.sha256, db.Action.provider).where(
+                    db.Action.id == action_id
+                )
             ).one_or_none()
             if row is None:
                 return Transition(False, False, False, None)
@@ -106,6 +126,10 @@ def transition(
                 values["reason"] = reason
             elif event in (Event.APPROVE, Event.APPLIED, Event.RESTORED):
                 values["reason"] = None
+            if event is Event.RESTORED:
+                values["mail_ref"] = None  # no longer needed: the message is back where it was
+            elif not isinstance(mail_ref, _Keep):
+                values["mail_ref"] = mail_ref
             done = c.execute(
                 update(db.Action)
                 .where(db.Action.id == action_id, db.Action.state == row.state)
@@ -113,13 +137,20 @@ def transition(
             )
             if done.rowcount != 1:
                 continue  # someone else moved it first: look again
+            detail: dict[str, Any] = {
+                "sha12": row.sha256[:12], "from": row.state, "to": s.new_state, "reason": reason,
+            }  # fmt: skip
+            if row.provider is not None:
+                detail["provider"] = row.provider  # never the message id
             c.execute(
                 insert(db.AuditLog).values(
-                    actor=actor, action=_AUDIT[event], target_type="action", target_id=action_id,
-                    detail={"sha12": row.sha256[:12], "from": row.state, "to": s.new_state,
-                            "reason": reason},
+                    actor=actor,
+                    action=_AUDIT[event],
+                    target_type="action",
+                    target_id=action_id,
+                    detail=detail,
                 )
-            )  # fmt: skip
+            )
             return Transition(True, True, True, s.new_state)
     raise RuntimeError("the action kept changing under us")
 
@@ -127,6 +158,7 @@ def transition(
 def _action_dict(r: Row[Any]) -> dict[str, Any]:
     return {
         "id": r.id, "verdict_id": r.verdict_id, "kind": r.kind, "state": r.state,
+        "provider": r.provider,  # the message id (mail_ref) is deliberately not part of this
         "file_ref": r.file_ref, "sha256": r.sha256, "decided_by": r.decided_by,
         "reason": r.reason, "created_at": r.created_at,
         "decided_at": r.decided_at, "finished_at": r.finished_at,
@@ -148,12 +180,71 @@ def get_action(engine: Engine, action_id: uuid.UUID) -> dict[str, Any] | None:
     return _action_dict(row) if row else None
 
 
-def list_actions(engine: Engine, states: list[str] | None, limit: int) -> list[dict[str, Any]]:
+def list_actions(
+    engine: Engine, states: list[str] | None, limit: int, kind: str | None = None
+) -> list[dict[str, Any]]:
     q = _action_query().limit(limit)
     if states:
         q = q.where(db.Action.state.in_(states))
+    if kind:
+        q = q.where(db.Action.kind == kind)
     with engine.connect() as c:
         return [_action_dict(r) for r in c.execute(q)]
+
+
+def action_kind(engine: Engine, action_id: uuid.UUID) -> str | None:
+    with engine.connect() as c:
+        return c.scalar(select(db.Action.kind).where(db.Action.id == action_id))
+
+
+def create_pending_mail(
+    engine: Engine, verdict_id: uuid.UUID, provider: str, mail_ref: str
+) -> uuid.UUID:
+    """A proposal to move one flagged message out of the inbox. One action per message: asking again
+    returns the same one. `mail_ref` is the provider's message id, kept only on this row."""
+    if provider not in MAIL_PROVIDERS or not _MAIL_REF.match(mail_ref):
+        raise ValueError("not a mail provider or message id")
+    key = hashlib.sha256(f"{provider}:{mail_ref}".encode()).hexdigest()
+    with engine.begin() as c:
+        have = c.scalar(select(db.Action.id).where(db.Action.file_ref == key[:32]))
+        if have is not None:
+            return have
+        new = uuid.uuid4()
+        c.execute(
+            insert(db.Action).values(
+                id=new, verdict_id=verdict_id, kind="MAIL_QUARANTINE", state="PENDING",
+                file_ref=key[:32], sha256=key, provider=provider, mail_ref=mail_ref,
+            )
+        )  # fmt: skip
+        c.execute(
+            insert(db.AuditLog).values(
+                actor="policy", action="action.create", target_type="action", target_id=new,
+                detail={"sha12": key[:12], "to": "PENDING", "provider": provider},
+            )
+        )  # fmt: skip
+        return new
+
+
+class MailWork(NamedTuple):
+    id: uuid.UUID
+    state: str  # APPROVED (move it out) or RESTORE_REQUESTED (move it back)
+    provider: str
+    mail_ref: str | None
+
+
+def mail_work(engine: Engine, limit: int = 50) -> list[MailWork]:
+    """Email actions waiting for the core: what you approved, and what you asked to restore."""
+    with engine.connect() as c:
+        rows = c.execute(
+            select(db.Action.id, db.Action.state, db.Action.provider, db.Action.mail_ref)
+            .where(
+                db.Action.kind == "MAIL_QUARANTINE",
+                db.Action.state.in_(["APPROVED", "RESTORE_REQUESTED"]),
+            )
+            .order_by(db.Action.created_at)
+            .limit(limit)
+        )
+        return [MailWork(r.id, r.state, r.provider, r.mail_ref) for r in rows]
 
 
 def allow_add(engine: Engine, sha256: str, actor: str, days: int | None) -> datetime | None:

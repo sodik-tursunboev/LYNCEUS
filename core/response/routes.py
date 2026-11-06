@@ -24,6 +24,7 @@ class ActionOut(BaseModel):
     id: uuid.UUID
     verdict_id: uuid.UUID
     kind: str
+    provider: str | None = None  # gmail or outlook, for email actions (never the message id)
     state: str
     file_ref: str
     sha256: str
@@ -140,9 +141,10 @@ def build_router(
     def actions(
         state: Annotated[str | None, Query(pattern=r"^[A-Z_,]{1,120}$")] = None,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        kind: Annotated[str | None, Query(pattern=r"^[A-Z_]{1,24}$")] = None,
     ) -> list[ActionOut]:
         states = [s for s in (state or "").split(",") if s] or None
-        return [ActionOut(**a) for a in service.list_actions(need_db(), states, limit)]
+        return [ActionOut(**a) for a in service.list_actions(need_db(), states, limit, kind)]
 
     @router.get("/v1/actions/{action_id}")
     def action(action_id: uuid.UUID) -> ActionOut:
@@ -155,7 +157,13 @@ def build_router(
     def approve(
         action_id: uuid.UUID, x_mirage_actor: Annotated[str | None, Header()] = None
     ) -> ActionResult:
-        return apply(action_id, Event.APPROVE, _actor(x_mirage_actor))
+        actor = _actor(x_mirage_actor)
+        if actor == "policy" and service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
+            # a wrong message move costs more than a wrong file move: always your own click
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "an email is moved only when you approve it yourself"
+            )
+        return apply(action_id, Event.APPROVE, actor)
 
     @router.post("/v1/actions/{action_id}/dismiss")
     def dismiss(
@@ -172,6 +180,11 @@ def build_router(
     @router.post("/v1/actions/{action_id}/result")
     def result(action_id: uuid.UUID, body: ResultBody) -> ActionResult:
         """What the agent did. Only the agent reports this; the console cannot claim a result."""
+        if service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
+            # the agent never handles email: only the core finishes these, in-process
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, "an email action is finished by the core, not reported"
+            )
         event_for = {
             "applied": Event.APPLIED, "failed": Event.FAILED, "restored": Event.RESTORED,
             "restore_failed": Event.RESTORE_FAILED,
