@@ -1,6 +1,8 @@
 # M6b: Email quarantine (Gmail and Outlook), reversible
 
-**Status (2026-11-05): approved by you.** You chose "Email quarantine (M6b)" in answer to a question that named the wider permission it needs. Built the same way as M5/M5b: against fakes only, never run against real Google or Microsoft.
+**Status (2026-11-06): approved by you; partly built.** Done and tested: the narrow request guard and the Gmail and Outlook movers (`core/mailbox/write.py`, 102 tests against fakes, including every forbidden request), the agent ignoring email actions, and the console wording. **Not done:** the migration, the response-service changes, the runner (drafts in `docs/milestones/m6b-wip/`), the write-consent sign-in, the wiring and the end-to-end tests. Not run against real Google or Microsoft.
+
+**Original status (2026-11-05): approved by you.** You chose "Email quarantine (M6b)" in answer to a question that named the wider permission it needs. Built the same way as M5/M5b: against fakes only, never run against real Google or Microsoft.
 
 **Goal:** a MALICIOUS email can be moved out of the inbox into a quarantine place **by you, with one click, and moved back with one click**. Nothing is deleted, nothing is sent. **Done when:** the whole flow (flag, approve, move, restore) passes against the fake Gmail and fake Graph, the write permission is a separate consent with its own token, and no code path can delete or send.
 **Not in M6b:** auto-quarantine of mail, SUSPICIOUS mail, deleting or purging, other folders than the inbox, a live run (yours).

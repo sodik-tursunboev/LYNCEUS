@@ -4,7 +4,8 @@ safe_fetch (the redirect resolver) is off and unwired; core/intel/http.py is the
 threat-intelligence providers open connections, and only for providers the operator enabled;
 core/mailbox/gmail.py, oauth.py, graph.py and ms_oauth.py are the only places the live mailbox
 talks to Google or Microsoft (fixed hosts, GET-only to the mail APIs), and only when the operator
-connected an account (M5, M5b);
+connected an account (M5, M5b); core/mailbox/write.py is the one place a mailbox is changed (M6b),
+behind its own narrow request guard that the tests try with every forbidden request;
 eval/perf.py is a measurement tool that talks only to a local server it starts itself (M7)."""
 
 import ast
@@ -22,6 +23,7 @@ ALLOWED = {
     ROOT / "core" / "mailbox" / "oauth.py",
     ROOT / "core" / "mailbox" / "graph.py",  # Microsoft Graph, GET only (M5b)
     ROOT / "core" / "mailbox" / "ms_oauth.py",
+    ROOT / "core" / "mailbox" / "write.py",  # the narrow write guard and the two movers (M6b)
     ROOT / "eval" / "perf.py",  # loopback only: checked by the test below
 }
 
@@ -80,7 +82,7 @@ def test_the_mailbox_reaches_the_network_only_through_its_two_guarded_modules() 
     """Sync, service and storage code never open connections: they use the guarded client."""
     mailbox = ROOT / "core" / "mailbox"
     for path in mailbox.glob("*.py"):
-        if path.name in ("gmail.py", "oauth.py", "graph.py", "ms_oauth.py"):
+        if path.name in ("gmail.py", "oauth.py", "graph.py", "ms_oauth.py", "write.py"):
             continue
         bad = {n for n in imports(path) if n.split(".")[0] in NETWORK_MODULES} - set()
         assert not bad, f"{path}: {bad}"

@@ -1,0 +1,48 @@
+"""email quarantine actions (M6b, ADR-017 addendum)
+
+Adds the action kind MAIL_QUARANTINE and two columns used only by it: the provider (gmail or outlook)
+and the provider's own message id, which is needed to find the message again. The id is never returned
+by the API or written to a log, and it is cleared when the message is restored.
+
+Revision ID: 0003
+Revises: 0002
+Create Date: 2026-11-06 12:00:00.000000
+
+"""
+
+from collections.abc import Sequence
+
+import sqlalchemy as sa
+from alembic import op
+
+revision: str = "0003"
+down_revision: str | Sequence[str] | None = "0002"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
+
+
+def upgrade() -> None:
+    op.add_column("actions", sa.Column("provider", sa.String(length=16), nullable=True))
+    op.add_column("actions", sa.Column("mail_ref", sa.String(length=512), nullable=True))
+    op.drop_constraint(op.f("ck_actions_kind_valid"), "actions", type_="check")
+    op.create_check_constraint(
+        op.f("ck_actions_kind_valid"), "actions", "kind IN ('FILE_QUARANTINE', 'MAIL_QUARANTINE')"
+    )
+    op.create_check_constraint(
+        op.f("ck_actions_provider_valid"),
+        "actions",
+        "(kind = 'FILE_QUARANTINE' AND provider IS NULL AND mail_ref IS NULL) "
+        "OR (kind = 'MAIL_QUARANTINE' AND provider IN ('gmail', 'outlook'))",
+    )
+
+
+def downgrade() -> None:
+    # Email actions cannot be represented before this revision: they are removed (their audit rows stay).
+    op.execute("DELETE FROM actions WHERE kind = 'MAIL_QUARANTINE'")
+    op.drop_constraint(op.f("ck_actions_provider_valid"), "actions", type_="check")
+    op.drop_constraint(op.f("ck_actions_kind_valid"), "actions", type_="check")
+    op.create_check_constraint(
+        op.f("ck_actions_kind_valid"), "actions", "kind IN ('FILE_QUARANTINE')"
+    )
+    op.drop_column("actions", "mail_ref")
+    op.drop_column("actions", "provider")
