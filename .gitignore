@@ -17,3 +17,7 @@ obj/
 extension/dist/
 
 console/dist/
+
+# MSI build output
+deploy/msi/stage/
+deploy/msi/out/

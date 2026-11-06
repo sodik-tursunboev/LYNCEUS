@@ -64,8 +64,6 @@ def _drop_profile_grant(sid: str) -> None:
 def build() -> None:
     if sys.platform != "win32":
         raise SandboxUnavailable("the sandbox is implemented for Windows only (ADR-008)")
-    from core.sandbox import _win32
-
     base = Path(sys.base_prefix)
     if SANDBOX_DIR.exists():
         shutil.rmtree(SANDBOX_DIR)
@@ -77,7 +75,19 @@ def build() -> None:
     _copy_lib(base / "Lib", RUNTIME / "Lib")
     shutil.copytree(GUEST, APP, ignore=shutil.ignore_patterns("__pycache__"))
     _install_parsers()
+    register()
 
+
+def register() -> None:
+    """Register this user's container profile and give it read-only access to an already built
+    .sandbox. The installer ships the sandbox built; this is the only step it needs on the user's
+    machine (the profile and the folder permission are per user and per place)."""
+    if sys.platform != "win32":
+        raise SandboxUnavailable("the sandbox is implemented for Windows only (ADR-008)")
+    from core.sandbox import _win32
+
+    if not (RUNTIME / "python.exe").exists() or not APP.exists():
+        raise SandboxUnavailable(f"{SANDBOX_DIR} is not built: run python tasks.py sandbox")
     sid = _win32.register_container(CONTAINER)
     done = subprocess.run(  # noqa: S603
         ["icacls", str(SANDBOX_DIR), "/grant", f"*{sid}:(OI)(CI)(RX)", "/T", "/C", "/Q"],  # noqa: S607
@@ -86,7 +96,7 @@ def build() -> None:
     if done.returncode != 0:
         raise SandboxUnavailable(f"could not grant the sandbox read access: {done.stderr.strip()}")
     _drop_profile_grant(sid)
-    print(f"sandbox built: {SANDBOX_DIR} (container {CONTAINER}, read-only grant to {sid})")
+    print(f"sandbox ready: {SANDBOX_DIR} (container {CONTAINER}, read-only grant to {sid})")
 
 
 def remove() -> None:
@@ -101,4 +111,9 @@ def remove() -> None:
 
 
 if __name__ == "__main__":
-    remove() if "--remove" in sys.argv[1:] else build()
+    if "--remove" in sys.argv[1:]:
+        remove()
+    elif "--register" in sys.argv[1:]:
+        register()
+    else:
+        build()
