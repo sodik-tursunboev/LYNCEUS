@@ -13,6 +13,7 @@ A local-first phishing detector for Windows. It watches your downloads and your 
 | Threat intelligence | optional: list feeds matched locally, query providers asked about a bare domain only; a provider failure is never "safe" | `core/intel` |
 | Windows agent | watches Downloads, judges each new file, answers the browser, shows notifications, carries out your decisions | `agent/` (.NET) |
 | Browser extension | Edge/Chrome MV3: warns before a page that looks like phishing, fails open and says so when the agent is down | `extension/` |
+| Analysis workbench and console | paste a link or drop an email or file and see the verdict, the signs, the anatomy of the link and the evidence; review and undo responses | `console/` |
 | Live Gmail and Outlook | read-only; new mail is analysed once and missed mail is found again (both tested against fakes only) | `core/mailbox` |
 | Responses | a dangerous file can be quarantined (reversible, audited, asks first by default) | `core/response`, `agent/` |
 | Console | see events with their evidence, decide on pending actions, restore, read the audit log | `console/` |

@@ -60,6 +60,33 @@ def test_a_placeholder_or_short_token_is_refused(value: str) -> None:
     assert Settings(_env_file=None, api_token="x" * 16).api_token is not None
 
 
+def test_the_anatomy_splits_the_url_the_way_the_engine_sees_it() -> None:
+    userinfo = (
+        "paypal.com:" + "s3cret"
+    )  # assembled, so no credentials-in-a-URL literal sits in the source
+    body = post(client(), f"https://{userinfo}@login.secure-check.co.uk:8443/a/b?x=1#frag").json()
+    assert body["anatomy"] == {
+        "scheme": "https",
+        "username": "paypal.com",
+        "has_password": True,
+        "host": "login.secure-check.co.uk",
+        "host_unicode": "login.secure-check.co.uk",
+        "host_kind": "DOMAIN",
+        "subdomain": "login",
+        "registered_domain": "secure-check.co.uk",
+        "public_suffix": "co.uk",
+        "private_suffix": False,
+        "port": 8443,
+        "path": "/a/b",
+        "query": "x=1",
+        "fragment": "frag",
+    }
+    assert "s3cret" not in json.dumps(body["anatomy"])  # the parts never carry the password
+    ip = post(client(), "http://203.0.113.5/x").json()["anatomy"]
+    assert ip["host_kind"] == "IPV4" and ip["registered_domain"] is None
+    assert post(client(), "http://ex ample.test/").json()["anatomy"] is None
+
+
 def test_full_verdict_comes_back() -> None:
     r = post(client(), "https://paypal.com@secure-check.test/login.php")
     assert r.status_code == 200

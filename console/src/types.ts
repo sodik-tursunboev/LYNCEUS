@@ -26,7 +26,8 @@ export interface EventDetail extends EventRow { signals: Signal[]; evidence: Evi
 export interface ActionRow {
   id: string;
   verdict_id: string;
-  kind: string;
+  kind: string; // FILE_QUARANTINE or MAIL_QUARANTINE
+  provider?: string | null; // gmail or outlook, for email actions
   state: ActionState;
   sha256: string;
   decided_by: string | null;
@@ -44,3 +45,108 @@ export interface AuditRow {
   detail: Record<string, unknown> | null;
 }
 export interface MailboxStatus { state: string; last_poll?: string | null; analysed?: number; flagged?: unknown[] }
+// ---- the analysis workbench: the shapes the analyze endpoints answer with ---------------------------------
+
+export type Confidence = "LOW" | "MEDIUM" | "HIGH";
+export type ResponseAction = "NONE" | "WARN" | "BLOCK" | "QUARANTINE";
+
+export interface FullSignal {
+  rule_id: string;
+  category: string;
+  weight: number; // 0..1
+  description: string;
+  evidence_ids: string[];
+  attack: string | null; // an ATT&CK technique id such as T1566.002
+}
+export interface ProviderResultRow {
+  provider: string;
+  status: "OK" | "TIMEOUT" | "ERROR" | "RATE_LIMITED" | "UNAVAILABLE";
+  state: VerdictState | null;
+  queried_at: string;
+  latency_ms: number;
+  provenance: string;
+  detail: string | null;
+}
+export interface Verdict {
+  id: string;
+  state: VerdictState;
+  risk_score: number | null;
+  confidence: Confidence;
+  signals: FullSignal[];
+  provider_results: ProviderResultRow[];
+  recommended_response: ResponseAction;
+  applied_response: ResponseAction;
+  explanation: string;
+  engine_version: string;
+  ruleset_version: string;
+  created_at: string;
+}
+export interface AnalysisEvidence { id: string; kind: string; summary: string; sha256: string | null }
+
+export interface Anatomy {
+  scheme: string;
+  username: string | null;
+  has_password: boolean;
+  host: string | null;
+  host_unicode: string | null;
+  host_kind: "DOMAIN" | "IPV4" | "IPV6" | "OPAQUE" | string;
+  subdomain: string;
+  registered_domain: string | null;
+  public_suffix: string | null;
+  private_suffix: boolean;
+  port: number | null;
+  path: string;
+  query: string;
+  fragment: string;
+}
+
+export interface LinkRow {
+  part: string;
+  kind: string;
+  flags: string[];
+  normalized_url: string | null;
+  host: string | null;
+  state: VerdictState | null;
+  risk_score: number | null;
+  rules: string[];
+}
+export interface FileRow { part: string; kind: string; status: string; facts: string[] }
+export interface MessageSummary {
+  size: number;
+  parts: number;
+  attachments: number;
+  links: number;
+  links_analyzed: number;
+  relative_links_skipped: number;
+  limits_hit: string[];
+  defects: string[];
+}
+
+interface Common { verdict: Verdict; evidence: AnalysisEvidence[]; reason: string | null; persisted: boolean }
+export interface UrlAnalysis extends Common {
+  type: "url";
+  normalized_url: string | null;
+  flags: string[];
+  intel_skipped: Array<{ provider: string; reason: string }>;
+  anatomy: Anatomy | null;
+}
+export interface EmailAnalysis extends Common {
+  type: "email";
+  summary: MessageSummary | null;
+  links: LinkRow[];
+  files: FileRow[];
+}
+export interface FileAnalysis extends Common {
+  type: "file";
+  inspected: boolean;
+  files: FileRow[];
+  links: LinkRow[];
+  action_id: string | null;
+  allow_listed: boolean;
+}
+export type Analysis = UrlAnalysis | EmailAnalysis | FileAnalysis;
+
+export interface IntelHealth {
+  providers: Array<{ provider: string; sends: string; breaker: string; usable: boolean }>;
+  feeds: Array<{ feed: string; downloaded: boolean; entries: number; age_hours: number | null; stale: boolean }>;
+}

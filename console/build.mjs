@@ -1,4 +1,4 @@
-// Bundle the console with esbuild into dist/ (the core serves it at /console/).
+﻿// Bundle the console with esbuild into dist/ (the core serves it at /console/).
 import { build } from "esbuild";
 import { cpSync, mkdirSync, rmSync } from "node:fs";
 
@@ -13,6 +13,7 @@ await build({
   jsx: "automatic",
   define: { "process.env.NODE_ENV": '"production"' },
   legalComments: "none",
+  minify: true,
   logLevel: "warning",
 });
 cpSync("static", "dist", { recursive: true });

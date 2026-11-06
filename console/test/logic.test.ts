@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApi } from "../src/api";
 import { clearToken, getToken, setToken, takeTokenFromFragment, type Env } from "../src/auth";
 import { compact, score, shortHash, when } from "../src/format";
-import { consequence, group, GROUPS, LABEL, reasonText, verbsFor } from "../src/policy";
+import { consequence, group, GROUPS, LABEL, MAIL_LABEL, reasonText, verbsFor } from "../src/policy";
 import type { ActionRow, ActionState } from "../src/types";
 
 const TOKEN = "t".repeat(24);
@@ -120,6 +120,19 @@ describe("what each state offers", () => {
     expect(consequence("restore", 30)).toMatch(/dangerous again/);
     expect(consequence("restore_allow", 30)).toMatch(/30 days/);
     expect(consequence("restore_allow", null)).toMatch(/until you remove it/);
+  });
+
+  it("for email: the same rules, no allow-list shortcut, plain words, and nothing that deletes or sends", () => {
+    const mail = Object.fromEntries(states.map((s) => [s, verbsFor(s, "MAIL_QUARANTINE")]));
+    expect(mail.APPLIED).toEqual(["restore"]); // the allow list is by file hash: not for mail
+    expect({ ...mail, APPLIED: 0 }).toEqual({ ...Object.fromEntries(states.map((s) => [s, verbsFor(s)])), APPLIED: 0 });
+    expect(consequence("approve", 30, "MAIL_QUARANTINE", "gmail")).toMatch(/out of your inbox into the MIRAGE-Quarantine label.*Nothing is deleted or sent/);
+    expect(consequence("approve", 30, "MAIL_QUARANTINE", "outlook")).toMatch(/MIRAGE Quarantine folder/);
+    expect(consequence("restore", 30, "MAIL_QUARANTINE", "gmail")).toMatch(/back into your inbox/);
+    const words = Object.values(MAIL_LABEL).join(" ").toLowerCase();
+    expect(words).not.toMatch(/delete|purge|erase|wipe|send|trash/);
+    expect(reasonText("message_gone")).toMatch(/no longer in the mailbox/);
+    expect(reasonText("no_write_access")).toMatch(/Write access/);
   });
 
   it("groups every state into exactly one section", () => {

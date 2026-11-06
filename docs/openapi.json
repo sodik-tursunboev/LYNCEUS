@@ -220,6 +220,16 @@
       "AnalyzeResponse": {
         "additionalProperties": false,
         "properties": {
+          "anatomy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UrlAnatomy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "evidence": {
             "items": {
               "$ref": "#/components/schemas/Evidence"
@@ -1367,6 +1377,127 @@
           "reason"
         ],
         "title": "Skipped",
+        "type": "object"
+      },
+      "UrlAnatomy": {
+        "description": "How the analysed URL splits into parts, for the console's \"anatomy\" view. Echoes the caller's\nown input back to them (the password, if any, is never included); nothing here is logged or\nstored.",
+        "properties": {
+          "fragment": {
+            "title": "Fragment",
+            "type": "string"
+          },
+          "has_password": {
+            "title": "Has Password",
+            "type": "boolean"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "host_kind": {
+            "title": "Host Kind",
+            "type": "string"
+          },
+          "host_unicode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host Unicode"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          },
+          "private_suffix": {
+            "title": "Private Suffix",
+            "type": "boolean"
+          },
+          "public_suffix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Suffix"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "registered_domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registered Domain"
+          },
+          "scheme": {
+            "title": "Scheme",
+            "type": "string"
+          },
+          "subdomain": {
+            "title": "Subdomain",
+            "type": "string"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "required": [
+          "scheme",
+          "username",
+          "has_password",
+          "host",
+          "host_unicode",
+          "host_kind",
+          "subdomain",
+          "registered_domain",
+          "public_suffix",
+          "private_suffix",
+          "port",
+          "path",
+          "query",
+          "fragment"
+        ],
+        "title": "UrlAnatomy",
         "type": "object"
       },
       "UrlFlag": {

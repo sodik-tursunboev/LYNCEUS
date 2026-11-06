@@ -67,9 +67,31 @@ class Skipped(BaseModel):
     reason: str
 
 
+class UrlAnatomy(BaseModel):
+    """How the analysed URL splits into parts, for the console's "anatomy" view. Echoes the caller's
+    own input back to them (the password, if any, is never included); nothing here is logged or
+    stored."""
+
+    scheme: str
+    username: str | None  # the text before "@": often the deception itself (paypal.com@evil.test)
+    has_password: bool
+    host: str | None
+    host_unicode: str | None
+    host_kind: str
+    subdomain: str
+    registered_domain: str | None
+    public_suffix: str | None
+    private_suffix: bool
+    port: int | None
+    path: str
+    query: str
+    fragment: str
+
+
 class AnalyzeResponse(UrlReport):
     persisted: bool  # False when storage is off or failed; the verdict still stands
     intel_skipped: list[Skipped]  # providers that were enabled but not asked, and why
+    anatomy: UrlAnatomy | None = None  # None when the input could not be parsed as a URL
 
 
 class ProviderHealth(BaseModel):
@@ -289,7 +311,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 log.exception("could not persist analysis")
         skipped = [Skipped(provider=n, reason=why) for n, why in outcome.skipped]
         report = analysis.report().model_dump()
-        return AnalyzeResponse(**report, persisted=persisted, intel_skipped=skipped)
+        u = analysis.url
+        anatomy = (
+            UrlAnatomy(
+                scheme=u.scheme,
+                username=u.username,
+                has_password=u.has_password,
+                host=u.host,
+                host_unicode=u.host_unicode,
+                host_kind=str(u.host_kind.value),
+                subdomain=u.subdomain,
+                registered_domain=u.registered_domain,
+                public_suffix=u.public_suffix,
+                private_suffix=u.private_suffix,
+                port=u.port,
+                path=u.path,
+                query=u.query,
+                fragment=u.fragment,
+            )  # fmt: skip
+            if u is not None
+            else None
+        )
+        return AnalyzeResponse(
+            **report, persisted=persisted, intel_skipped=skipped, anatomy=anatomy
+        )
 
     @app.get("/v1/mailbox/status", dependencies=[Depends(require_token)])
     def mailbox_status() -> dict[str, object]:

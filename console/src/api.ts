@@ -1,4 +1,6 @@
-import type { ActionRow, AllowRow, AuditRow, EventDetail, EventRow, MailboxStatus } from "./types";
+import type {
+  ActionRow, AllowRow, Analysis, AuditRow, EmailAnalysis, EventDetail, EventRow, FileAnalysis, IntelHealth, MailboxStatus, UrlAnalysis,
+} from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -13,7 +15,7 @@ type Fetch = typeof fetch;
 
 /** The only way the console talks to the core. Every call carries the token; a 401 signs you out. */
 export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAuthFail: () => void) {
-  async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async function call<T>(method: string, path: string, body?: unknown, raw?: { type: string; headers?: Record<string, string> }): Promise<T> {
     const token = getToken();
     if (!token) {
       onAuthFail();
@@ -23,8 +25,12 @@ export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAut
     try {
       response = await fetchImpl(path, {
         method,
-        headers: { Authorization: `Bearer ${token}`, ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(body === undefined ? {} : { "Content-Type": raw?.type ?? "application/json" }),
+          ...(raw?.headers ?? {}),
+        },
+        body: body === undefined ? undefined : raw ? (body as BodyInit) : JSON.stringify(body),
         cache: "no-store",
         credentials: "omit",
         redirect: "error",
@@ -60,10 +66,23 @@ export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAut
     allowAdd: (sha256: string, days: number | null) => call<AllowRow>("POST", "/v1/allowlist", { sha256, days }),
     allowRemove: (sha256: string) => call<{ removed: boolean }>("DELETE", `/v1/allowlist/${encodeURIComponent(sha256)}`),
     audit: (limit = 100) => call<AuditRow[]>("GET", `/v1/audit${q({ limit })}`),
+    intelHealth: () => call<IntelHealth>("GET", "/v1/intel/health"),
+    // The analysis workbench. A URL goes as JSON; a message or a file goes as raw bytes, exactly as the agent sends them.
+    analyzeUrl: async (url: string): Promise<UrlAnalysis> => ({ ...(await call<Omit<UrlAnalysis, "type">>("POST", "/v1/urls/analyze", { url })), type: "url" }),
+    analyzeEmail: async (bytes: ArrayBuffer): Promise<EmailAnalysis> => ({
+      ...(await call<Omit<EmailAnalysis, "type">>("POST", "/v1/emails/analyze", bytes, { type: "message/rfc822" })), type: "email",
+    }),
+    analyzeFile: async (name: string, sha256: string, bytes: ArrayBuffer): Promise<FileAnalysis> => ({
+      ...(await call<Omit<FileAnalysis, "type">>("POST", "/v1/files/analyze", bytes, {
+        type: "application/octet-stream",
+        headers: { "X-Mirage-Name": encodeURIComponent(name), "X-Mirage-Sha256": sha256 },
+      })), type: "file",
+    }),
   };
 }
 
 export type Api = ReturnType<typeof createApi>;
+export type { Analysis };
 
 function explain(status: number): string {
   if (status === 404) return "That no longer exists.";
@@ -71,5 +90,7 @@ function explain(status: number): string {
   if (status === 422) return "The core refused that request.";
   if (status === 503) return "The core cannot do that now (is the database configured?).";
   if (status === 429) return "Too many requests. Wait a moment.";
+  if (status === 413) return "That is larger than MIRAGE reads.";
+  if (status === 415) return "The core did not accept that kind of content.";
   return `The core answered ${status}.`;
 }
