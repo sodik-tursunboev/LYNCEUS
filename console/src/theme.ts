@@ -46,6 +46,10 @@ export const CATEGORY: Record<string, { icon: IconName; label: string }> = {
   attachment: { icon: "Paperclip", label: "Attachment" },
   active_content: { icon: "Lightning", label: "Active content" },
   content: { icon: "FileText", label: "Content" },
+  code_behavior: { icon: "Code", label: "What the code does" },
+  evasion: { icon: "ShieldSlash", label: "Evasion" },
+  persistence: { icon: "ArrowsClockwise", label: "Stays on the computer" },
+  known_bad: { icon: "Skull", label: "Known malware" },
 };
 
 /** A category, or a category of a link inside a message ("link.impersonation"): the same icon, said as "in a link". */
@@ -62,6 +66,7 @@ export const KIND_ICON: Record<string, IconName> = {
   URL: "Link", EMAIL: "EnvelopeSimple", FILE: "File", url: "Link", email: "EnvelopeSimple", file: "File",
   a: "Link", area: "Link", form: "Stamp", iframe: "Globe", script: "Code", meta_refresh: "ArrowBendUpRight",
   text: "TextAa", pdf_uri: "FilePdf", qr: "QrCode", image: "Image", archive: "FileZip", pdf: "FilePdf",
+  code: "Code", content: "Code",
 };
 
 export const kindIcon = (kind: string): IconName => KIND_ICON[kind] ?? "File";

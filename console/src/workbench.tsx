@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type RefObject } from "react";
 import { ApiError, type Api } from "./api";
 import {
-  ROLE_TEXT, classifyPaste, destination, formatBytes, relativeTime, rolesPresent, sha256Hex, sizeProblem, sortLinks, sortSignals, urlParts,
+  ROLE_TEXT, classifyPaste, destination, explainFact, formatBytes, hashRows, relativeTime, rolesPresent, sha256Hex, sizeProblem, sortLinks, sortSignals, urlParts,
 } from "./analysis";
 import { when } from "./format";
 import { Icon, type IconName } from "./Icon";
 import { categoryMeta, flagText, kindIcon, verdictMeta } from "./theme";
-import type { Analysis, Anatomy, FileRow, FullSignal, IntelHealth, LinkRow } from "./types";
+import type { Analysis, Anatomy, FileRow, FullSignal, HashMatch, IntelHealth, LinkRow } from "./types";
 import { Badge, Chip, Confidence, CopyButton, Empty, ErrorLine, Gauge, Hash, PageTitle, Panel, Skeleton, Spinner, WeightBar } from "./ui";
 
 type Mode = "url" | "email" | "file";
@@ -298,6 +298,7 @@ function Result({ done, headingRef }: { done: Done; headingRef: RefObject<HTMLDi
           {r.type === "url" && r.anatomy ? <AnatomyPanel a={r.anatomy} normalized={r.normalized_url} flags={r.flags} /> : null}
           {r.type === "email" && r.summary ? <SummaryPanel s={r.summary} /> : null}
           {r.type === "file" ? <FileSummary inspected={r.inspected} count={r.files.length} links={r.links.length} /> : null}
+          {r.type === "file" ? <HashesPanel hashes={r.hashes} matches={r.hash_matches ?? []} lists={r.hash_lists ?? 0} /> : null}
           <ProvidersPanel results={v.provider_results} skipped={r.type === "url" ? r.intel_skipped : []} />
         </div>
       </div>
@@ -418,6 +419,32 @@ function FileSummary({ inspected, count, links }: { inspected: boolean; count: n
   );
 }
 
+/** The file's fingerprints, computed here, and whether any is on a known-bad list kept on this machine. */
+function HashesPanel({ hashes, matches, lists }: { hashes: Record<string, string> | undefined; matches: HashMatch[]; lists: number }) {
+  const rows = hashRows(hashes);
+  if (rows.length === 0) return null;
+  const bad = matches.length > 0;
+  return (
+    <Panel title="Fingerprints" icon="Fingerprint" tone={bad ? "bad" : undefined}>
+      <ul className="hash-list">
+        {rows.map((h) => (
+          <li key={h.algorithm}>
+            <Chip>{h.label}</Chip>
+            <span className="mono hash-value" title={h.value}>{h.value}</span>
+            <CopyButton text={h.value} label={`Copy the ${h.label} hash`} />
+          </li>
+        ))}
+      </ul>
+      {bad ? (
+        <p className="note hash-hit"><Icon name="Skull" weight="fill" size={16} />
+          Known malware: {matches.map((m) => `${m.where === "file" ? "this file" : "an entry inside it"} matches the ${m.algorithm.toUpperCase()} list “${m.source}”`).join("; ")}.</p>
+      ) : (
+        <p className="muted hash-clear"><Icon name="Hash" weight="duotone" size={15} />Not on any of the {lists} known-bad list{lists === 1 ? "" : "s"} kept here. That is not a sign of safety: new malware is on no list yet.</p>
+      )}
+    </Panel>
+  );
+}
+
 function ProvidersPanel({ results, skipped }: { results: Analysis["verdict"]["provider_results"]; skipped: Array<{ provider: string; reason: string }> }) {
   return (
     <Panel title="Outside opinions" icon="Cloud">
@@ -475,7 +502,14 @@ function FilesPanel({ files }: { files: FileRow[] }) {
             <Icon name={kindIcon(f.kind)} weight="duotone" size={22} />
             <div>
               <div className="file-top"><strong>{f.kind.replaceAll("_", " ")}</strong><Chip tone={STATUS_TONE(f.status)}>{f.status.replaceAll("_", " ")}</Chip><span className="muted mono">part {f.part}</span></div>
-              {f.facts.length > 0 ? <ul className="facts">{f.facts.map((x, j) => <li key={j}>{x}</li>)}</ul> : <p className="muted">Nothing notable.</p>}
+              {f.facts.length > 0 ? (
+                <ul className="facts">
+                  {f.facts.map((x, j) => {
+                    const help = explainFact(x);
+                    return <li key={j}>{help ? <><strong>{x}</strong><span className="muted"> — {help}</span></> : x}</li>;
+                  })}
+                </ul>
+              ) : <p className="muted">Nothing notable.</p>}
             </div>
           </li>
         ))}

@@ -150,5 +150,59 @@ export async function sha256Hex(data: ArrayBuffer): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// ---- what was found inside a file (the core reports fixed words; these say them in plain English) ----------
+
+export const FACT_HELP: Record<string, string> = {
+  "exec shell": "starts other programs or commands",
+  "download": "fetches files from the Internet",
+  "execute dynamic": "runs text it builds or decodes while it runs",
+  "encoded command": "carries a command hidden as encoded text",
+  "base64 decode": "decodes hidden text",
+  "hidden window": "starts things without showing a window",
+  "bypass policy": "turns off PowerShell's safety setting",
+  "persistence": "arranges to run again at start-up or on a schedule",
+  "lolbin proxy": "uses a trusted Windows program to run code",
+  "defense evasion": "tries to switch off the antivirus",
+  "process injection": "writes code into other running programs",
+  "credential access": "goes after stored passwords",
+  "credential prompt": "pops up a password prompt",
+  "anti analysis": "checks whether it is being watched or tested",
+  "string obfuscation": "spells words with codes and pieces to hide them",
+  "high entropy blob": "carries a large block of scrambled-looking data",
+  "autoexec": "runs by itself when the document is opened",
+  "macro code": "contains a macro (a program inside a document)",
+  "remote template": "loads something from the Internet when opened",
+  "dde": "has a field that can run a command when opened",
+  "ole object": "embeds or links another object",
+  "equation editor": "uses the old Equation Editor, a common exploit carrier",
+  "lnk interpreter": "a shortcut whose job is to run a command interpreter",
+  "lnk hidden args": "arguments padded so they are hard to see",
+  "lnk icon lure": "a shortcut dressed up with a document icon",
+  "pe packed": "looks packed to hide its code",
+  "pe rwx": "has memory that is both writable and executable",
+  "pe injection apis": "imports functions for injecting into other programs",
+  "pe downloader apis": "imports functions for downloading and starting a program",
+  "pe overlay": "has a large hidden tail after the program",
+};
+
+/** A plain-English sentence for one fact ("2x exec shell" counts the same as "exec shell"), or null. */
+export function explainFact(fact: string): string | null {
+  const key = /^\d+x (.+)$/.exec(fact)?.[1] ?? fact;
+  return FACT_HELP[key] ?? null;
+}
+
+export const HASH_ORDER = ["sha256", "sha1", "md5"] as const;
+export const HASH_LABEL: Record<string, string> = { sha256: "SHA-256", sha1: "SHA-1", md5: "MD5" };
+
+/** The hashes the core computed, in a fixed order, skipping any it did not. */
+export function hashRows(hashes: Record<string, string> | undefined): Array<{ algorithm: string; label: string; value: string }> {
+  const rows: Array<{ algorithm: string; label: string; value: string }> = [];
+  for (const algorithm of HASH_ORDER) {
+    const value = hashes?.[algorithm];
+    if (typeof value === "string" && value.length > 0) rows.push({ algorithm, label: HASH_LABEL[algorithm] ?? algorithm, value });
+  }
+  return rows;
+}
+
 /** A confidence word as a number of filled bars (of three). */
 export const confidenceBars = (c: string): number => (c === "HIGH" ? 3 : c === "MEDIUM" ? 2 : c === "LOW" ? 1 : 0);

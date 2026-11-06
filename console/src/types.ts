@@ -136,6 +136,8 @@ export interface EmailAnalysis extends Common {
   links: LinkRow[];
   files: FileRow[];
 }
+/** A hash of the file (or of an entry inside an archive) that is on a known-bad list on this machine. */
+export interface HashMatch { algorithm: string; source: string; where: string }
 export interface FileAnalysis extends Common {
   type: "file";
   inspected: boolean;
@@ -143,6 +145,9 @@ export interface FileAnalysis extends Common {
   links: LinkRow[];
   action_id: string | null;
   allow_listed: boolean;
+  hashes?: Record<string, string>;
+  hash_matches?: HashMatch[];
+  hash_lists?: number;
 }
 export type Analysis = UrlAnalysis | EmailAnalysis | FileAnalysis;
 

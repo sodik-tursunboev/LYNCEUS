@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  GAUGE_LENGTH, LIMITS, classifyPaste, confidenceBars, destination, formatBytes, gaugeFill, relativeTime, rolesPresent, scoreBand, segments,
-  sha256Hex, sizeProblem, sortLinks, sortSignals, urlParts, verdictCounts,
+  FACT_HELP, GAUGE_LENGTH, LIMITS, classifyPaste, confidenceBars, destination, explainFact, formatBytes, gaugeFill, hashRows, relativeTime,
+  rolesPresent, scoreBand, segments, sha256Hex, sizeProblem, sortLinks, sortSignals, urlParts, verdictCounts,
 } from "../src/analysis";
+import { categoryMeta } from "../src/theme";
 import { parseTime, when } from "../src/format";
 import type { Anatomy, LinkRow } from "../src/types";
 
@@ -127,5 +128,38 @@ describe("what can be analysed", () => {
     expect(await sha256Hex(abc.buffer.slice(abc.byteOffset, abc.byteOffset + abc.byteLength) as ArrayBuffer)).toBe(
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", // pragma: allowlist secret (the published SHA-256 of "abc")
     );
+  });
+});
+
+describe("what was found inside a file", () => {
+  it("says each fixed word in plain English, with or without a count in front", () => {
+    expect(explainFact("download")).toMatch(/Internet/);
+    expect(explainFact("3x exec shell")).toBe(FACT_HELP["exec shell"]);
+    expect(explainFact("2 entries hashed")).toBeNull();
+    expect(explainFact("")).toBeNull();
+  });
+
+  it("explains every indicator the core can report", () => {
+    const indicators = [
+      "exec shell", "download", "execute dynamic", "encoded command", "base64 decode", "hidden window", "bypass policy", "persistence",
+      "lolbin proxy", "defense evasion", "process injection", "credential access", "credential prompt", "anti analysis", "string obfuscation",
+      "high entropy blob", "autoexec", "macro code", "remote template", "dde", "ole object", "equation editor", "lnk interpreter",
+      "lnk hidden args", "lnk icon lure", "pe packed", "pe rwx", "pe injection apis", "pe downloader apis", "pe overlay",
+    ];
+    for (const name of indicators) expect(explainFact(name), name).not.toBeNull();
+  });
+
+  it("lists the fingerprints in a fixed order and skips what the core did not compute", () => {
+    const rows = hashRows({ md5: "m".repeat(32), sha256: "s".repeat(64), sha1: "" });
+    expect(rows.map((r) => r.label)).toEqual(["SHA-256", "MD5"]);
+    expect(hashRows(undefined)).toEqual([]);
+    expect(hashRows({ other: "x" })).toEqual([]);
+  });
+
+  it("gives the new evidence categories an icon and a plain label", () => {
+    for (const c of ["code_behavior", "obfuscation", "evasion", "persistence", "known_bad"]) {
+      expect(categoryMeta(c).label, c).not.toMatch(/_/);
+    }
+    expect(categoryMeta("known_bad").label).toBe("Known malware");
   });
 });
