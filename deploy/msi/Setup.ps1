@@ -91,7 +91,17 @@ try {
     } else { Say "no MIRAGE_DATABASE_URL in ${envFile}: skipping migrations (responses and the console lists need a database)" }
 
     # ---- register and start -----------------------------------------------------------------------------
-    if (-not $skipRegister) { Say 'registering start-at-logon and the browser bridge'; & $agentExe --install; Start-Sleep -Milliseconds 500 }
+    if (-not $skipRegister) {
+        Say 'registering start-at-logon and the browser bridge'
+        & $agentExe --install
+        $status = (& $agentExe --status) -join ' '
+        if ($status -match 'False') {   # seen once: the Edge entry missing after the first call, present after a second
+            Say "registration incomplete ($status); trying once more"
+            Start-Sleep -Seconds 2; & $agentExe --install
+            $status = (& $agentExe --status) -join ' '
+        }
+        if ($status -match 'False') { Say ('WARNING: registration still incomplete (' + $status + '). Run "' + $agentExe + '" --install') } else { Say $status }
+    }
     if (-not $skipStart) {
         $elsewhere = @(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and -not (Test-IsUnder $_.Path $install) })
         if ($elsewhere.Count) {
