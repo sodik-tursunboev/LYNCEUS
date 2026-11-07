@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Lynceus.NativeHost</RootNamespace>
+    <AssemblyName>Lynceus.NativeHost</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Lynceus.Ipc\Lynceus.Ipc.csproj" />
+    <InternalsVisibleTo Include="Lynceus.Agent.Tests" />
+  </ItemGroup>
+</Project>

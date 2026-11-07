@@ -82,7 +82,7 @@ def build_mailbox(
     if not settings.gmail_enabled:
         return None
     if not settings.gmail_client_id:
-        raise RuntimeError("MIRAGE_GMAIL_CLIENT_ID is required when MIRAGE_GMAIL_ENABLED is true")
+        raise RuntimeError("LYNCEUS_GMAIL_CLIENT_ID is required when LYNCEUS_GMAIL_ENABLED is true")
     directory = mailbox_dir(settings)
     read_name, write_name = token_names("gmail")
     tokens, write_tokens = TokenFile(directory, read_name), TokenFile(directory, write_name)
@@ -114,7 +114,7 @@ def build_outlook(
         return None
     if not settings.outlook_client_id:
         raise RuntimeError(
-            "MIRAGE_OUTLOOK_CLIENT_ID is required when MIRAGE_OUTLOOK_ENABLED is true"
+            "LYNCEUS_OUTLOOK_CLIENT_ID is required when LYNCEUS_OUTLOOK_ENABLED is true"
         )
     directory = mailbox_dir(settings)
     read_name, write_name = token_names("outlook")

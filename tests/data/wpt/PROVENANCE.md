@@ -14,4 +14,4 @@
 | License | 3-Clause BSD, copyright web-platform-tests contributors (`LICENSE.md`, copied verbatim from the same commit) |
 | Used by | `tests/unit/test_urls_wpt.py` |
 
-Cases with a base URL are left out because a URL analysed by MIRAGE never has one.
+Cases with a base URL are left out because a URL analysed by Lynceus never has one.

@@ -149,7 +149,7 @@ def test_an_unknown_provider_name_stops_start_up() -> None:
 
 
 def sqlite_url(tmp_path: Path) -> str:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     db.Base.metadata.create_all(create_engine(url))
     return url
 

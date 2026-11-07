@@ -1,5 +1,5 @@
 """The deploy scripts' safety helpers (independent review R1): who can change the folder the core
-runs from, that an uninstall only ever deletes what is certainly MIRAGE's, and that quarantined
+runs from, that an uninstall only ever deletes what is certainly Lynceus's, and that quarantined
 files are not deleted by accident. Everything runs against folders made under pytest's temp
 directory, never the real install or data folder, and with -NoRegister so the registry is not
 touched."""
@@ -104,21 +104,21 @@ def test_quarantined_files_that_were_not_restored_are_counted_and_an_unreadable_
 def uninstall(install: Path, data: Path, *flags: str) -> subprocess.CompletedProcess[str]:
     return ps(
         f"& '{DEPLOY / 'uninstall.ps1'}' -InstallDir '{install}' -NoRegister {' '.join(flags)}",
-        env={"MIRAGE_AGENT_HOME": str(data)},
+        env={"LYNCEUS_AGENT_HOME": str(data)},
     )
 
 
-def test_uninstall_refuses_a_folder_that_is_not_a_mirage_install(tmp_path: Path) -> None:
+def test_uninstall_refuses_a_folder_that_is_not_a_lynceus_install(tmp_path: Path) -> None:
     other = tmp_path / "my-projects"
     other.mkdir()
     (other / "important.txt").write_text("not yours to delete", encoding="utf-8")
     result = uninstall(other, tmp_path / "data")
-    assert result.returncode != 0 and "does not look like a MIRAGE install" in result.stderr
+    assert result.returncode != 0 and "does not look like a Lynceus install" in result.stderr
     assert (other / "important.txt").read_text(encoding="utf-8") == "not yours to delete"
 
     real = tmp_path / "install"
     (real / "agent").mkdir(parents=True)
-    (real / "agent" / "Mirage.Agent.exe").write_bytes(b"MZ")
+    (real / "agent" / "Lynceus.Agent.exe").write_bytes(b"MZ")
     assert uninstall(real, tmp_path / "data").returncode == 0
     assert not real.exists()  # a real install is removed
 
@@ -144,5 +144,5 @@ def test_remove_data_keeps_quarantined_files_unless_forced_and_never_deletes_a_f
     foreign.mkdir()
     (foreign / "thesis.docx").write_bytes(b"years of work")
     result = uninstall(install, foreign, "-RemoveData", "-Force")
-    assert result.returncode != 0 and "does not look like a MIRAGE data folder" in result.stderr
+    assert result.returncode != 0 and "does not look like a Lynceus data folder" in result.stderr
     assert (foreign / "thesis.docx").read_bytes() == b"years of work"

@@ -1,4 +1,4 @@
-MIRAGE
+Lynceus
 
 Continuous Phishing Detection & Intelligence Engine
 
@@ -16,9 +16,9 @@ Frontend: React / TypeScript
 
 1. Project Overview
 
-MIRAGE is a continuously operating phishing detection and threat intelligence system designed to identify malicious URLs, deceptive hyperlinks, suspicious emails, malicious attachments, QR-code phishing and other phishing-related threats.
+Lynceus is a continuously operating phishing detection and threat intelligence system designed to identify malicious URLs, deceptive hyperlinks, suspicious emails, malicious attachments, QR-code phishing and other phishing-related threats.
 
-MIRAGE is NOT a traditional antivirus, a simple URL scanner, or a dashboard that requires users to manually submit suspicious links.
+Lynceus is NOT a traditional antivirus, a simple URL scanner, or a dashboard that requires users to manually submit suspicious links.
 
 Its primary objective is to detect phishing attempts across multiple digital environments before users interact with malicious content.
 
@@ -33,7 +33,7 @@ The system operates through multiple independent monitoring components:
 * Threat intelligence integrations.
 * Automated detection and response engine.
 
-MIRAGE must continue operating when its desktop interface is closed.
+Lynceus must continue operating when its desktop interface is closed.
 
 The desktop interface is a management and investigation component, not the monitoring engine itself.
 
@@ -60,7 +60,7 @@ The system must:
 
 3. Core Architecture
 
-MIRAGE consists of three primary architectural layers.
+Lynceus consists of three primary architectural layers.
 
 3.1 Sensor Layer
 
@@ -159,7 +159,7 @@ Requirements:
 * Provider provenance.
 * Graceful degradation.
 
-Never make MIRAGE dependent on a single provider.
+Never make Lynceus dependent on a single provider.
 
 Never assume a provider timeout means a URL is safe.
 
@@ -431,7 +431,7 @@ Implement database migrations and indexes from the beginning.
 
 Use a monorepo:
 
-MIRAGE/
+Lynceus/
 ├── apps/
 │   ├── desktop/
 │   ├── browser-extension/
@@ -503,7 +503,7 @@ The actual implementation may adjust this structure when justified by engineerin
 
 15. Development Roadmap
 
-Build MIRAGE in controlled phases.
+Build Lynceus in controlled phases.
 
 Phase 1 — Foundation
 
@@ -529,7 +529,7 @@ Phase 2 — Deep Content Inspection
 * OCR.
 * Archive inspection.
 
-Acceptance criteria: MIRAGE can extract suspicious indicators from representative EML, HTML, PDF and image samples.
+Acceptance criteria: Lynceus can extract suspicious indicators from representative EML, HTML, PDF and image samples.
 
 Phase 3 — Threat Intelligence
 
@@ -667,7 +667,7 @@ After each milestone:
 
 18. Definition of Success
 
-MIRAGE will be considered a successful first major release when it can:
+Lynceus will be considered a successful first major release when it can:
 
 1. Run as a Windows background monitoring service.
 2. Monitor supported browser activity.
@@ -691,7 +691,7 @@ MIRAGE will be considered a successful first major release when it can:
 
 Final Engineering Principle
 
-MIRAGE must be a genuine security engineering system.
+Lynceus must be a genuine security engineering system.
 
 Do not prioritize visual appearance over detection accuracy.
 

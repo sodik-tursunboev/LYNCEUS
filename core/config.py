@@ -1,13 +1,64 @@
-"""Env-based settings (MIRAGE_ prefix, optional .env). No secrets in code; see .env.example."""
+"""Env-based settings (LYNCEUS_ prefix, optional .env). No secrets in code; see .env.example.
 
+The product was called MIRAGE before it was Lynceus. The old MIRAGE_ names are still read, after the
+new ones (a LYNCEUS_ value always wins), so an existing .env and an older agent keep working; the
+start-up log names which old variables are still in use (names only, never values).
+"""
+
+import os
 from pathlib import Path
 
 from pydantic import Field, SecretStr, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    DotEnvSettingsSource,
+    EnvSettingsSource,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
+
+LEGACY_PREFIX = "MIRAGE_"
+
+
+def legacy_env_names(env_file: str | os.PathLike[str] | None = ".env") -> list[str]:
+    """The old-style variable names in use, from the environment and the .env file."""
+    found = {k for k in os.environ if k.upper().startswith(LEGACY_PREFIX)}
+    if env_file:
+        try:
+            for line in Path(env_file).read_text(encoding="utf-8", errors="replace").splitlines():
+                name = line.strip().split("=", 1)[0].strip()
+                if name.upper().startswith(LEGACY_PREFIX) and "=" in line:
+                    found.add(name)
+        except OSError:
+            pass
+    return sorted(found)
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="MIRAGE_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="LYNCEUS_", env_file=".env", extra="ignore")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        legacy: list[PydanticBaseSettingsSource] = [
+            EnvSettingsSource(settings_cls, env_prefix=LEGACY_PREFIX)
+        ]
+        if isinstance(dotenv_settings, DotEnvSettingsSource):
+            legacy.append(
+                DotEnvSettingsSource(
+                    settings_cls,
+                    env_file=dotenv_settings.env_file,
+                    env_file_encoding=dotenv_settings.env_file_encoding,
+                    env_prefix=LEGACY_PREFIX,
+                )
+            )
+        return (init_settings, env_settings, dotenv_settings, *legacy, file_secret_settings)
 
     log_level: str = "INFO"
 
@@ -20,7 +71,7 @@ class Settings(BaseSettings):
         text = value.get_secret_value().strip()
         if len(text) < 16 or text.upper().startswith("CHANGE_ME"):
             raise ValueError(
-                "MIRAGE_API_TOKEN is too short or still the placeholder: use at least 16 random "
+                "LYNCEUS_API_TOKEN is too short or still the placeholder: use at least 16 random "
                 "characters (the installer generates one)"
             )
         return value

@@ -1,14 +1,14 @@
 """Moving a flagged message out of the inbox, and back (M6b, ADR-017 addendum).
 
 This is the only code that changes a mailbox, and it is held to a short list. The token it uses
-can do far more than MIRAGE ever asks of it (Gmail's `gmail.modify` also composes and sends;
+can do far more than Lynceus ever asks of it (Gmail's `gmail.modify` also composes and sends;
 Microsoft's `Mail.ReadWrite` also deletes), so the limit is enforced HERE, before a byte leaves:
 a transport hook refuses every request that is not one of a handful of exact shapes (method,
 host, path, query and body). There is no code path for DELETE, send, draft, trash or any edit of
 the message itself, and the tests try each of them against the guard.
 
-What "quarantine" means: Gmail adds the label MIRAGE-Quarantine and removes INBOX; Outlook moves
-the message to a folder named MIRAGE Quarantine. Restore reverses it. Both are checked before
+What "quarantine" means: Gmail adds the label LYNCEUS-Quarantine and removes INBOX; Outlook moves
+the message to a folder named Lynceus Quarantine. Restore reverses it. Both are checked before
 and after (already in place: do nothing; result not as expected: say so), so repeating a call is
 harmless.
 """
@@ -31,8 +31,8 @@ from core.mailbox.gmail import (
 )
 from core.mailbox.graph import safe_link
 
-QUARANTINE_LABEL = "MIRAGE-Quarantine"
-QUARANTINE_FOLDER = "MIRAGE Quarantine"
+QUARANTINE_LABEL = "LYNCEUS-Quarantine"
+QUARANTINE_FOLDER = "Lynceus Quarantine"
 GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me"
 GRAPH_API = "https://graph.microsoft.com/v1.0/me"
 MAX_FOLDER_PAGES = 20
@@ -130,7 +130,7 @@ def write_guard(request: httpx.Request) -> None:
         else False
     )
     if not allowed:
-        raise EgressRefused(f"{request.method} to {host} is not one of the moves MIRAGE makes")
+        raise EgressRefused(f"{request.method} to {host} is not one of the moves Lynceus makes")
 
 
 def make_write_client(
@@ -141,7 +141,7 @@ def make_write_client(
         timeout=timeout,
         follow_redirects=False,
         event_hooks={"request": [write_guard]},
-        headers={"User-Agent": "mirage/0.1"},
+        headers={"User-Agent": "lynceus/0.1"},
     )
 
 
@@ -269,7 +269,7 @@ class GmailMover:
 
 
 class GraphMover:
-    """Quarantine = move to the MIRAGE Quarantine folder; restore = move back to the inbox.
+    """Quarantine = move to the Lynceus Quarantine folder; restore = move back to the inbox.
 
     A move makes a copy in the destination and removes the original, so the message gets a NEW id:
     quarantine returns it and the caller keeps it for the restore."""

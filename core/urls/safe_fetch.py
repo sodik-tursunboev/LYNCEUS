@@ -25,7 +25,7 @@ from core.urls.parse import HostKind, ParsedUrl, UrlFlag, parse_url
 # Honest and identical for every user: it names the tool, never the person or the machine. A
 # made-up browser string ("Mozilla/5.0 (compatible)") hung against a CDN edge in a live test, and
 # a real browser string would be a lie. Sites may still show scanners something different.
-USER_AGENT = "MIRAGE-LinkCheck/1.0"
+USER_AGENT = "LYNCEUS-LinkCheck/1.0"
 ALLOWED_PORTS = frozenset({80, 443})
 REDIRECTS = frozenset({301, 302, 303, 307, 308})
 _INTERNAL_NAMES = (".localhost", ".local", ".internal", ".intranet", ".lan", ".home", ".corp")

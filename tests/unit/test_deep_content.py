@@ -497,7 +497,7 @@ def test_dispatch_routes_by_content_and_leaves_pictures_and_pdfs_alone() -> None
 
 def run_cli(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, *args: str) -> int:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("MIRAGE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("LYNCEUS_DATA_DIR", str(tmp_path / "data"))
     return intel_cli.main(["hashes", *args])
 
 

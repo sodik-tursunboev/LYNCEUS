@@ -126,8 +126,8 @@ describe("what each state offers", () => {
     const mail = Object.fromEntries(states.map((s) => [s, verbsFor(s, "MAIL_QUARANTINE")]));
     expect(mail.APPLIED).toEqual(["restore"]); // the allow list is by file hash: not for mail
     expect({ ...mail, APPLIED: 0 }).toEqual({ ...Object.fromEntries(states.map((s) => [s, verbsFor(s)])), APPLIED: 0 });
-    expect(consequence("approve", 30, "MAIL_QUARANTINE", "gmail")).toMatch(/out of your inbox into the MIRAGE-Quarantine label.*Nothing is deleted or sent/);
-    expect(consequence("approve", 30, "MAIL_QUARANTINE", "outlook")).toMatch(/MIRAGE Quarantine folder/);
+    expect(consequence("approve", 30, "MAIL_QUARANTINE", "gmail")).toMatch(/out of your inbox into the LYNCEUS-Quarantine label.*Nothing is deleted or sent/);
+    expect(consequence("approve", 30, "MAIL_QUARANTINE", "outlook")).toMatch(/Lynceus Quarantine folder/);
     expect(consequence("restore", 30, "MAIL_QUARANTINE", "gmail")).toMatch(/back into your inbox/);
     const words = Object.values(MAIL_LABEL).join(" ").toLowerCase();
     expect(words).not.toMatch(/delete|purge|erase|wipe|send|trash/);

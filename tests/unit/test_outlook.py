@@ -452,7 +452,7 @@ def test_no_address_subject_body_token_or_message_id_is_kept(
         sender="SENDERMARK <sendermark@sender.test>", to="rcptmark@rcpt.test",
         subject="SUBJECTMARK", text="BODYMARK https://paypal-login.test/PATHMARK?q=QUERYMARK",
     )  # fmt: skip
-    engine = create_engine(f"sqlite:///{tmp_path / 'mirage.db'}")
+    engine = create_engine(f"sqlite:///{tmp_path / 'lynceus.db'}")
     db.Base.metadata.create_all(engine)
     rig = Rig(tmp_path, store=lambda a: save_email_analysis(engine, a, EventSource.EMAIL))
     with caplog.at_level("DEBUG"):
@@ -743,7 +743,7 @@ def test_enabling_outlook_without_a_client_id_stops_start_up_and_a_bad_tenant_is
     from core.api.app import create_app
     from core.config import Settings
 
-    with pytest.raises(RuntimeError, match="MIRAGE_OUTLOOK_CLIENT_ID"):
+    with pytest.raises(RuntimeError, match="LYNCEUS_OUTLOOK_CLIENT_ID"):
         create_app(
             Settings(_env_file=None, api_token="t" * 20, data_dir=tmp_path, outlook_enabled=True)
         )

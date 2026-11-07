@@ -25,7 +25,7 @@ MARKED = "https://paypal.com@PATHMARK-secure.test/login.php?token=QUERYMARK#FRAG
 
 @pytest.fixture
 def engine(tmp_path: Path) -> Engine:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     e = create_engine(url)
     db.Base.metadata.create_all(e)
     return e
@@ -73,7 +73,7 @@ def test_one_line_per_verdict_in_time_order_each_a_valid_record(engine: Engine) 
     records = [ExportRecord.model_validate_json(line) for line in out]
     assert len(records) == 3
     assert [r.timestamp for r in records] == sorted(r.timestamp for r in records)
-    assert [r.mirage.artifact.kind for r in records] == ["URL", "URL", "EMAIL"]
+    assert [r.lynceus.artifact.kind for r in records] == ["URL", "URL", "EMAIL"]
 
 
 def test_fields_follow_the_documented_mapping(engine: Engine) -> None:
@@ -82,17 +82,17 @@ def test_fields_follow_the_documented_mapping(engine: Engine) -> None:
     assert flagged["event"]["kind"] == "alert" and flagged["event"]["category"] == ["threat", "web"]
     assert flagged["event"]["severity"] == 3 and flagged["event"]["risk_score"] >= 80
     assert (
-        flagged["event"]["dataset"] == "mirage.verdict" and flagged["event"]["action"] == "verdict"
+        flagged["event"]["dataset"] == "lynceus.verdict" and flagged["event"]["action"] == "verdict"
     )
     assert flagged["url"] == {
         "domain": "pathmark-secure.test"
     }  # the host, lower-cased: never a path
     assert flagged["threat"]["technique"]["id"] == sorted(set(flagged["threat"]["technique"]["id"]))
     assert "T1566.002" in flagged["threat"]["technique"]["id"]
-    assert [s["rule_id"] for s in flagged["mirage"]["signals"]] == sorted(
-        s["rule_id"] for s in flagged["mirage"]["signals"]
+    assert [s["rule_id"] for s in flagged["lynceus"]["signals"]] == sorted(
+        s["rule_id"] for s in flagged["lynceus"]["signals"]
     )
-    assert {p["provider"]: p["status"] for p in flagged["mirage"]["provider_results"]} == {
+    assert {p["provider"]: p["status"] for p in flagged["lynceus"]["provider_results"]} == {
         "openphish": "TIMEOUT",
         "phishtank": "OK",
     }
@@ -100,7 +100,7 @@ def test_fields_follow_the_documented_mapping(engine: Engine) -> None:
     assert "risk_score" not in quiet["event"] and "threat" not in quiet
     assert mail["event"]["category"] == ["threat", "email"]
     assert len(mail["file"]["hash"]["sha256"]) == 64 and "url" not in mail
-    assert flagged["mirage"]["schema_version"] == 1 and flagged["@timestamp"]
+    assert flagged["lynceus"]["schema_version"] == 1 and flagged["@timestamp"]
 
 
 def test_the_export_is_deterministic(engine: Engine) -> None:
@@ -150,10 +150,10 @@ def test_the_cli_needs_a_database_and_writes_a_file(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("MIRAGE_DATABASE_URL", raising=False)
+    monkeypatch.delenv("LYNCEUS_DATABASE_URL", raising=False)
     assert main([]) == 2 and "nothing to export" in capsys.readouterr().err
     fill(engine)
-    monkeypatch.setenv("MIRAGE_DATABASE_URL", str(engine.url))
+    monkeypatch.setenv("LYNCEUS_DATABASE_URL", str(engine.url))
     target = tmp_path / "out.jsonl"
     assert main(["--out", str(target)]) == 0
     assert "3 verdicts written" in capsys.readouterr().err

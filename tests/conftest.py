@@ -13,7 +13,7 @@ _LOCAL = {None, "", "localhost", "127.0.0.1", "::1"}
 
 @pytest.fixture(autouse=True, scope="session")
 def no_network() -> Iterator[None]:
-    if os.environ.get("MIRAGE_LIVE_FETCH") == "1":  # the manual real-socket test, run on purpose
+    if os.environ.get("LYNCEUS_LIVE_FETCH") == "1":  # the manual real-socket test, run on purpose
         yield
         return
     real_connect, real_lookup = socket.socket.connect, socket.getaddrinfo

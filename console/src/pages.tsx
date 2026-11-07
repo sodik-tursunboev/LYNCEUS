@@ -32,7 +32,7 @@ export function Overview({ api }: { api: Api }) {
   return (
     <>
       <PageTitle
-        icon="Gauge" title="Overview" lead="What MIRAGE found, and what is waiting for you."
+        icon="Gauge" title="Overview" lead="What Lynceus found, and what is waiting for you."
         actions={<a className="btn primary" href="#/analyze"><Icon name="MagnifyingGlass" size={16} />Analyze something</a>}
       />
       <ErrorLine error={health.error ?? actions.error} />
@@ -73,7 +73,7 @@ export function Overview({ api }: { api: Api }) {
           </Panel>
         </div>
       </div>
-      <p className="muted foot">This console only shows what MIRAGE found and carries out your decisions. Monitoring runs without it.</p>
+      <p className="muted foot">This console only shows what Lynceus found and carries out your decisions. Monitoring runs without it.</p>
     </>
   );
 }
@@ -88,7 +88,7 @@ export function EventsPage({ api }: { api: Api }) {
   const events = useLoad(() => api.events(state || undefined, 100), [api, state], 5000);
   return (
     <>
-      <PageTitle icon="Pulse" title="Events" lead="Every link, message and file MIRAGE judged, newest first." />
+      <PageTitle icon="Pulse" title="Events" lead="Every link, message and file Lynceus judged, newest first." />
       <div className="segmented" role="group" aria-label="Filter by verdict">
         {FILTERS.map((f) => (
           <button key={f.value} type="button" className={state === f.value ? "seg on" : "seg"} aria-pressed={state === f.value} onClick={() => setState(f.value)}>{f.label}</button>
@@ -210,7 +210,7 @@ export function ActionsPage({ api }: { api: Api }) {
     <>
       <PageTitle
         icon="ShieldCheck" title="Responses"
-        lead="MIRAGE never deletes anything. A quarantined file is moved to a private folder, and a quarantined email to a label or folder in your mailbox; both can be restored."
+        lead="Lynceus never deletes anything. A quarantined file is moved to a private folder, and a quarantined email to a label or folder in your mailbox; both can be restored."
       />
       <ErrorLine error={actions.error} />
       {GROUPS.map((g) => {
@@ -254,7 +254,7 @@ export function AllowPage({ api }: { api: Api }) {
     <>
       <PageTitle
         icon="ListChecks" title="Allow list"
-        lead="Files you told MIRAGE not to flag again (by exact content). They are still judged and recorded; they just no longer ask for a decision or raise a notification."
+        lead="Files you told Lynceus not to flag again (by exact content). They are still judged and recorded; they just no longer ask for a decision or raise a notification."
       />
       <ErrorLine error={list.error} />
       <Panel>
@@ -267,7 +267,7 @@ export function AllowPage({ api }: { api: Api }) {
                   <td><Hash value={a.sha256} /> <CopyButton text={a.sha256} label="Copy the full hash" /></td>
                   <td><Ago iso={a.created_at} /></td><td>{a.created_by}</td>
                   <td>{a.expires_at ? when(a.expires_at) : "until removed"}</td>
-                  <td><ConfirmButton label="Remove" explain={`MIRAGE will flag ${shortHash(a.sha256)} again if it sees it.`} onConfirm={async () => { await api.allowRemove(a.sha256); list.reload(); }} /></td>
+                  <td><ConfirmButton label="Remove" explain={`Lynceus will flag ${shortHash(a.sha256)} again if it sees it.`} onConfirm={async () => { await api.allowRemove(a.sha256); list.reload(); }} /></td>
                 </tr>
               ))}</tbody>
             </table>

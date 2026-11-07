@@ -89,7 +89,7 @@ export function AnalyzePage({ api }: { api: Api }) {
       <PageTitle
         icon="MagnifyingGlass"
         title="Analyze"
-        lead="Investigate a link, an email or a file. MIRAGE reads it with its own rules, in a sandbox on this computer, and shows exactly why it reached its verdict."
+        lead="Investigate a link, an email or a file. Lynceus reads it with its own rules, in a sandbox on this computer, and shows exactly why it reached its verdict."
       />
       <Panel className="intake">
         <div className="tabs" role="tablist" aria-label="What to analyze">
@@ -144,7 +144,7 @@ function PrivacyNote({ intel }: { intel: IntelHealth | null }) {
   return (
     <p className="privacy">
       <Icon name="LockKey" weight="duotone" size={16} />
-      {intel === null ? "Analysed on this computer by MIRAGE's own engine."
+      {intel === null ? "Analysed on this computer by Lynceus's own engine."
         : outside.length === 0 ? "Analysed on this computer. No outside service is asked: nothing leaves your machine."
         : `Analysed on this computer. Outside lookups are on (${outside.map((p) => p.provider).join(", ")}); only a registered domain name is ever sent, never a full link, a message or a file.`}
     </p>

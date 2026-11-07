@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Lynceus.Agent.Tests/Lynceus.Agent.Tests.csproj" />
+  <Project Path="Lynceus.Agent/Lynceus.Agent.csproj" />
+  <Project Path="Lynceus.Ipc/Lynceus.Ipc.csproj" />
+  <Project Path="Lynceus.NativeHost/Lynceus.NativeHost.csproj" />
+</Solution>

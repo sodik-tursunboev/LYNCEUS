@@ -19,7 +19,7 @@ const PAGES: ReadonlyArray<readonly [hash: string, label: string, icon: IconName
   ["#/audit", "Audit log", "Scroll"],
 ];
 
-/** The MIRAGE mark: a shield with the shimmer of a heat haze across it. */
+/** The Lynceus mark: an eye in a shield (Lynceus, the Argonaut who saw through walls). */
 export function Mark({ size = 34 }: { size?: number }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" focusable="false" className="mark">
@@ -27,9 +27,8 @@ export function Mark({ size = 34 }: { size?: number }) {
         <linearGradient id="mk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#65f7ff" /><stop offset="1" stopColor="#00a9b3" /></linearGradient>
       </defs>
       <path d="M32 4 56 12v18c0 14-10 24-24 30C18 54 8 44 8 30V12Z" fill="none" stroke="url(#mk)" strokeWidth="3.2" strokeLinejoin="round" />
-      <path d="M18 24q4-4 7.5 0t7.5 0 7.5 0 5.5 0" fill="none" stroke="url(#mk)" strokeWidth="3" strokeLinecap="round" />
-      <path d="M18 32q4-4 7.5 0t7.5 0 7.5 0 5.5 0" fill="none" stroke="url(#mk)" strokeWidth="3" strokeLinecap="round" opacity=".62" />
-      <path d="M21 40q3.5-3.5 6.5 0t6.5 0 6.5 0" fill="none" stroke="url(#mk)" strokeWidth="3" strokeLinecap="round" opacity=".32" />
+      <path d="M15 30q17-16 34 0q-17 16-34 0Z" fill="none" stroke="url(#mk)" strokeWidth="3" strokeLinejoin="round" />
+      <circle cx="32" cy="30" r="5.2" fill="url(#mk)" />
     </svg>
   );
 }
@@ -41,9 +40,9 @@ function Login({ onDone }: { onDone: () => void }) {
     <main className="login">
       <div className="login-card">
         <Mark size={56} />
-        <h1>MIRAGE</h1>
-        <p className="login-tag">Phishing defence that runs on your computer.</p>
-        <p>Enter the API token. Start the console with <code>Mirage.Agent.exe --open-console</code> to skip this.</p>
+        <h1>Lynceus</h1>
+        <p className="login-tag">A phishing solution kit that runs on your computer.</p>
+        <p>Enter the API token. Start the console with <code>Lynceus.Agent.exe --open-console</code> to skip this.</p>
         <form onSubmit={(e) => { e.preventDefault(); if (ok) { setToken(env, value); onDone(); } }}>
           <label className="field">
             <span><Icon name="Key" weight="duotone" size={15} />API token</span>
@@ -83,9 +82,9 @@ function App() {
     <div className="shell">
       <a className="skip" href="#content">Skip to the page</a>
       <aside className="side">
-        <a className="brand" href="#/" aria-label="MIRAGE, overview">
+        <a className="brand" href="#/" aria-label="Lynceus, overview">
           <Mark />
-          <span className="brand-text"><strong>MIRAGE</strong><small>phishing defence</small></span>
+          <span className="brand-text"><strong>LYNCEUS</strong><small>phishing solution kit</small></span>
         </a>
         <nav aria-label="Pages">
           {PAGES.map(([h, label, icon]) => (

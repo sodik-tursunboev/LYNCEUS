@@ -17,7 +17,7 @@ from urllib.parse import urlsplit
 REDACTED = "[REDACTED]"
 
 _URL = re.compile(r"[a-zA-Z][a-zA-Z0-9+.\-]*://[^\s\"'<>]+")
-# The key may carry a prefix (refresh_token, client_secret, MIRAGE_API_TOKEN, POSTGRES_PASSWORD)
+# The key may carry a prefix (refresh_token, client_secret, LYNCEUS_API_TOKEN, POSTGRES_PASSWORD)
 # and may be quoted (JSON): a word boundary alone would let `refresh_token=...` through.
 _KV = re.compile(
     r"(?i)\b([\w.\-]*?(?:password|passwd|pwd|secret|token|api[_-]?key|authorization))"
@@ -79,14 +79,14 @@ class RedactingJsonFormatter(logging.Formatter):
         return json.dumps(out, default=str)
 
 
-class MirageHandler(logging.StreamHandler):  # type: ignore[type-arg]
+class LynceusHandler(logging.StreamHandler):  # type: ignore[type-arg]
     """Marker subclass so configure() can replace its own handler without touching others."""
 
 
 def configure(level: str = "INFO", stream: IO[str] | None = None) -> None:
     root = logging.getLogger()
-    root.handlers = [h for h in root.handlers if not isinstance(h, MirageHandler)]
-    handler = MirageHandler(stream or sys.stderr)
+    root.handlers = [h for h in root.handlers if not isinstance(h, LynceusHandler)]
+    handler = LynceusHandler(stream or sys.stderr)
     handler.setFormatter(RedactingJsonFormatter())
     root.addHandler(handler)
     root.setLevel(level.upper())

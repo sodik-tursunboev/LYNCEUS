@@ -21,7 +21,7 @@ export const VERDICT: Record<VerdictState, VerdictMeta> = {
   },
   UNKNOWN: {
     icon: "Question", tone: "info", headline: "Not enough to say either way",
-    meaning: "No rule fired, or too little to decide. Unknown is not safe: it only means MIRAGE has no opinion.",
+    meaning: "No rule fired, or too little to decide. Unknown is not safe: it only means Lynceus has no opinion.",
   },
   ERROR: {
     icon: "WarningOctagon", tone: "info", headline: "The analysis did not finish",

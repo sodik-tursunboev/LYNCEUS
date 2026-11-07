@@ -5,7 +5,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from core.log import MirageHandler, RedactingJsonFormatter, configure, redact_value
+from core.log import LynceusHandler, RedactingJsonFormatter, configure, redact_value
 
 # Obviously fake values. Each carries the secret-scanner pragma on its own line, and URLs are
 # assembled from them so no URL with embedded credentials sits in the source.
@@ -81,7 +81,7 @@ def test_secrets_named_by_what_this_project_handles_are_redacted(emit: Emit) -> 
         f"access_token: {TOKEN}",
         f"client_secret={TOKEN}",
         f"id_token={TOKEN}",
-        f"MIRAGE_API_TOKEN={TOKEN}",
+        f"LYNCEUS_API_TOKEN={TOKEN}",
         f"POSTGRES_PASSWORD={TOKEN}",
         f'{{"refresh_token": "{TOKEN}", "scope": "Mail.Read"}}',
         f"x-api-key: {TOKEN}",
@@ -131,6 +131,6 @@ def test_configure_is_idempotent() -> None:
     try:
         configure("INFO", io.StringIO())
         configure("DEBUG", io.StringIO())
-        assert sum(isinstance(h, MirageHandler) for h in root.handlers) == 1
+        assert sum(isinstance(h, LynceusHandler) for h in root.handlers) == 1
     finally:
         root.handlers = before

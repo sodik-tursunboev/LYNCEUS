@@ -1,6 +1,6 @@
 """Manual only: real sockets.
 
-    MIRAGE_LIVE_FETCH=1 python -m pytest tests/adversarial/test_safe_fetch_live.py
+    LYNCEUS_LIVE_FETCH=1 python -m pytest tests/adversarial/test_safe_fetch_live.py
 
 The fake-transport suite cannot show that connecting to a pinned IP, presenting the name for TLS,
 and verifying the certificate work together on a real socket. This does, against example.com
@@ -18,7 +18,7 @@ import pytest
 from core.urls.safe_fetch import REDIRECTS, Outcome, follow, is_public
 
 pytestmark = pytest.mark.skipif(
-    os.environ.get("MIRAGE_LIVE_FETCH") != "1", reason="manual: needs the network"
+    os.environ.get("LYNCEUS_LIVE_FETCH") != "1", reason="manual: needs the network"
 )
 
 

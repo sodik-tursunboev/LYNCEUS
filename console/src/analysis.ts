@@ -131,7 +131,7 @@ export const LIMITS = { email: 10 * 1024 * 1024, file: 16 * 1024 * 1024 - 4096, 
 
 export function sizeProblem(kind: "email" | "file", size: number): string | null {
   if (size === 0) return "That file is empty.";
-  return size > LIMITS[kind] ? `That is ${formatBytes(size)}; MIRAGE reads up to ${formatBytes(LIMITS[kind])}.` : null;
+  return size > LIMITS[kind] ? `That is ${formatBytes(size)}; Lynceus reads up to ${formatBytes(LIMITS[kind])}.` : null;
 }
 
 export type Pasted = "empty" | "url" | "email" | "unclear";

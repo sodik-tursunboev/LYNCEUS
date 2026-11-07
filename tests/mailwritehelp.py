@@ -54,7 +54,7 @@ class FakeGmailWrite:
             hide = self.hide_labels_once
             self.hide_labels_once = False
             shown = {
-                n: i for n, i in self.labels.items() if not (hide and n == "MIRAGE-Quarantine")
+                n: i for n, i in self.labels.items() if not (hide and n == "LYNCEUS-Quarantine")
             }
             return httpx.Response(
                 200, json={"labels": [{"id": i, "name": n} for n, i in shown.items()]}

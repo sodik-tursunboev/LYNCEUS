@@ -394,7 +394,7 @@ def test_no_address_subject_body_token_or_message_id_is_kept(
         subject="SUBJECTMARK",
         text="BODYMARK https://paypal-login.test/PATHMARK?q=QUERYMARK",
     )  # fmt: skip
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     engine = create_engine(url)
     db.Base.metadata.create_all(engine)
     rig = Rig(tmp_path, store=lambda a: save_email_analysis(engine, a, EventSource.EMAIL))
@@ -698,7 +698,7 @@ def test_the_status_endpoint_needs_the_token_and_says_off_when_not_enabled(tmp_p
 def test_enabling_without_a_client_id_stops_start_up_instead_of_doing_nothing(
     tmp_path: Path,
 ) -> None:
-    with pytest.raises(RuntimeError, match="MIRAGE_GMAIL_CLIENT_ID"):
+    with pytest.raises(RuntimeError, match="LYNCEUS_GMAIL_CLIENT_ID"):
         _api(tmp_path, gmail_enabled=True)
 
 

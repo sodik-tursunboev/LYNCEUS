@@ -16,7 +16,7 @@ import httpx
 from core.intel.base import ProviderError, ProviderRateLimited
 
 Client = httpx.AsyncClient  # providers import this name, so httpx is imported in this file only
-USER_AGENT = "mirage-local/0.1"
+USER_AGENT = "lynceus-local/0.1"
 # httpx logs every request URL at INFO, and some providers carry the API key in the URL path.
 for _noisy in ("httpx", "httpcore"):
     logging.getLogger(_noisy).setLevel(logging.WARNING)

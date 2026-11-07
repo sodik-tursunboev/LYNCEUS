@@ -37,7 +37,7 @@ from core.urls.parse import ParsedUrl, parse_url
 from rules.url.data import lists, official_domains
 
 log = logging.getLogger(__name__)
-_MAGIC = "mirage-feed 1"
+_MAGIC = "lynceus-feed 1"
 _HEX = re.compile(r"^[0-9a-f]{64}$")
 _MAX_HOST = 253
 MAX_HOPS = 3

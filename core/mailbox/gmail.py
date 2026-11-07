@@ -68,7 +68,7 @@ def make_client(
         timeout=timeout,
         follow_redirects=False,  # a redirect would be a surprise; never followed
         event_hooks={"request": [guard]},
-        headers={"User-Agent": "mirage/0.1"},
+        headers={"User-Agent": "lynceus/0.1"},
     )
 
 

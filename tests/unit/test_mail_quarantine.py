@@ -298,9 +298,9 @@ class Cli:
 
     def __init__(self, tmp: Path, mp: pytest.MonkeyPatch) -> None:
         mp.chdir(tmp)  # no .env is read from the project
-        mp.setenv("MIRAGE_DATA_DIR", str(tmp / "data"))
-        mp.setenv("MIRAGE_GMAIL_CLIENT_ID", "cid.apps.test")
-        mp.setenv("MIRAGE_OUTLOOK_CLIENT_ID", "outlook-cid")
+        mp.setenv("LYNCEUS_DATA_DIR", str(tmp / "data"))
+        mp.setenv("LYNCEUS_GMAIL_CLIENT_ID", "cid.apps.test")
+        mp.setenv("LYNCEUS_OUTLOOK_CLIENT_ID", "outlook-cid")
         self.dir = tmp / "data" / "mailbox"
         self.connects: list[tuple[str, bool]] = []
         self.revoked: list[str] = []
@@ -385,7 +385,7 @@ def test_yes_skips_the_question_but_the_notice_names_the_wider_permission(
     assert "Mail.ReadWrite" in notice and "never sends, deletes" in notice
 
 
-def test_the_notice_says_what_the_permission_can_do_and_what_mirage_will_not(
+def test_the_notice_says_what_the_permission_can_do_and_what_lynceus_will_not(
     cl: Cli, capsys: Any
 ) -> None:
     cl.run("connect", "--write", answer="no")
@@ -397,7 +397,7 @@ def test_the_notice_says_what_the_permission_can_do_and_what_mirage_will_not(
 def test_connect_write_needs_the_client_id_before_anything_is_asked(
     cl: Cli, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("MIRAGE_GMAIL_CLIENT_ID")
+    monkeypatch.delenv("LYNCEUS_GMAIL_CLIENT_ID")
     assert cl.run("connect", "--write") == 2
     assert cl.questions == [] and cl.connects == []
 
@@ -442,7 +442,7 @@ def mail(n: int) -> bytes:
 
 class World:
     def __init__(self, tmp_path: Path) -> None:
-        self.url = f"sqlite:///{tmp_path / 'mirage.db'}"
+        self.url = f"sqlite:///{tmp_path / 'lynceus.db'}"
         self.engine: Engine = create_engine(self.url)
         db.Base.metadata.create_all(self.engine)
         settings = Settings(
@@ -460,7 +460,7 @@ class World:
         return service.create_pending_mail(self.engine, self.verdict(n), provider, ref)
 
     def act(self, action_id: object, verb: str, actor: str | None = None) -> Any:
-        headers = AUTH | ({"X-Mirage-Actor": actor} if actor else {})
+        headers = AUTH | ({"X-Lynceus-Actor": actor} if actor else {})
         return self.client.post(f"/v1/actions/{action_id}/{verb}", headers=headers)
 
     def get(self, action_id: object) -> dict[str, Any]:
@@ -649,7 +649,7 @@ def test_an_approved_gmail_message_is_moved_out_of_the_inbox_and_can_be_moved_ba
 
     assert runner.poll_once() == 1
     assert w.state(action_id) == "APPLIED"
-    label = fake.labels["MIRAGE-Quarantine"]
+    label = fake.labels["LYNCEUS-Quarantine"]
     assert fake.messages[MSG_ID] == {
         label
     }  # out of the inbox, in the quarantine label, not deleted
@@ -853,7 +853,7 @@ def test_outlook_saves_the_new_id_with_the_outcome_and_restores_with_it(w: World
     new_ref = w.mail_ref(action_id)
     assert new_ref and new_ref != GRAPH_ID and new_ref in fake.messages
     assert GRAPH_ID not in fake.messages  # the old id is gone, as Graph does on a move
-    folder = fake.folders["mirage quarantine"]
+    folder = fake.folders["lynceus quarantine"]
     assert fake.messages[new_ref] == folder
 
     w.act(action_id, "restore", actor="user")
@@ -1058,7 +1058,7 @@ def test_the_status_says_ready_then_reauth_needed(tmp_path: Path) -> None:
 def test_the_app_starts_and_stops_the_runner_and_it_finishes_an_approved_move(
     tmp_path: Path,
 ) -> None:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     engine = create_engine(url)
     db.Base.metadata.create_all(engine)
     settings = Settings(_env_file=None, api_token=TOKEN, database_url=url, data_dir=tmp_path / "d")

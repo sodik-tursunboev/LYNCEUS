@@ -89,7 +89,7 @@ describe("stores", () => {
       now += 1;
       await cache.put(`k${i}`, { state: "UNKNOWN", score: null, reasons: [], explanation: null });
     }
-    const table = kv.data.get("mirage.verdicts") as Record<string, unknown>;
+    const table = kv.data.get("lynceus.verdicts") as Record<string, unknown>;
     expect(Object.keys(table)).toHaveLength(MAX_ENTRIES);
     expect(await cache.get("k0")).toBeNull();
     expect(await cache.get(`k${MAX_ENTRIES + 19}`)).not.toBeNull();

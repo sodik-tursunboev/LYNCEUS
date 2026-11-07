@@ -23,11 +23,11 @@
 
 | # | Decision | Recommendation |
 |---|---|---|
-| D1 | Scope | `Mail.Read` + `offline_access` only. After sign-in the granted scopes are checked against an allow list (`Mail.Read`, `offline_access`, `openid`, `profile`, `email`, `User.Read`); **any other scope, above all anything that can write or send, makes MIRAGE refuse and store nothing** |
+| D1 | Scope | `Mail.Read` + `offline_access` only. After sign-in the granted scopes are checked against an allow list (`Mail.Read`, `offline_access`, `openid`, `profile`, `email`, `User.Read`); **any other scope, above all anything that can write or send, makes Lynceus refuse and store nothing** |
 | D2 | Shape | One mail-source interface (position, list recent, changes, raw message); Gmail and Graph both implement it; the sync, recovery, storage and privacy rules are the existing ones, unchanged |
 | D3 | Tokens | refresh token DPAPI-encrypted like Gmail's, in its own file; **Microsoft rotates the refresh token on every use, so the new one is stored each time** (a test checks it) |
 | D4 | Egress | `graph.microsoft.com` (GET only) and `login.microsoftonline.com`, nothing else; links Graph returns (`nextLink`, `deltaLink`) are refused unless they point at Graph over HTTPS |
-| D5 | Your part | an Azure app registration ("Mobile and desktop applications", redirect URI `http://localhost`, delegated `Mail.Read`), its client id in `MIRAGE_OUTLOOK_CLIENT_ID`, then `python -m core.mailbox connect --provider outlook` |
+| D5 | Your part | an Azure app registration ("Mobile and desktop applications", redirect URI `http://localhost`, delegated `Mail.Read`), its client id in `LYNCEUS_OUTLOOK_CLIENT_ID`, then `python -m core.mailbox connect --provider outlook` |
 
 ## Acceptance criteria
 

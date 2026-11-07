@@ -46,7 +46,7 @@ def value(rng: random.Random, depth: int = 0) -> Any:
 
 @pytest.fixture
 def world(tmp_path: Path) -> tuple[TestClient, Any]:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     engine = create_engine(url)
     db.Base.metadata.create_all(engine)
     settings = Settings(
@@ -81,7 +81,7 @@ def test_random_requests_to_every_response_route_get_a_stated_answer(world: Any)
         params = {
             rng.choice(["state", "limit", "x"]): junk(rng, 8) for _ in range(rng.randint(0, 2))
         }
-        headers = AUTH | {"X-Mirage-Actor": junk(rng, 8).encode("ascii", "ignore").decode()}
+        headers = AUTH | {"X-Lynceus-Actor": junk(rng, 8).encode("ascii", "ignore").decode()}
         body = value(rng) if route[0] == "POST" else None
         r = client.request(
             route[0], route[1].replace("\x00", ""), params=params, headers=headers, json=body

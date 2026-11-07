@@ -62,9 +62,9 @@ jobs:
         env:
           CI: "true"
         run: |
-          dotnet restore agent/Mirage.slnx
-          dotnet build agent/Mirage.slnx --no-restore
-          dotnet test agent/Mirage.slnx --no-build
+          dotnet restore agent/Lynceus.slnx
+          dotnet build agent/Lynceus.slnx --no-restore
+          dotnet test agent/Lynceus.slnx --no-build
       - name: Extension
         shell: pwsh
         working-directory: extension

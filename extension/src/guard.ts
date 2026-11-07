@@ -103,9 +103,9 @@ export class Guard {
   }
 
   badge(state: "ok" | "down" | "core"): void {
-    if (state === "ok") this.browser.setBadge("", "#000000", "MIRAGE is protecting this browser");
-    else if (state === "down") this.browser.setBadge("!", "#c62828", "MIRAGE is not protecting this browser: the agent is not running");
-    else this.browser.setBadge("?", "#b26a00", "MIRAGE agent is running but cannot reach its analysis engine");
+    if (state === "ok") this.browser.setBadge("", "#000000", "Lynceus is protecting this browser");
+    else if (state === "down") this.browser.setBadge("!", "#c62828", "Lynceus is not protecting this browser: the agent is not running");
+    else this.browser.setBadge("?", "#b26a00", "Lynceus agent is running but cannot reach its analysis engine");
   }
 
   private afterFailure(code: string): void {

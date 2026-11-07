@@ -4,7 +4,7 @@
 
 ## What you get
 
-- **Analyze** (new, `#/analyze`): paste a link, drop an `.eml` message, or drop any file. MIRAGE analyses it with its own rules, in its sandbox, on this computer, and shows an investigation view:
+- **Analyze** (new, `#/analyze`): paste a link, drop an `.eml` message, or drop any file. Lynceus analyses it with its own rules, in its sandbox, on this computer, and shows an investigation view:
   - a **risk ring** and a plain-language verdict (what it means and what to do), confidence, recommended response;
   - **Why**: every sign that fired, strongest first, with its category icon, rule id, description, ATT&CK technique and weight;
   - for a link, the **anatomy of the link**: scheme, user name (the `www.paypal.com@` trick shown in red), subdomain, the **owner** (the registered domain, highlighted, "the browser will connect to …"), suffix, port, path, query, with a legend and the parser's flags in words;

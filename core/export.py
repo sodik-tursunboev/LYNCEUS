@@ -3,8 +3,8 @@
     python -m core.export [--since ISO] [--until ISO] [--out FILE]
 
 The field names follow the Elastic Common Schema where it has a field (`@timestamp`, `event.*`,
-`threat.technique.id`, `url.domain`, `file.hash.sha256`); everything MIRAGE-specific sits under
-`mirage`. It writes a file or standard output and sends nothing anywhere. What is exported is what
+`threat.technique.id`, `url.domain`, `file.hash.sha256`); everything LYNCEUS-specific sits under
+`lynceus`. It writes a file or standard output and sends nothing anywhere. What is exported is what
 is stored: hashes, hosts, verdicts, signals, evidence summaries and provider results, never URL or
 message text (ADR-007). Output is deterministic: the same database gives the same bytes.
 """
@@ -76,7 +76,7 @@ class ArtifactOut(_Strict):
     sha256: str
 
 
-class MirageBlock(_Strict):
+class LynceusBlock(_Strict):
     schema_version: int
     verdict: VerdictOut
     artifact: ArtifactOut
@@ -107,7 +107,7 @@ class FileBlock(_Strict):
 class ExportRecord(_Strict):
     timestamp: datetime = Field(alias="@timestamp")
     event: EventBlock
-    mirage: MirageBlock
+    lynceus: LynceusBlock
     threat: ThreatBlock | None = None
     url: UrlBlock | None = None
     file: FileBlock | None = None
@@ -131,12 +131,12 @@ def _record(
             category=["threat", "email" if a.kind == "EMAIL" else "file" if email else "web"],
             type=["info"],
             action="verdict",
-            dataset="mirage.verdict",
+            dataset="lynceus.verdict",
             id=str(v.id),
             severity=SEVERITY[v.state],
             risk_score=v.risk_score,
         ),
-        mirage=MirageBlock(
+        lynceus=LynceusBlock(
             schema_version=SCHEMA_VERSION,
             verdict=VerdictOut(
                 state=v.state,
@@ -239,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     url = Settings().database_url
     if url is None:
-        print("MIRAGE_DATABASE_URL is not set: there is nothing to export", file=sys.stderr)
+        print("LYNCEUS_DATABASE_URL is not set: there is nothing to export", file=sys.stderr)
         return 2
     engine = create_engine(url.get_secret_value(), hide_parameters=True)
     records = export_records(engine, args.since, args.until)

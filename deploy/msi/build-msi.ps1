@@ -1,5 +1,5 @@
 <#
-.SYNOPSIS  Build deploy\msi\out\Mirage-<version>-x64.msi from this checkout.
+.SYNOPSIS  Build deploy\msi\out\Lynceus-<version>-x64.msi from this checkout.
 .DESCRIPTION
   Stages the self-contained agent (no .NET needed on the target), the browser extension, the native
   console window (Tauri; needs Rust, see shell\), and the engine (a trimmed Python with only the libraries the core needs, the core, the console and the
@@ -32,9 +32,9 @@ if (-not $ReuseStage) {
 if (Test-Path $stage) { Remove-Item (Split-Path $stage) -Recurse -Force }
 New-Item -ItemType Directory -Force $stage | Out-Null
 Say 'building the agent (self-contained)'
-dotnet publish (Join-Path $repo 'agent\Mirage.Agent\Mirage.Agent.csproj') -c Release -r win-x64 --self-contained true -o (Join-Path $stage 'agent') --nologo -v quiet
+dotnet publish (Join-Path $repo 'agent\Lynceus.Agent\Lynceus.Agent.csproj') -c Release -r win-x64 --self-contained true -o (Join-Path $stage 'agent') --nologo -v quiet
 if ($LASTEXITCODE) { throw 'dotnet publish failed' }
-foreach ($exe in 'Mirage.Agent.exe', 'Mirage.NativeHost.exe') {
+foreach ($exe in 'Lynceus.Agent.exe', 'Lynceus.NativeHost.exe') {
     if (-not (Test-Path (Join-Path $stage "agent\$exe"))) { throw "the publish did not produce $exe" }
 }
 foreach ($app in 'extension', 'console') {
@@ -58,7 +58,7 @@ try {
     npx tauri build --no-bundle 2>&1 | Out-Null; if ($LASTEXITCODE) { throw 'the Tauri build failed' }
 } finally { $ErrorActionPreference = $strict; Pop-Location }
 New-Item -ItemType Directory -Force (Join-Path $stage 'shell') | Out-Null
-Copy-Item (Join-Path $repo 'shell\src-tauri\target\release\mirage-console.exe') (Join-Path $stage 'shell\Mirage.Console.exe')
+Copy-Item (Join-Path $repo 'shell\src-tauri\target\release\lynceus-console.exe') (Join-Path $stage 'shell\Lynceus.Console.exe')
 
 Say 'staging the engine (Python, core, console, sandbox)'
 & $python (Join-Path $PSScriptRoot 'stage_engine.py') (Join-Path $stage 'engine') | Select-Object -Last 2
@@ -67,9 +67,9 @@ if ($LASTEXITCODE) { throw 'staging the engine failed' }
 Copy-Item (Join-Path $PSScriptRoot 'Setup.ps1'), (Join-Path $PSScriptRoot 'Cleanup.ps1') $stage -Force
 New-Item -ItemType Directory -Force $outDir | Out-Null
 
-$msi = Join-Path $outDir "Mirage-$Version-x64.msi"
+$msi = Join-Path $outDir "Lynceus-$Version-x64.msi"
 Say "building $msi"
-wix build (Join-Path $PSScriptRoot 'Mirage.wxs') -arch x64 -d "Version=$Version" -d "StageDir=$stage" -dcl mszip -o $msi
+wix build (Join-Path $PSScriptRoot 'Lynceus.wxs') -arch x64 -d "Version=$Version" -d "StageDir=$stage" -dcl mszip -o $msi
 if ($LASTEXITCODE) { throw 'wix build failed' }
 if (-not ($KeepStage -or $ReuseStage)) { Remove-Item (Split-Path $stage) -Recurse -Force }
 Say ("done: {0} ({1:N0} MB)" -f $msi, ((Get-Item $msi).Length / 1MB))

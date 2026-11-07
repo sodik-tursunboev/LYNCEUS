@@ -17,9 +17,9 @@ def feed_bytes(*urls: str) -> bytes:
 
 @pytest.fixture
 def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    for name in ("MIRAGE_INTEL_PROVIDERS", "MIRAGE_PHISHTANK_KEY", "MIRAGE_URLHAUS_AUTH_KEY"):
+    for name in ("LYNCEUS_INTEL_PROVIDERS", "LYNCEUS_PHISHTANK_KEY", "LYNCEUS_URLHAUS_AUTH_KEY"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("MIRAGE_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("LYNCEUS_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.chdir(tmp_path)  # no .env here: only what the test sets counts
     return tmp_path
 
@@ -47,7 +47,7 @@ def test_nothing_is_enabled_by_default(env: Path, capsys: pytest.CaptureFixture[
 def test_sync_refuses_a_feed_the_operator_did_not_enable(
     env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("MIRAGE_INTEL_PROVIDERS", "openphish")
+    monkeypatch.setenv("LYNCEUS_INTEL_PROVIDERS", "openphish")
     seen = serve(monkeypatch, lambda r: httpx.Response(200))
     assert cli.main(["sync", "--feed", "phishtank"]) == 2
     assert "not enabled" in capsys.readouterr().err and seen == []
@@ -56,8 +56,8 @@ def test_sync_refuses_a_feed_the_operator_did_not_enable(
 def test_sync_status_and_lookup_work_together(
     env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("MIRAGE_INTEL_PROVIDERS", "phishtank")
-    monkeypatch.setenv("MIRAGE_PHISHTANK_KEY", "KEY-SECRET-123")
+    monkeypatch.setenv("LYNCEUS_INTEL_PROVIDERS", "phishtank")
+    monkeypatch.setenv("LYNCEUS_PHISHTANK_KEY", "KEY-SECRET-123")
     seen = serve(
         monkeypatch, lambda r: httpx.Response(200, content=feed_bytes("http://evil-site.test/a"))
     )
@@ -75,7 +75,7 @@ def test_sync_status_and_lookup_work_together(
 def test_a_failed_sync_exits_non_zero_and_says_why(
     env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("MIRAGE_INTEL_PROVIDERS", "openphish")
+    monkeypatch.setenv("LYNCEUS_INTEL_PROVIDERS", "openphish")
     serve(monkeypatch, lambda r: httpx.Response(503))
     assert cli.main(["sync"]) == 1
     assert "http 503" in capsys.readouterr().out
@@ -84,7 +84,7 @@ def test_a_failed_sync_exits_non_zero_and_says_why(
 def test_lookup_before_any_download_says_unavailable_not_clean(
     env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv("MIRAGE_INTEL_PROVIDERS", "phishtank")
+    monkeypatch.setenv("LYNCEUS_INTEL_PROVIDERS", "phishtank")
     assert cli.main(["lookup", "http://x.test/"]) == 0
     out = capsys.readouterr().out
     assert "UNAVAILABLE" in out and "not downloaded" in out

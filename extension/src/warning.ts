@@ -14,8 +14,8 @@ export function readParams(search: string): { key: string; state: State; url: st
 /** The same page is used for both bad verdicts; only the wording and the weight of the buttons differ. */
 export function wording(state: State): { title: string; lead: string } {
   return state === "MALICIOUS"
-    ? { title: "This page looks like phishing", lead: "MIRAGE stopped this page before it loaded. It matched several signs of a phishing attempt." }
-    : { title: "This page looks suspicious", lead: "MIRAGE stopped this page. It showed some signs of phishing, but not enough to be sure." };
+    ? { title: "This page looks like phishing", lead: "Lynceus stopped this page before it loaded. It matched several signs of a phishing attempt." }
+    : { title: "This page looks suspicious", lead: "Lynceus stopped this page. It showed some signs of phishing, but not enough to be sure." };
 }
 
 function text(id: string, value: string): void {
@@ -26,14 +26,14 @@ function text(id: string, value: string): void {
 async function main(): Promise<void> {
   if (window.top !== window) {
     // Framed inside another page (any website can do that): show nothing it could be clicked through.
-    text("title", "MIRAGE warning page");
+    text("title", "Lynceus warning page");
     text("lead", "This warning is only shown on its own, not inside another page.");
     document.getElementById("actions")?.setAttribute("hidden", "");
     return;
   }
   const params = readParams(location.search);
   if (!params) {
-    text("title", "MIRAGE warning page");
+    text("title", "Lynceus warning page");
     text("lead", "This page was opened without the information it needs.");
     document.getElementById("actions")?.setAttribute("hidden", "");
     return;
@@ -63,7 +63,7 @@ async function main(): Promise<void> {
     chrome.runtime.sendMessage({ type: "override", url: params.url }).then(
       (answer: { ok?: boolean } | undefined) => {
         if (answer?.ok) location.replace(params.url);
-        else text("status", "The decision could not be recorded, so the page stays blocked. Is the MIRAGE agent running?");
+        else text("status", "The decision could not be recorded, so the page stays blocked. Is the Lynceus agent running?");
       },
       () => text("status", "The decision could not be recorded, so the page stays blocked."),
     );

@@ -4,7 +4,7 @@ Only this folder is made readable to the sandbox's AppContainer SID, and read-on
 root, which holds .env, is never granted.
 
 Windows will not start a process in an AppContainer whose profile is not registered, so building
-registers one per user (a registry key and %LOCALAPPDATA%\\Packages\\mirage.parser). Undo it with
+registers one per user (a registry key and %LOCALAPPDATA%\\Packages\\lynceus.parser). Undo it with
 `python -m core.sandbox.build --remove`, which deletes the profile and the .sandbox folder.
 """
 
@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from core.sandbox import APP, CONTAINER, RUNTIME, SANDBOX_DIR, SandboxUnavailable
+from core.sandbox import APP, CONTAINER, LEGACY_CONTAINER, RUNTIME, SANDBOX_DIR, SandboxUnavailable
 
 GUEST = Path(__file__).parent / "guest"
 REQUIREMENTS = Path(__file__).parents[2] / "requirements-sandbox.txt"
@@ -110,9 +110,22 @@ def remove() -> None:
     print(f"removed the {CONTAINER} profile and {SANDBOX_DIR}")
 
 
+def remove_legacy() -> None:
+    """Delete the profile registered under the product's old name (the installer does this once the
+    new profile is in place; it is a separate step so a running older copy keeps its sandbox)."""
+    if sys.platform != "win32":
+        return
+    from core.sandbox import _win32
+
+    _win32.remove_container(LEGACY_CONTAINER)
+    print(f"removed the old {LEGACY_CONTAINER} profile (if there was one)")
+
+
 if __name__ == "__main__":
     if "--remove" in sys.argv[1:]:
         remove()
+    elif "--remove-legacy" in sys.argv[1:]:
+        remove_legacy()
     elif "--register" in sys.argv[1:]:
         register()
     else:

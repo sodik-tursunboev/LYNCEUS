@@ -164,7 +164,7 @@ def test_the_route_is_documented_as_a_raw_message_body() -> None:
 
 
 def sqlite_url(tmp_path: Path) -> str:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     db.Base.metadata.create_all(create_engine(url))
     return url
 

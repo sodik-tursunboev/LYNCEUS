@@ -1,6 +1,6 @@
 import { AGENT_DOWN, AGENT_SLOW, parseReply, type Reply, type Request } from "./protocol";
 
-export const HOST_NAME = "com.mirage.agent";
+export const HOST_NAME = "com.lynceus.agent";
 export type LinkState = "up" | "down";
 
 interface Waiting {

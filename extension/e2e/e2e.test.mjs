@@ -12,13 +12,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO = resolve(import.meta.dirname, "..", "..");
 const PY = join(REPO, ".venv", "Scripts", "python.exe");
-const BIN = process.env.MIRAGE_AGENT_BIN ?? join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0");
-const AGENT = join(BIN, "Mirage.Agent.exe");
-const HOST = join(BIN, "Mirage.NativeHost.exe");
+const BIN = process.env.LYNCEUS_AGENT_BIN ?? join(REPO, "agent", "Lynceus.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0");
+const AGENT = join(BIN, "Lynceus.Agent.exe");
+const HOST = join(BIN, "Lynceus.NativeHost.exe");
 const DIST = join(REPO, "extension", "dist");
 const EXT = "ahnnfchmgkcemcljobhnmmgfdgcajhfo";
 const EDGE = ["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe"].find(existsSync);
-const HOST_KEY = "HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.mirage.agent";
+const HOST_KEY = "HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.lynceus.agent";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(check, what, ms = 60_000) {
@@ -40,8 +40,8 @@ const requests = []; // what the fixture web server was asked for
 beforeAll(async () => {
   if (!EDGE) throw new Error("Microsoft Edge is not installed");
   for (const f of [PY, AGENT, HOST, join(DIST, "manifest.json")]) if (!existsSync(f)) throw new Error("missing: " + f + " (build the agent and the extension first)");
-  const tmp = mkdtempSync(join(tmpdir(), "mirage-e2e-"));
-  Object.assign(world, { tmp, home: join(tmp, "home"), watched: join(tmp, "watched"), samples: join(tmp, "samples"), db: join(tmp, "mirage.db").replaceAll("\\", "/") });
+  const tmp = mkdtempSync(join(tmpdir(), "lynceus-e2e-"));
+  Object.assign(world, { tmp, home: join(tmp, "home"), watched: join(tmp, "watched"), samples: join(tmp, "samples"), db: join(tmp, "lynceus.db").replaceAll("\\", "/") });
   for (const d of [world.home, world.watched, world.samples]) mkdirSync(d, { recursive: true });
   world.corePort = await freePort();
   world.webPort = await freePort();
@@ -70,12 +70,12 @@ beforeAll(async () => {
 
   // the browser looks this up by name; remember what was there and put it back afterwards
   world.oldHost = regQuery();
-  const manifest = join(world.home, "com.mirage.agent.json");
-  writeFileSync(manifest, JSON.stringify({ name: "com.mirage.agent", description: "e2e", path: HOST, type: "stdio", allowed_origins: [`chrome-extension://${EXT}/`] }));
+  const manifest = join(world.home, "com.lynceus.agent.json");
+  writeFileSync(manifest, JSON.stringify({ name: "com.lynceus.agent", description: "e2e", path: HOST, type: "stdio", allowed_origins: [`chrome-extension://${EXT}/`] }));
   execFileSync("reg", ["add", HOST_KEY, "/ve", "/d", manifest, "/f"]);
 
-  world.env = { ...process.env, MIRAGE_AGENT_HOME: world.home, MIRAGE_DATABASE_URL: `sqlite:///${world.db}` };
-  delete world.env.MIRAGE_API_TOKEN;
+  world.env = { ...process.env, LYNCEUS_AGENT_HOME: world.home, LYNCEUS_DATABASE_URL: `sqlite:///${world.db}` };
+  delete world.env.LYNCEUS_API_TOKEN;
   world.agent = spawn(AGENT, [], { env: world.env, windowsHide: true, stdio: "ignore" });
   await until(async () => { try { return (await fetch(`http://127.0.0.1:${world.corePort}/health`)).ok; } catch { return false; } }, "the agent to start the core");
 

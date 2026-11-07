@@ -1720,6 +1720,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
+name = "lynceus-console"
+version = "0.1.0"
+dependencies = [
+ "tauri",
+ "tauri-build",
+]
+
+[[package]]
 name = "markup5ever"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1780,14 +1788,6 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "mirage-console"
-version = "0.1.0"
-dependencies = [
- "tauri",
- "tauri-build",
 ]
 
 [[package]]

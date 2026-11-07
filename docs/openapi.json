@@ -1740,7 +1740,7 @@
     }
   },
   "info": {
-    "title": "MIRAGE",
+    "title": "Lynceus",
     "version": "1.0.0"
   },
   "openapi": "3.1.0",
@@ -1943,7 +1943,7 @@
           },
           {
             "in": "header",
-            "name": "x-mirage-actor",
+            "name": "x-lynceus-actor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -1954,7 +1954,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Actor"
+              "title": "X-Lynceus-Actor"
             }
           }
         ],
@@ -2004,7 +2004,7 @@
           },
           {
             "in": "header",
-            "name": "x-mirage-actor",
+            "name": "x-lynceus-actor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -2015,7 +2015,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Actor"
+              "title": "X-Lynceus-Actor"
             }
           }
         ],
@@ -2065,7 +2065,7 @@
           },
           {
             "in": "header",
-            "name": "x-mirage-actor",
+            "name": "x-lynceus-actor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -2076,7 +2076,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Actor"
+              "title": "X-Lynceus-Actor"
             }
           }
         ],
@@ -2197,7 +2197,7 @@
         "parameters": [
           {
             "in": "header",
-            "name": "x-mirage-actor",
+            "name": "x-lynceus-actor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -2208,7 +2208,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Actor"
+              "title": "X-Lynceus-Actor"
             }
           }
         ],
@@ -2267,7 +2267,7 @@
           },
           {
             "in": "header",
-            "name": "x-mirage-actor",
+            "name": "x-lynceus-actor",
             "required": false,
             "schema": {
               "anyOf": [
@@ -2278,7 +2278,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Actor"
+              "title": "X-Lynceus-Actor"
             }
           }
         ],
@@ -2689,7 +2689,7 @@
         "parameters": [
           {
             "in": "header",
-            "name": "x-mirage-source",
+            "name": "x-lynceus-source",
             "required": false,
             "schema": {
               "anyOf": [
@@ -2700,7 +2700,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mirage-Source"
+              "title": "X-Lynceus-Source"
             }
           }
         ],

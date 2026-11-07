@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const REPO = resolve(import.meta.dirname, "..", "..");
 const PY = join(REPO, ".venv", "Scripts", "python.exe");
-const AGENT = join(process.env.MIRAGE_AGENT_BIN ?? join(REPO, "agent", "Mirage.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0"), "Mirage.Agent.exe");
+const AGENT = join(process.env.LYNCEUS_AGENT_BIN ?? join(REPO, "agent", "Lynceus.Agent", "bin", "Debug", "net10.0-windows10.0.19041.0"), "Lynceus.Agent.exe");
 const EDGE = ["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe"].find(existsSync);
 const TOKEN = "e2e-" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + "0123456789";
 
@@ -56,8 +56,8 @@ const healthy = () => until(async () => { try { return (await fetch(`http://127.
 
 beforeAll(async () => {
   for (const f of [EDGE, PY, AGENT, join(REPO, "console", "dist", "index.html")]) if (!f || !existsSync(f)) throw new Error("missing: " + f);
-  const tmp = mkdtempSync(join(tmpdir(), "mirage-console-e2e-"));
-  Object.assign(world, { tmp, home: join(tmp, "home"), watched: join(tmp, "watched"), samples: join(tmp, "samples"), db: join(tmp, "mirage.db").replaceAll("\\", "/") });
+  const tmp = mkdtempSync(join(tmpdir(), "lynceus-console-e2e-"));
+  Object.assign(world, { tmp, home: join(tmp, "home"), watched: join(tmp, "watched"), samples: join(tmp, "samples"), db: join(tmp, "lynceus.db").replaceAll("\\", "/") });
   for (const d of [world.home, world.watched, world.samples]) mkdirSync(d, { recursive: true });
   world.corePort = await freePort();
   py(`from sqlalchemy import create_engine\nfrom core.db import models as db\ndb.Base.metadata.create_all(create_engine('sqlite:///${world.db}'))`);
@@ -66,7 +66,7 @@ beforeAll(async () => {
       `base = fh.make_pdf('/OpenAction 4 0 R', ['<< /S /Launch /F (cmd.exe) >>', '<< /S /JavaScript /JS (x) >>', '<< /S /URI /URI (https://paypal-login.test/login.php?email=jane%40example.test) >>'])\n` +
       `for n in range(1, 5):\n    open(r'${world.samples}\\bad%d.pdf' % n, 'wb').write(base + b'\\n%%variant %d\\n' % n)\n`,
   );
-  world.env = { ...process.env, MIRAGE_AGENT_HOME: world.home, MIRAGE_DATABASE_URL: `sqlite:///${world.db}`, MIRAGE_API_TOKEN: TOKEN };
+  world.env = { ...process.env, LYNCEUS_AGENT_HOME: world.home, LYNCEUS_DATABASE_URL: `sqlite:///${world.db}`, LYNCEUS_API_TOKEN: TOKEN };
   startAgent("ask");
   await healthy();
   world.browser = await puppeteer.launch({ executablePath: EDGE, headless: true, userDataDir: join(tmp, "profile") });
@@ -217,7 +217,7 @@ describe("failures are stated and nothing is lost", () => {
     expect(readFileSync(target, "utf8")).toContain("changed after the verdict");
     await go("#/actions");
     await waitText("Failed (1)");
-    expect(await bodyText()).toContain("The file changed after it was checked, so MIRAGE left it alone.");
+    expect(await bodyText()).toContain("The file changed after it was checked, so Lynceus left it alone.");
     expect(pendingBefore).toBeGreaterThan(0);
   });
 });
@@ -230,7 +230,7 @@ describe("signing in and out", () => {
     await page.close();
     await world.page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Sign out")?.click());
     await world.page.waitForFunction(() => document.body.innerText.includes("Enter the API token"));
-    expect(await world.page.evaluate(() => window.sessionStorage.getItem("mirage.token"))).toBeNull();
+    expect(await world.page.evaluate(() => window.sessionStorage.getItem("lynceus.token"))).toBeNull();
   });
 
   it("raised no policy violations or errors in the whole run", () => {

@@ -1,4 +1,4 @@
-// Messages between the extension and the MIRAGE agent (through the native host). Replies are
+// Messages between the extension and the Lynceus agent (through the native host). Replies are
 // validated strictly: anything that is not exactly one of these shapes is dropped, so a confused
 // or hostile host can never make the extension treat an unknown thing as a verdict.
 

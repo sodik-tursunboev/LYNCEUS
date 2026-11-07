@@ -75,7 +75,7 @@ export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAut
     analyzeFile: async (name: string, sha256: string, bytes: ArrayBuffer): Promise<FileAnalysis> => ({
       ...(await call<Omit<FileAnalysis, "type">>("POST", "/v1/files/analyze", bytes, {
         type: "application/octet-stream",
-        headers: { "X-Mirage-Name": encodeURIComponent(name), "X-Mirage-Sha256": sha256 },
+        headers: { "X-Lynceus-Name": encodeURIComponent(name), "X-Lynceus-Sha256": sha256 },
       })), type: "file",
     }),
   };
@@ -90,7 +90,7 @@ function explain(status: number): string {
   if (status === 422) return "The core refused that request.";
   if (status === 503) return "The core cannot do that now (is the database configured?).";
   if (status === 429) return "Too many requests. Wait a moment.";
-  if (status === 413) return "That is larger than MIRAGE reads.";
+  if (status === 413) return "That is larger than Lynceus reads.";
   if (status === 415) return "The core did not accept that kind of content.";
   return `The core answered ${status}.`;
 }

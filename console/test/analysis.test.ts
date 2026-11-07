@@ -109,7 +109,7 @@ describe("what can be analysed", () => {
   it("refuses what the core would refuse, saying why", () => {
     expect(sizeProblem("email", 0)).toBe("That file is empty.");
     expect(sizeProblem("email", LIMITS.email)).toBeNull();
-    expect(sizeProblem("email", LIMITS.email + 1)).toMatch(/MIRAGE reads up to 10\.0 MB/);
+    expect(sizeProblem("email", LIMITS.email + 1)).toMatch(/Lynceus reads up to 10\.0 MB/);
     expect(sizeProblem("file", LIMITS.file + 1)).toMatch(/up to 16\.0 MB/);
     expect(sizeProblem("file", 1)).toBeNull();
   });

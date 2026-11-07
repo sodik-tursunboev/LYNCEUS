@@ -1,7 +1,7 @@
-//! A native window around the MIRAGE console.
+//! A native window around the Lynceus console.
 //!
 //! It shows the console that the core already serves at http://127.0.0.1:<port>/console/. It makes sure
-//! the agent (which runs the core) is running, asks it for the signed-in address (`Mirage.Agent.exe
+//! the agent (which runs the core) is running, asks it for the signed-in address (`Lynceus.Agent.exe
 //! --console-link`, so the API token is only ever handled by the agent), and points the window there.
 //! It talks to nothing else: no network code other than one loopback health check, and the window may
 //! only navigate to this machine. The console page gets no access to the shell (no commands, no
@@ -22,22 +22,22 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 const DETACHED_PROCESS: u32 = 0x0000_0008;
 const START_WAIT: Duration = Duration::from_secs(60);
 
-/// `<install>\shell\mirage-console.exe` sits next to `<install>\agent\Mirage.Agent.exe`.
+/// `<install>\shell\lynceus-console.exe` sits next to `<install>\agent\Lynceus.Agent.exe`.
 fn agent_exe() -> Result<PathBuf, String> {
     #[cfg(debug_assertions)]
-    if let Some(p) = std::env::var_os("MIRAGE_AGENT_EXE") {
+    if let Some(p) = std::env::var_os("LYNCEUS_AGENT_EXE") {
         return Ok(PathBuf::from(p)); // development builds only
     }
     let here = std::env::current_exe().map_err(|e| e.to_string())?;
     let agent = here
         .parent()
         .and_then(|shell| shell.parent())
-        .map(|install| install.join("agent").join("Mirage.Agent.exe"))
+        .map(|install| install.join("agent").join("Lynceus.Agent.exe"))
         .ok_or("cannot find the install folder")?;
     if agent.is_file() {
         Ok(agent)
     } else {
-        Err(format!("the MIRAGE agent was not found at {}", agent.display()))
+        Err(format!("the Lynceus agent was not found at {}", agent.display()))
     }
 }
 
@@ -129,12 +129,12 @@ fn launch(window: WebviewWindow) {
         let agent = agent_exe()?;
         let (link, port) = console_link(&agent)?;
         if !healthy(port) {
-            say(&window, "Starting MIRAGE\u{2026}", false);
+            say(&window, "Starting Lynceus\u{2026}", false);
             start_agent(&agent)?;
             let deadline = Instant::now() + START_WAIT;
             while !healthy(port) {
                 if Instant::now() > deadline {
-                    return Err("The MIRAGE core did not answer within a minute. Look at agent.log and core.log in %LOCALAPPDATA%\\Mirage.".into());
+                    return Err("The Lynceus core did not answer within a minute. Look at agent.log and core.log in %LOCALAPPDATA%\\Lynceus.".into());
                 }
                 thread::sleep(Duration::from_millis(500));
             }
@@ -163,7 +163,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("MIRAGE")
+                .title("Lynceus")
                 .inner_size(1320.0, 860.0)
                 .min_inner_size(960.0, 640.0)
                 .center()
@@ -173,5 +173,5 @@ fn main() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("the MIRAGE console window failed to start");
+        .expect("the Lynceus console window failed to start");
 }

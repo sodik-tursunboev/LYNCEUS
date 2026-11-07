@@ -21,7 +21,7 @@
 | # | Decision | Recommendation |
 |---|---|---|
 | D1 | The permission | A **separate, explicit consent with its own token file**. The reading poller keeps its read-only token and never uses the write one. `python -m core.mailbox connect --provider gmail|outlook --write`. Gmail asks for `gmail.modify`; Outlook for `Mail.ReadWrite offline_access`. After sign-in the granted scopes are checked against a tight allow list; **any send, compose, full-access or file scope is refused and nothing is stored** |
-| D2 | What "quarantine" is | Gmail: add the label `MIRAGE-Quarantine`, remove `INBOX`. Outlook: move to a folder `MIRAGE Quarantine`. **Restore** puts it back in the inbox. Nothing goes to Trash, nothing is deleted, and the mail stays visible to you in that label or folder |
+| D2 | What "quarantine" is | Gmail: add the label `LYNCEUS-Quarantine`, remove `INBOX`. Outlook: move to a folder `Lynceus Quarantine`. **Restore** puts it back in the inbox. Nothing goes to Trash, nothing is deleted, and the mail stays visible to you in that label or folder |
 | D3 | Who acts | The **core** (it already holds the mailbox tokens), from a small runner. The agent never sees mail actions: the action list can be filtered by kind, the agent asks for files only, and the result route refuses to finish a mail action. Same state machine, audit and console as files |
 | D4 | Policy | Only **MALICIOUS** mail creates a pending action, and only if the write permission for that provider is connected. **Always your click**: `auto` mode never applies to mail (a wrong mail move costs more than a wrong file move). SUSPICIOUS is never moved |
 | D5 | What is stored | The provider's opaque message id and the provider name, on the action row only (needed to find the message again). Never returned by the API, never logged, cleared when the action is restored. This relaxes ADR-017's "only a hash"; PRIVACY and the ADR addendum say so |
@@ -31,8 +31,8 @@
 
 ## Security implications
 
-**New:** a credential that can change your mailbox, and code that uses it. **Controls:** separate consent and token (D1); granted-scope allow list; the narrow guard (D7) so MIRAGE's own code cannot delete or send even though the token could; always a human click (D4); reversible (D2); audit rows for every step with actor, provider and a hash prefix, never an id, address or subject (D5); the message id never leaves the action row.
-**Residual:** the token is more powerful than MIRAGE's use of it: a program running as you that can decrypt it could send mail (Gmail) or delete mail (Graph) — the DPAPI file is protected from other users, not from your own session. Google's restricted scope means tokens last 7 days while the project is in "Testing", and public use would need Google's verification. A mail provider could change its behaviour (unverified rows above).
+**New:** a credential that can change your mailbox, and code that uses it. **Controls:** separate consent and token (D1); granted-scope allow list; the narrow guard (D7) so Lynceus's own code cannot delete or send even though the token could; always a human click (D4); reversible (D2); audit rows for every step with actor, provider and a hash prefix, never an id, address or subject (D5); the message id never leaves the action row.
+**Residual:** the token is more powerful than Lynceus's use of it: a program running as you that can decrypt it could send mail (Gmail) or delete mail (Graph) — the DPAPI file is protected from other users, not from your own session. Google's restricted scope means tokens last 7 days while the project is in "Testing", and public use would need Google's verification. A mail provider could change its behaviour (unverified rows above).
 
 ## Acceptance criteria
 

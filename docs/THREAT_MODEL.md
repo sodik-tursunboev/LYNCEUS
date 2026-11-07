@@ -1,6 +1,6 @@
 # Threat model v0
 
-Scope: the MIRAGE system as described in `CLAUDE.md`. Written in M0, before any detection logic exists; it records what we protect, where trust changes, who attacks, and what each top threat will be met with. "Status" says what actually exists today, not what is planned.
+Scope: the Lynceus system as described in `CLAUDE.md`. Written in M0, before any detection logic exists; it records what we protect, where trust changes, who attacks, and what each top threat will be met with. "Status" says what actually exists today, not what is planned.
 
 ## Assets
 | Asset | Why it matters |
@@ -52,7 +52,7 @@ Revisit at the end of every milestone. Ownership of the three sign-off ADRs (008
 
 ## Live mailbox (M5)
 
-New assets: an OAuth client id/secret (operator's own), a refresh token that can read the whole mailbox, and the mail itself while it is analysed. New boundary: the core talks to three Google hosts on the user's behalf, the only Internet access MIRAGE makes for the user (apart from opt-in threat-intel providers, ADR-015).
+New assets: an OAuth client id/secret (operator's own), a refresh token that can read the whole mailbox, and the mail itself while it is analysed. New boundary: the core talks to three Google hosts on the user's behalf, the only Internet access Lynceus makes for the user (apart from opt-in threat-intel providers, ADR-015).
 
 | Threat | Control | Residual |
 |---|---|---|
@@ -85,7 +85,7 @@ New asset: a second refresh token per provider that can **change** the mailbox (
 
 | Threat | Control | Residual |
 |---|---|---|
-| MIRAGE's own code deletes or sends mail | a second HTTP client with an allow-list guard: only the exact label/folder/move requests, bodies limited to the label lists or `destinationId`; DELETE, PUT, PATCH, send, drafts, trash refused before sending; tests try each | the guard limits MIRAGE, not the token |
+| Lynceus's own code deletes or sends mail | a second HTTP client with an allow-list guard: only the exact label/folder/move requests, bodies limited to the label lists or `destinationId`; DELETE, PUT, PATCH, send, drafts, trash refused before sending; tests try each | the guard limits Lynceus, not the token |
 | The wider token is stolen or misused | separate consent with a typed YES; own DPAPI file; the reading poller never loads it; granted scopes checked against an allow list (send, compose, full access, `Mail.Send`, files refused, nothing stored); `disconnect --write` removes it and asks Google to revoke | any program running as you can decrypt the file and then send mail (Gmail) or delete mail (Graph) |
 | A wrong or forged verdict hides a good message | only MALICIOUS; always your click (`auto` mode and the `policy` actor are refused for mail); reversible (a label or folder, nothing deleted); restore is one click | a mis-judged message is out of your inbox until you restore it |
 | Something other than you approves a move | the agent never receives mail actions; `/result` refuses to finish one; approval needs the API token | a local process holding the API token can approve, like for files |
@@ -95,4 +95,4 @@ New asset: a second refresh token per provider that can **change** the mailbox (
 
 ## Hardening pass (M7)
 
-The new doors (native-messaging protocol, pipe, response routes, console route) were attacked with seeded random and mutated input; see `tests/adversarial/test_response_fuzz.py` and `agent/Mirage.Agent.Tests/FuzzTests.cs`. Two defects were found and fixed: a protocol parser that threw on invalid UTF-8 (a hostile frame closed the connection instead of being refused) and an audit log that could record an unknown actor name. **Residual:** the fuzzing is bounded (fixed seeds, thousands of cases, not coverage-guided); the sandbox's escape resistance has been tested with bomb and malformed-input fixtures only, never with a real exploit; nothing has been reviewed by anyone but the author.
+The new doors (native-messaging protocol, pipe, response routes, console route) were attacked with seeded random and mutated input; see `tests/adversarial/test_response_fuzz.py` and `agent/Lynceus.Agent.Tests/FuzzTests.cs`. Two defects were found and fixed: a protocol parser that threw on invalid UTF-8 (a hostile frame closed the connection instead of being refused) and an audit log that could record an unknown actor name. **Residual:** the fuzzing is bounded (fixed seeds, thousands of cases, not coverage-guided); the sandbox's escape resistance has been tested with bomb and malformed-input fixtures only, never with a real exploit; nothing has been reviewed by anyone but the author.

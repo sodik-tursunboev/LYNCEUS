@@ -4,7 +4,7 @@
   Registers the parser sandbox for this user (the MSI ships it built), writes agent.json and a first
   engine\.env if there are none, applies database migrations if a database is configured, registers
   start-at-logon and the browser bridge, and starts the agent. Your data folder is never touched. A
-  failure here makes the installer roll back; the reason is in %LOCALAPPDATA%\Mirage\setup.log.
+  failure here makes the installer roll back; the reason is in %LOCALAPPDATA%\Lynceus\setup.log.
 .PARAMETER InstallDir   The folder the MSI installed to.
 .PARAMETER NoStart      Anything but empty or 0: do not start the agent.
 .PARAMETER NoRegister   Anything but empty or 0: do not register start-at-logon and the browser bridge.
@@ -28,11 +28,20 @@ $forceConfig = IsOn $ResetConfig
 $install = [System.IO.Path]::GetFullPath($InstallDir).TrimEnd('\')
 $engine = Join-Path $install 'engine'
 $python = Join-Path $engine 'python\python.exe'
-$agentExe = Join-Path $install 'agent\Mirage.Agent.exe'
-$home_ = if ($env:MIRAGE_AGENT_HOME) { $env:MIRAGE_AGENT_HOME } else { Join-Path $env:LOCALAPPDATA 'Mirage' }
+$agentExe = Join-Path $install 'agent\Lynceus.Agent.exe'
+$agentHome = if ($env:LYNCEUS_AGENT_HOME) { $env:LYNCEUS_AGENT_HOME } else { $env:MIRAGE_AGENT_HOME }   # the old name still works
+$home_ = if ($agentHome) { $agentHome } else { Join-Path $env:LOCALAPPDATA 'Lynceus' }
+# The product used to be called MIRAGE: bring its data folder (config, token, quarantine, logs) along, once.
+$legacyHome = Join-Path $env:LOCALAPPDATA 'Mirage'
+$migrated = $null
+if ((-not $agentHome) -and (-not (Test-Path $home_)) -and (Test-Path $legacyHome)) {
+    try { Move-Item -LiteralPath $legacyHome -Destination $home_ -ErrorAction Stop; $migrated = "moved your data from $legacyHome to $home_" }
+    catch { $home_ = $legacyHome; $migrated = "could not move $legacyHome ($($_.Exception.GetType().Name)); the old folder stays in use" }
+}
 New-Item -ItemType Directory -Force $home_ | Out-Null
 $log = Join-Path $home_ 'setup.log'
 function Say($text) { Add-Content -Path $log -Value "$(Get-Date -Format s) $text"; Write-Host "[setup] $text" }
+if ($migrated) { Say $migrated }
 function Test-IsUnder($path, $folder) {
     $p = [System.IO.Path]::GetFullPath($path).TrimEnd('\') + '\'
     $f = [System.IO.Path]::GetFullPath($folder).TrimEnd('\') + '\'
@@ -40,7 +49,7 @@ function Test-IsUnder($path, $folder) {
 }
 
 try {
-    if (-not ((Test-Path $python) -and (Test-Path $agentExe))) { throw "$install does not look like a MIRAGE install" }
+    if (-not ((Test-Path $python) -and (Test-Path $agentExe))) { throw "$install does not look like a Lynceus install" }
 
     # ---- the sandbox: shipped built, registered for this user -------------------------------------
     Say 'registering the parser sandbox for this user'
@@ -49,6 +58,7 @@ try {
         $out = & $python -E -s -m core.sandbox.build --register 2>&1
         if ($LASTEXITCODE) { throw "the sandbox could not be registered: $($out -join ' ')" }
         Say ($out -join ' ')
+        & $python -E -s -m core.sandbox.build --remove-legacy 2>&1 | Out-Null   # the profile it had under its old name
     } finally { Pop-Location }
 
     # ---- configuration (your settings are kept) ------------------------------------------------------
@@ -74,21 +84,21 @@ try {
     $envFile = Join-Path $engine '.env'
     if (-not (Test-Path $envFile)) {
         $example = 'postgresql+psycopg://USER:' + 'PASSWORD@127.0.0.1:5432/mirage'
-        $text = "MIRAGE_DATA_DIR=$(Join-Path $home_ 'data')`r`n# Responses and the console lists need a PostgreSQL database:`r`n# MIRAGE_DATABASE_URL=$example`r`n"
+        $text = "LYNCEUS_DATA_DIR=$(Join-Path $home_ 'data')`r`n# Responses and the console lists need a PostgreSQL database:`r`n# LYNCEUS_DATABASE_URL=$example`r`n"
         [System.IO.File]::WriteAllText($envFile, $text, (New-Object System.Text.UTF8Encoding($false)))
         Say "wrote $envFile"
     }
 
     # ---- database (only if you configured one) --------------------------------------------------------
     $url = $null
-    $m = Select-String -Path $envFile -Pattern '^MIRAGE_DATABASE_URL=(.+)$' | Select-Object -First 1
+    $m = Select-String -Path $envFile -Pattern '^LYNCEUS_DATABASE_URL=(.+)$' | Select-Object -First 1
     if ($m) { $url = $m.Matches[0].Groups[1].Value }
     if ($url) {
         Say 'applying database migrations'
-        $env:MIRAGE_DATABASE_URL = $url
+        $env:LYNCEUS_DATABASE_URL = $url
         Push-Location $engine
-        try { $out = & $python -E -s -m alembic upgrade head 2>&1; Say (($out | Select-Object -Last 2) -join ' ') } finally { Pop-Location; Remove-Item Env:\MIRAGE_DATABASE_URL -ErrorAction SilentlyContinue }
-    } else { Say "no MIRAGE_DATABASE_URL in ${envFile}: skipping migrations (responses and the console lists need a database)" }
+        try { $out = & $python -E -s -m alembic upgrade head 2>&1; Say (($out | Select-Object -Last 2) -join ' ') } finally { Pop-Location; Remove-Item Env:\LYNCEUS_DATABASE_URL -ErrorAction SilentlyContinue }
+    } else { Say "no LYNCEUS_DATABASE_URL in ${envFile}: skipping migrations (responses and the console lists need a database)" }
 
     # ---- register and start -----------------------------------------------------------------------------
     if (-not $skipRegister) {
@@ -103,9 +113,9 @@ try {
         if ($status -match 'False') { Say ('WARNING: registration still incomplete (' + $status + '). Run "' + $agentExe + '" --install') } else { Say $status }
     }
     if (-not $skipStart) {
-        $elsewhere = @(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and -not (Test-IsUnder $_.Path $install) })
+        $elsewhere = @(Get-Process -Name 'Lynceus.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and -not (Test-IsUnder $_.Path $install) })
         if ($elsewhere.Count) {
-            Say "a MIRAGE agent is already running from $($elsewhere[0].Path), so this one was not started. Stop that one and start $agentExe."
+            Say "a Lynceus agent is already running from $($elsewhere[0].Path), so this one was not started. Stop that one and start $agentExe."
         } else {
             Say 'starting the agent'
             Start-Process -FilePath $agentExe -WindowStyle Hidden

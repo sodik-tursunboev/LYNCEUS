@@ -1,8 +1,8 @@
 {
-  "name": "mirage-extension",
+  "name": "lynceus-extension",
   "version": "0.1.0",
   "private": true,
-  "description": "MIRAGE browser extension (Manifest V3)",
+  "description": "Lynceus browser extension (Manifest V3)",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",

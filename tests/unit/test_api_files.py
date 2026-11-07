@@ -36,12 +36,12 @@ def client(tmp_path: Path, **over: Any) -> TestClient:
 
 
 def send(c: TestClient, name: str, data: bytes, **headers: str) -> Any:
-    h = AUTH | OCTET | {"X-Mirage-Name": quote(name, safe="")} | headers
+    h = AUTH | OCTET | {"X-Lynceus-Name": quote(name, safe="")} | headers
     return c.post("/v1/files/analyze", content=data, headers=h)
 
 
 def sqlite_url(tmp_path: Path) -> str:
-    url = f"sqlite:///{tmp_path / 'mirage.db'}"
+    url = f"sqlite:///{tmp_path / 'lynceus.db'}"
     db.Base.metadata.create_all(create_engine(url))
     return url
 
@@ -75,13 +75,13 @@ def test_the_origin_host_and_a_correct_hash_are_accepted(tmp_path: Path) -> None
         client(tmp_path),
         "a.exe",
         EXE,
-        **{"X-Mirage-Sha256": sha, "X-Mirage-Origin-Host": "origin.test"},
+        **{"X-Lynceus-Sha256": sha, "X-Lynceus-Origin-Host": "origin.test"},
     )
     assert r.status_code == 200 and r.json()["reason"] is None
 
 
 def test_a_hash_that_does_not_match_the_bytes_is_reported_not_trusted(tmp_path: Path) -> None:
-    r = send(client(tmp_path), "a.exe", EXE, **{"X-Mirage-Sha256": "00" * 32})
+    r = send(client(tmp_path), "a.exe", EXE, **{"X-Lynceus-Sha256": "00" * 32})
     assert (
         r.json()["reason"] == "changed_while_reading" and r.json()["verdict"]["state"] == "UNKNOWN"
     )
@@ -89,7 +89,7 @@ def test_a_hash_that_does_not_match_the_bytes_is_reported_not_trusted(tmp_path: 
 
 @pytest.mark.parametrize("name", ["", "a\x00b", "x" * 5000])
 def test_a_missing_or_absurd_name_is_a_422(tmp_path: Path, name: str) -> None:
-    h = AUTH | OCTET | ({"X-Mirage-Name": quote(name, safe="")} if name else {})
+    h = AUTH | OCTET | ({"X-Lynceus-Name": quote(name, safe="")} if name else {})
     assert client(tmp_path).post("/v1/files/analyze", content=EXE, headers=h).status_code == 422
 
 
@@ -97,7 +97,7 @@ def test_only_octet_stream_is_accepted(tmp_path: Path) -> None:
     r = client(tmp_path).post(
         "/v1/files/analyze",
         content=EXE,
-        headers=AUTH | {"Content-Type": "application/json", "X-Mirage-Name": "a"},
+        headers=AUTH | {"Content-Type": "application/json", "X-Lynceus-Name": "a"},
     )
     assert r.status_code == 415
 
@@ -163,7 +163,7 @@ def test_a_file_is_stored_by_hash_and_origin_host_only(tmp_path: Path) -> None:
     url = sqlite_url(tmp_path)
     c = client(tmp_path, database_url=url)
     pdf = fh.pdf_with_uris("https://paypal-login.test/PATHMARK?q=QUERYMARK")
-    r = send(c, "FILEMARK-statement.pdf", pdf, **{"X-Mirage-Origin-Host": "origin-site.test"})
+    r = send(c, "FILEMARK-statement.pdf", pdf, **{"X-Lynceus-Origin-Host": "origin-site.test"})
     assert r.status_code == 200 and r.json()["persisted"] is True
     with create_engine(url).connect() as conn:
         art = conn.execute(select(db.Artifact)).one()
@@ -248,13 +248,13 @@ def test_the_browser_header_marks_the_stored_event_source(tmp_path: Path) -> Non
     body = {"url": "https://paypal-login.test/login.php"}
     assert (
         c.post(
-            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Mirage-Source": "BROWSER"}
+            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Lynceus-Source": "BROWSER"}
         ).status_code
         == 200
     )
     assert (
         c.post(
-            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Mirage-Source": "whatever"}
+            "/v1/urls/analyze", json=body, headers=AUTH | {"X-Lynceus-Source": "whatever"}
         ).status_code
         == 200
     )

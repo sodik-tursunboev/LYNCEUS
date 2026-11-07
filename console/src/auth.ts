@@ -1,6 +1,6 @@
 // The API token lives in sessionStorage (this tab only) and is never put in a URL by the console.
-// `#token=...` is accepted once, from `Mirage.Agent --open-console`, and removed from the address at once.
-const KEY = "mirage.token";
+// `#token=...` is accepted once, from `Lynceus.Agent --open-console`, and removed from the address at once.
+const KEY = "lynceus.token";
 
 export interface Env {
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">;

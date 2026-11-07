@@ -45,7 +45,7 @@ def fake_sandbox(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class World:
     def __init__(self, tmp_path: Path) -> None:
-        self.url = f"sqlite:///{tmp_path / 'mirage.db'}"
+        self.url = f"sqlite:///{tmp_path / 'lynceus.db'}"
         self.engine = create_engine(self.url)
         db.Base.metadata.create_all(self.engine)
         settings = Settings(
@@ -56,14 +56,14 @@ class World:
     def send(self, name: str, data: bytes, ref: str | None = "a" * 32) -> Any:
         h = AUTH | {
             "Content-Type": "application/octet-stream",
-            "X-Mirage-Name": quote(name, safe=""),
+            "X-Lynceus-Name": quote(name, safe=""),
         }
         if ref:
-            h["X-Mirage-File-Id"] = ref
+            h["X-Lynceus-File-Id"] = ref
         return self.client.post("/v1/files/analyze", content=data, headers=h)
 
     def act(self, action_id: str, verb: str, actor: str | None = None) -> Any:
-        headers = AUTH | ({"X-Mirage-Actor": actor} if actor else {})
+        headers = AUTH | ({"X-Lynceus-Actor": actor} if actor else {})
         return self.client.post(f"/v1/actions/{action_id}/{verb}", headers=headers)
 
     def result(self, action_id: str, outcome: str, reason: str | None = None) -> Any:
@@ -147,8 +147,8 @@ def test_no_file_id_means_no_action_and_a_malformed_one_is_ignored(world: World)
     assert world.send("a.pdf", BAD_PDF, None).json()["action_id"] is None
     r = world.client.post(
         "/v1/files/analyze", content=BAD_PDF,
-        headers=AUTH | {"Content-Type": "application/octet-stream", "X-Mirage-Name": "a.pdf",
-                        "X-Mirage-File-Id": "not-hex"},
+        headers=AUTH | {"Content-Type": "application/octet-stream", "X-Lynceus-Name": "a.pdf",
+                        "X-Lynceus-File-Id": "not-hex"},
     )  # fmt: skip
     assert r.status_code == 200 and r.json()["action_id"] is None
 
@@ -363,8 +363,8 @@ def test_without_a_database_a_malicious_file_still_gets_its_verdict_and_no_actio
     )
     r = c.post(
         "/v1/files/analyze", content=BAD_PDF,
-        headers=AUTH | {"Content-Type": "application/octet-stream", "X-Mirage-Name": "a.pdf",
-                        "X-Mirage-File-Id": "a" * 32},
+        headers=AUTH | {"Content-Type": "application/octet-stream", "X-Lynceus-Name": "a.pdf",
+                        "X-Lynceus-File-Id": "a" * 32},
     )  # fmt: skip
     assert r.status_code == 200 and r.json()["verdict"]["state"] == "MALICIOUS"
     assert r.json()["action_id"] is None and r.json()["persisted"] is False

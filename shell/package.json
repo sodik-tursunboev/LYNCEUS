@@ -1,8 +1,8 @@
 {
-  "name": "mirage-console-shell",
+  "name": "lynceus-console-shell",
   "version": "0.1.0",
   "private": true,
-  "description": "A native window around the MIRAGE console (Tauri). The console itself is console/, served by the core.",
+  "description": "A native window around the Lynceus console (Tauri). The console itself is console/, served by the core.",
   "scripts": {
     "build": "tauri build --no-bundle",
     "icons": "tauri icon ../console/static/favicon.svg"

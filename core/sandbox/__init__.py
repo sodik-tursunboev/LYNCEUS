@@ -13,7 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SANDBOX_DIR = ROOT / ".sandbox"
 RUNTIME = SANDBOX_DIR / "runtime"
 APP = SANDBOX_DIR / "app"
-CONTAINER = "mirage.parser"
+CONTAINER = "lynceus.parser"
+LEGACY_CONTAINER = "mirage.parser"  # the profile the product registered before it was renamed
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 # The whole environment the worker sees. LOCALAPPDATA must exist for an AppContainer launch to
 # succeed; a dummy value is enough (Windows derives TEMP from it). No real user path goes in.

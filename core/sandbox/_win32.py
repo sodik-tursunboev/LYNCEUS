@@ -280,7 +280,7 @@ def register_container(name: str) -> str:
     hr = (
         userenv.CreateAppContainerProfile(
             name,
-            "MIRAGE parser sandbox",
+            "Lynceus parser sandbox",
             "Runs untrusted parsers with no network or file access",
             None,
             0,

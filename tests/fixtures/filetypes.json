@@ -1,5 +1,5 @@
 {
-  "comment": "Shared by tests/unit/test_filetype_fixtures.py (core/sandbox/guest/filetype.py) and agent/Mirage.Agent.Tests (FileSignatures.cs). A case is the bytes of 'hex' (space-separated, so a secret scanner does not mistake them for keys) (or the UTF-8 of 'text') placed at offset 'at' in a zero-filled buffer of at least 'at' + length bytes. 'expect' is the type name or null. Change one detector and the other test fails until both agree.",
+  "comment": "Shared by tests/unit/test_filetype_fixtures.py (core/sandbox/guest/filetype.py) and agent/Lynceus.Agent.Tests (FileSignatures.cs). A case is the bytes of 'hex' (space-separated, so a secret scanner does not mistake them for keys) (or the UTF-8 of 'text') placed at offset 'at' in a zero-filled buffer of at least 'at' + length bytes. 'expect' is the type name or null. Change one detector and the other test fails until both agree.",
   "cases": [
     {"name": "pdf", "hex": "25 50 44 46 2d 31 2e 37 0a", "expect": "pdf"},
     {"name": "zip local header", "hex": "50 4b 03 04 72 65 73 74", "expect": "zip"},

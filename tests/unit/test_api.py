@@ -54,7 +54,7 @@ def test_health_proves_who_it_is_with_a_nonce_without_revealing_the_token() -> N
 
 @pytest.mark.parametrize("value", ["CHANGE_ME", "change_me_to_something_long", "short", "x" * 15])
 def test_a_placeholder_or_short_token_is_refused(value: str) -> None:
-    with pytest.raises(ValueError, match="MIRAGE_API_TOKEN"):
+    with pytest.raises(ValueError, match="LYNCEUS_API_TOKEN"):
         Settings(_env_file=None, api_token=value)
     assert Settings(_env_file=None, api_token="").api_token is None  # empty means not set
     assert Settings(_env_file=None, api_token="x" * 16).api_token is not None
@@ -264,7 +264,7 @@ def test_openapi_declares_the_bearer_scheme() -> None:
 
 
 def test_settings_read_env_with_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MIRAGE_LOG_LEVEL", "DEBUG")
+    monkeypatch.setenv("LYNCEUS_LOG_LEVEL", "DEBUG")
     assert Settings(_env_file=None).log_level == "DEBUG"
 
 

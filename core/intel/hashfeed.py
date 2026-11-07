@@ -1,7 +1,7 @@
 """Known-malware hashes from MalwareBazaar's "recent additions" export, into the local hash lists.
 
 Opt-in and operator-run (`python -m core.intel hashes sync`): nothing downloads unless you run it
-with your own free abuse.ch Auth-Key set (the same key URLhaus uses: MIRAGE_URLHAUS_AUTH_KEY).
+with your own free abuse.ch Auth-Key set (the same key URLhaus uses: LYNCEUS_URLHAUS_AUTH_KEY).
 Only a download: the key travels in the address (as abuse.ch's own example shows), no hash and
 nothing about your files is sent. The export lists the hashes of the last 48 hours and is
 regenerated every five minutes, so each run is merged into the local list, which therefore grows
@@ -38,7 +38,7 @@ async def sync(
 ) -> tuple[str, int, str]:
     """(status, hashes now in the list, detail). The previous list survives every failure."""
     if not key:
-        return "error", 0, "an abuse.ch Auth-Key is required (MIRAGE_URLHAUS_AUTH_KEY)"
+        return "error", 0, "an abuse.ch Auth-Key is required (LYNCEUS_URLHAUS_AUTH_KEY)"
     target = directory / f"{NAME}.txt"
     clock = now if now is not None else time.time()
     existing = hashlists.read_list(directory, NAME)

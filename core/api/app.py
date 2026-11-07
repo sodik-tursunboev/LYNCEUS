@@ -33,7 +33,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from core import hashlists
 from core.api.console import mount_console
-from core.config import Settings
+from core.config import Settings, legacy_env_names
 from core.contracts import EventSource, VerdictState
 from core.db import audit
 from core.db.store import save_analysis, save_email_analysis, save_file_analysis
@@ -208,6 +208,10 @@ def _file_ref(value: str | None) -> str | None:
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     configure(settings.log_level)
+    if old := legacy_env_names():  # names only, never values
+        log.warning(
+            "settings still use the old MIRAGE_ names (%s): rename them to LYNCEUS_", ", ".join(old)
+        )
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
 
     mailboxes: list[MailboxService] = []  # filled below, once the database exists
@@ -228,7 +232,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await intel.aclose()
 
     app = FastAPI(
-        title="MIRAGE",
+        title="Lynceus",
         version=ENGINE_VERSION,
         docs_url=None,
         redoc_url=None,
@@ -308,12 +312,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/v1/urls/analyze", dependencies=[Depends(require_token), Depends(url_limiter)])
     async def analyze(
         request: AnalyzeRequest,
-        x_mirage_source: Annotated[str | None, Header()] = None,
+        x_lynceus_source: Annotated[str | None, Header()] = None,
     ) -> AnalyzeResponse:
         analysis, outcome = await analyze_with_intel(request.url, intel)
         persisted = False
         # the browser extension says so; anything else is recorded as a plain API call
-        source = EventSource.BROWSER if x_mirage_source == "BROWSER" else EventSource.API
+        source = EventSource.BROWSER if x_lynceus_source == "BROWSER" else EventSource.API
         if db is not None:
             try:
                 await run_in_threadpool(save_analysis, db, analysis, source)
@@ -474,15 +478,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(
                 status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "send application/octet-stream"
             )
-        raw_name = request.headers.get("x-mirage-name", "")
+        raw_name = request.headers.get("x-lynceus-name", "")
         name = unquote(raw_name, errors="replace")
         if not raw_name or len(raw_name) > 4096 or len(name) > 1024 or "\x00" in name:
-            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "X-Mirage-Name is required")
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "X-Lynceus-Name is required")
         data = await request.body()
         return await _file_verdict(
-            name, len(data), request.headers.get("x-mirage-sha256", ""), data, None,
-            request.headers.get("x-mirage-origin-host"),
-            _file_ref(request.headers.get("x-mirage-file-id")),
+            name, len(data), request.headers.get("x-lynceus-sha256", ""), data, None,
+            request.headers.get("x-lynceus-origin-host"),
+            _file_ref(request.headers.get("x-lynceus-file-id")),
         )  # fmt: skip
 
     @app.post("/v1/files/check", dependencies=[Depends(require_token), Depends(limiter)])

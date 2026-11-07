@@ -109,7 +109,7 @@ def build_router(
         if db is None:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
-                "responses need the database (MIRAGE_DATABASE_URL)",
+                "responses need the database (LYNCEUS_DATABASE_URL)",
             )
         return db
 
@@ -155,9 +155,9 @@ def build_router(
 
     @router.post("/v1/actions/{action_id}/approve")
     def approve(
-        action_id: uuid.UUID, x_mirage_actor: Annotated[str | None, Header()] = None
+        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
     ) -> ActionResult:
-        actor = _actor(x_mirage_actor)
+        actor = _actor(x_lynceus_actor)
         if actor == "policy" and service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
             # a wrong message move costs more than a wrong file move: always your own click
             raise HTTPException(
@@ -167,15 +167,15 @@ def build_router(
 
     @router.post("/v1/actions/{action_id}/dismiss")
     def dismiss(
-        action_id: uuid.UUID, x_mirage_actor: Annotated[str | None, Header()] = None
+        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
     ) -> ActionResult:
-        return apply(action_id, Event.DISMISS, _actor(x_mirage_actor))
+        return apply(action_id, Event.DISMISS, _actor(x_lynceus_actor))
 
     @router.post("/v1/actions/{action_id}/restore")
     def restore(
-        action_id: uuid.UUID, x_mirage_actor: Annotated[str | None, Header()] = None
+        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
     ) -> ActionResult:
-        return apply(action_id, Event.RESTORE, _actor(x_mirage_actor))
+        return apply(action_id, Event.RESTORE, _actor(x_lynceus_actor))
 
     @router.post("/v1/actions/{action_id}/result")
     def result(action_id: uuid.UUID, body: ResultBody) -> ActionResult:
@@ -197,20 +197,20 @@ def build_router(
 
     @router.post("/v1/allowlist")
     def allow_add(
-        body: AllowBody, x_mirage_actor: Annotated[str | None, Header()] = None
+        body: AllowBody, x_lynceus_actor: Annotated[str | None, Header()] = None
     ) -> AllowOut:
-        actor = _actor(x_mirage_actor)
+        actor = _actor(x_lynceus_actor)
         service.allow_add(need_db(), body.sha256, actor, body.days)
         entry = next(a for a in service.allow_list(need_db()) if a["sha256"] == body.sha256)
         return AllowOut(**entry)
 
     @router.delete("/v1/allowlist/{sha256}")
     def allow_remove(
-        sha256: str, x_mirage_actor: Annotated[str | None, Header()] = None
+        sha256: str, x_lynceus_actor: Annotated[str | None, Header()] = None
     ) -> dict[str, bool]:
         if not _SHA.match(sha256):
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "not a SHA-256")
-        return {"removed": service.allow_remove(need_db(), sha256, _actor(x_mirage_actor))}
+        return {"removed": service.allow_remove(need_db(), sha256, _actor(x_lynceus_actor))}
 
     @router.get("/v1/audit")
     def audit(limit: Annotated[int, Query(ge=1, le=500)] = 100) -> list[AuditOut]:

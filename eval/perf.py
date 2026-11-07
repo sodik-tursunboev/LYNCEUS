@@ -110,9 +110,9 @@ def api_load(seconds: float, workers: int) -> dict[str, float]:
     # an empty database URL overrides the .env file: the load test must not write to a real database
     env = dict(
         os.environ,
-        MIRAGE_API_TOKEN=TOKEN,
-        MIRAGE_DATABASE_URL="",
-        MIRAGE_RATE_LIMIT_PER_MINUTE="100000000",
+        LYNCEUS_API_TOKEN=TOKEN,
+        LYNCEUS_DATABASE_URL="",
+        LYNCEUS_RATE_LIMIT_PER_MINUTE="100000000",
     )  # the default limiter is 120 a minute
     proc = subprocess.Popen(  # noqa: S603
         [sys.executable, "-m", "uvicorn", "core.api.app:create_app", "--factory",
@@ -247,7 +247,7 @@ def markdown(r: dict[str, object]) -> str:
         "  process starts for each one (the 1 KB file is the floor); the work inside it is small.",
         "- A URL costs about a millisecond in process. The API figure is the ceiling with the rate",
         "  limiter lifted: by default the API allows 120 requests a minute per client",
-        "  (`MIRAGE_RATE_LIMIT_PER_MINUTE`).",
+        "  (`LYNCEUS_RATE_LIMIT_PER_MINUTE`).",
         "- The agent notices a finished download after its quiet period (one second by default)",
         "  and then pays the file cost above plus a local HTTP call. A browser check adds the",
         "  native-messaging round trip (M4 spike: p95 under a millisecond) plus the URL cost.",

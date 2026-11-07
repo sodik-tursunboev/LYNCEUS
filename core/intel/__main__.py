@@ -6,7 +6,7 @@
     python -m core.intel hashes status|import|check|sync     known-bad file hashes (offline lookup)
 
 `sync` and `hashes sync` are the only commands that touch the network, and only to download lists
-the operator asked for (the feeds enabled in MIRAGE_INTEL_PROVIDERS; MalwareBazaar's hashes with the
+the operator asked for (the feeds in LYNCEUS_INTEL_PROVIDERS; MalwareBazaar's hashes with the
 operator's own abuse.ch key). `lookup` and the other `hashes` commands are offline.
 """
 
@@ -38,10 +38,10 @@ async def _sync(settings: Settings, names: list[str], force: bool) -> int:
     chosen = names or sorted(enabled)
     refused = [n for n in chosen if n not in enabled]
     if refused:
-        print(f"not enabled in MIRAGE_INTEL_PROVIDERS: {', '.join(refused)}", file=sys.stderr)
+        print(f"not enabled in LYNCEUS_INTEL_PROVIDERS: {', '.join(refused)}", file=sys.stderr)
         return 2
     if not chosen:
-        print("no list feeds are enabled (set MIRAGE_INTEL_PROVIDERS)")
+        print("no list feeds are enabled (set LYNCEUS_INTEL_PROVIDERS)")
         return 0
     store, keys, failed = FeedStore(settings.data_dir / "feeds"), _keys(settings), False
     async with make_client(timeout=30.0) as client:

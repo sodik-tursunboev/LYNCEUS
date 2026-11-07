@@ -74,7 +74,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             and ("code" in q or "error" in q)
         ):
             self.server.result = q
-            body, code = b"MIRAGE is connected. You can close this tab.", 200
+            body, code = b"Lynceus is connected. You can close this tab.", 200
         else:
             self.server.strays += 1
             body, code = b"Not the expected sign-in response.", 400

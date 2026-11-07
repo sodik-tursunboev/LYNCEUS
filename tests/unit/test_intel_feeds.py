@@ -165,7 +165,7 @@ def test_the_store_round_trips_and_caches_by_file_signature(store: FeedStore) ->
 
 @pytest.mark.parametrize(
     "content",
-    ["", "wrong-magic\n{}\n", "mirage-feed 1\nnot json\n", 'mirage-feed 1\n{"entries": 1}\n'],
+    ["", "wrong-magic\n{}\n", "lynceus-feed 1\nnot json\n", 'lynceus-feed 1\n{"entries": 1}\n'],
 )
 def test_a_damaged_file_is_treated_as_absent(store: FeedStore, content: str) -> None:
     store.dir.mkdir(parents=True)

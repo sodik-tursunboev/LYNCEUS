@@ -71,7 +71,7 @@ class Table_<T> {
 export class VerdictCache {
   private readonly table: Table_<Entry>;
   constructor(kv: KV, private readonly now: () => number = Date.now) {
-    this.table = new Table_<Entry>(kv, "mirage.verdicts");
+    this.table = new Table_<Entry>(kv, "lynceus.verdicts");
   }
 
   async get(key: string): Promise<Entry | null> {
@@ -96,7 +96,7 @@ export class VerdictCache {
 export class Overrides {
   private readonly table: Table_<number>;
   constructor(kv: KV, private readonly now: () => number = Date.now) {
-    this.table = new Table_<number>(kv, "mirage.overrides");
+    this.table = new Table_<number>(kv, "lynceus.overrides");
   }
 
   async active(key: string): Promise<boolean> {
@@ -116,7 +116,7 @@ export class Overrides {
 export class RuleBook {
   private readonly table: Table_<number>;
   constructor(kv: KV) {
-    this.table = new Table_<number>(kv, "mirage.rules");
+    this.table = new Table_<number>(kv, "lynceus.rules");
   }
 
   /** The rule id for a key, allocating the next free one; `existing` says it was already there. */

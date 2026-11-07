@@ -1,9 +1,0 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Mirage.Ipc</RootNamespace>
-    <AssemblyName>Mirage.Ipc</AssemblyName>
-  </PropertyGroup>
-  <ItemGroup>
-    <InternalsVisibleTo Include="Mirage.Agent.Tests" />
-  </ItemGroup>
-</Project>

@@ -56,13 +56,13 @@ function Protect-Folder {
     Set-Acl -LiteralPath $Path -AclObject $acl
 }
 
-# A folder that is certainly a MIRAGE install or data folder (so a typo cannot point a delete at something else).
-function Test-MirageInstall {
+# A folder that is certainly a Lynceus install or data folder (so a typo cannot point a delete at something else).
+function Test-LynceusInstall {
     param([Parameter(Mandatory)][string]$Path)
-    return (Test-Path -LiteralPath (Join-Path $Path 'agent\Mirage.Agent.exe'))
+    return (Test-Path -LiteralPath (Join-Path $Path 'agent\Lynceus.Agent.exe'))
 }
 
-function Test-MirageData {
+function Test-LynceusData {
     param([Parameter(Mandatory)][string]$Path)
     foreach ($marker in 'agent.json', 'core.token', 'pipe.secret', 'spool.jsonl', 'flagged.json', 'quarantine') {
         if (Test-Path -LiteralPath (Join-Path $Path $marker)) { return $true }

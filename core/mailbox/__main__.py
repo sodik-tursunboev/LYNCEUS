@@ -20,18 +20,18 @@ from core.mailbox.wiring import build_mailbox, build_outlook, mailbox_dir, token
 CONSENT = {
     "gmail": (
         "This asks Google for the permission 'gmail.modify'. Google describes it as: read, "
-        "compose and send email. That is wider than the read-only access MIRAGE normally has.\n"
-        "What MIRAGE does with it: when a message is judged MALICIOUS and you click Approve in the "
-        "console, it adds the label MIRAGE-Quarantine and takes the message out of the inbox "
+        "compose and send email. That is wider than the read-only access Lynceus normally has.\n"
+        "What it does with it: when a message is judged MALICIOUS and you click Approve in the "
+        "console, it adds the label LYNCEUS-Quarantine and takes the message out of the inbox "
         "(Restore puts it back). It never sends, drafts, trashes or deletes anything; a built-in "
         "filter refuses those requests. The token is stored encrypted for your Windows user only."
     ),
     "outlook": (
         "This asks Microsoft for the permission 'Mail.ReadWrite' (delegated). Microsoft "
         "describes it as: create, read, update and delete email; it does not include sending. "
-        "That is wider than the read-only access MIRAGE normally has.\n"
-        "What MIRAGE does with it: when a message is judged MALICIOUS and you click Approve in the "
-        "console, it moves the message to a folder named MIRAGE Quarantine (Restore moves it "
+        "That is wider than the read-only access Lynceus normally has.\n"
+        "What it does with it: when a message is judged MALICIOUS and you click Approve in the "
+        "console, it moves the message to a folder named Lynceus Quarantine (Restore moves it "
         "back). It never sends, deletes or edits anything; a built-in filter refuses those "
         "requests. The token is stored encrypted for your Windows user only."
     ),
@@ -60,12 +60,12 @@ def main(
     read_tokens = TokenFile(mailbox_dir(settings), read_name)
     write_tokens = TokenFile(mailbox_dir(settings), write_name)
     tokens = write_tokens if args.write else read_tokens
-    flag = "MIRAGE_OUTLOOK_ENABLED" if outlook else "MIRAGE_GMAIL_ENABLED"
+    flag = "LYNCEUS_OUTLOOK_ENABLED" if outlook else "LYNCEUS_GMAIL_ENABLED"
 
     if args.command == "connect":
         if outlook and not settings.outlook_client_id:
             print(
-                "Set MIRAGE_OUTLOOK_CLIENT_ID (an Azure app registration of your own: "
+                "Set LYNCEUS_OUTLOOK_CLIENT_ID (an Azure app registration of your own: "
                 "public client, redirect http://localhost, delegated "
                 f"{'Mail.ReadWrite' if args.write else 'Mail.Read'}) first.",
                 file=sys.stderr,
@@ -73,7 +73,7 @@ def main(
             return 2
         if not outlook and not settings.gmail_client_id:
             print(
-                "Set MIRAGE_GMAIL_CLIENT_ID (an OAuth 'Desktop app' client of your own) first.",
+                "Set LYNCEUS_GMAIL_CLIENT_ID (an OAuth 'Desktop app' client of your own) first.",
                 file=sys.stderr,
             )
             return 2
@@ -110,11 +110,11 @@ def main(
             return 1
         if args.write:
             print(
-                "Email quarantine is allowed. MIRAGE proposes it for MALICIOUS mail and moves "
+                "Email quarantine is allowed. Lynceus proposes it for MALICIOUS mail and moves "
                 "a message only after you approve it."
             )
             if read_tokens.load() is None:
-                print("MIRAGE also needs to read the mailbox: run connect without --write.")
+                print("Lynceus also needs to read the mailbox: run connect without --write.")
         else:
             print(f"Connected (read-only). Set {flag}=true so the API follows the mailbox.")
         return 0

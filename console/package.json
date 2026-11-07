@@ -1,8 +1,8 @@
 {
-  "name": "mirage-console",
+  "name": "lynceus-console",
   "version": "0.1.0",
   "private": true,
-  "description": "MIRAGE console: a viewer and restore tool, served by the core on 127.0.0.1",
+  "description": "Lynceus console: a viewer and restore tool, served by the core on 127.0.0.1",
   "type": "module",
   "scripts": {
     "build": "node build.mjs",

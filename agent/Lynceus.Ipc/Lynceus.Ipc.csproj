@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Lynceus.Ipc</RootNamespace>
+    <AssemblyName>Lynceus.Ipc</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lynceus.Agent.Tests" />
+  </ItemGroup>
+</Project>

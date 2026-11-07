@@ -1,16 +1,16 @@
 # Privacy: what is stored, where, and what leaves the machine
 
-Written from the code (database models, the agent's file formats, the log statements), not from memory. MIRAGE is local-first: by default **nothing leaves this computer**.
+Written from the code (database models, the agent's file formats, the log statements), not from memory. Lynceus is local-first: by default **nothing leaves this computer**.
 
 ## What leaves the machine
 
 | What | When | Where to |
 |---|---|---|
 | Nothing | by default | |
-| A bare registered domain (no path, query, user name, port or IP) or a hash | only for a threat-intelligence provider **you name** in `MIRAGE_INTEL_PROVIDERS`: RDAP and VirusTotal get one public domain; list feeds (PhishTank, OpenPhish, URLhaus) are *downloaded* and matched here, so nothing about your URL is sent | that provider. Links inside email only reach list feeds unless `MIRAGE_INTEL_EMAIL_LINKS=true`. See ADR-015 |
+| A bare registered domain (no path, query, user name, port or IP) or a hash | only for a threat-intelligence provider **you name** in `LYNCEUS_INTEL_PROVIDERS`: RDAP and VirusTotal get one public domain; list feeds (PhishTank, OpenPhish, URLhaus) are *downloaded* and matched here, so nothing about your URL is sent | that provider. Links inside email only reach list feeds unless `LYNCEUS_INTEL_EMAIL_LINKS=true`. See ADR-015 |
 | Requests to read your mail | only after you connect Gmail | `gmail.googleapis.com`, `oauth2.googleapis.com`, `accounts.google.com`, read-only, GET only (enforced in code) |
 | Requests to read your mail | only after you connect Outlook | `graph.microsoft.com` (GET only, enforced in code), `login.microsoftonline.com` (sign-in and token refresh), read-only `Mail.Read` |
-| Requests that move a message in your mail | only after you give the **separate write permission** (`connect --write`) **and** click Approve on a MALICIOUS message | the same hosts as above. Gmail: list or create the label `MIRAGE-Quarantine`, change one message's labels. Outlook: list or create the folder `MIRAGE Quarantine`, read one message's folder, move it. Nothing else (no delete, send, draft, trash: refused in code before sending). The message id goes to the provider, because that is how the message is named |
+| Requests that move a message in your mail | only after you give the **separate write permission** (`connect --write`) **and** click Approve on a MALICIOUS message | the same hosts as above. Gmail: list or create the label `LYNCEUS-Quarantine`, change one message's labels. Outlook: list or create the folder `Lynceus Quarantine`, read one message's folder, move it. Nothing else (no delete, send, draft, trash: refused in code before sending). The message id goes to the provider, because that is how the message is named |
 | A Windows toast, a browser warning page | always, but local | your screen |
 
 The agent talks to the core only over loopback (no proxy, no redirects, the resolved address is checked on every connection). The extension makes no network requests of its own.
@@ -29,7 +29,7 @@ Hashes, hosts, states, scores, rule names and counts. **Never**: a URL, a file n
 
 There is no encryption of the database (ADR-007 is unsigned) because nothing in it is content. There is no automatic deletion: it grows until you clear it.
 
-## What is stored on disk by the agent (`%LOCALAPPDATA%\Mirage`, current user only)
+## What is stored on disk by the agent (`%LOCALAPPDATA%\Lynceus`, current user only)
 
 These are the places where **local** names and paths do exist, because the agent needs them to find and move your files. They are never sent to the core or logged.
 
@@ -52,7 +52,7 @@ The verdict cache lives in `chrome.storage.session` (memory, gone when the brows
 
 ## Keys and secrets
 
-`.env` holds `MIRAGE_API_TOKEN`, provider keys and the database URL **in plain text** (owner decision): keep it out of backups you share and out of git (it is ignored; a secret scan runs on every commit). Provider keys, tokens and the Gmail refresh token are `SecretStr` or encrypted and are never written to logs, the database or results. A test per component plants markers and searches the stored data and logs for them.
+`.env` holds `LYNCEUS_API_TOKEN`, provider keys and the database URL **in plain text** (owner decision): keep it out of backups you share and out of git (it is ignored; a secret scan runs on every commit). Provider keys, tokens and the Gmail refresh token are `SecretStr` or encrypted and are never written to logs, the database or results. A test per component plants markers and searches the stored data and logs for them.
 
 ## What you control
 

@@ -1,6 +1,6 @@
 """Email quarantine, the write side (M6b): the request guard and the two movers, against fakes.
 
-The token the movers use could send or delete mail; the guard is what stops MIRAGE's own code from
+The token the movers use could send or delete mail; the guard is what stops Lynceus's own code from
 ever doing so, so most of these tests try the forbidden requests one by one and assert that nothing
 reaches the (fake) server."""
 
@@ -343,7 +343,7 @@ def test_outlook_quarantine_moves_to_the_folder_returns_the_new_id_and_restore_g
 
 def test_outlook_uses_an_existing_folder_whatever_its_case_and_creates_it_once_otherwise() -> None:
     fake = FakeGraphWrite()
-    fake.folders["mirage quarantine"] = "AAMine="
+    fake.folders["lynceus quarantine"] = "AAMine="
     fake.add("m1")
     graph(fake).quarantine("m1")
     assert [c for c in fake.calls("POST") if c[1].endswith("/mailFolders")] == []

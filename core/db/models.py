@@ -244,7 +244,7 @@ def _quoted(values: tuple[str, ...]) -> str:
 
 
 class Action(Base):
-    """A response to a verdict (M6, ADR-018): what MIRAGE proposes, what was decided, what happened.
+    """A response to a verdict (M6, ADR-018): what it proposes, what was decided, what happened.
 
     Holds ids, states and reason codes only: never a path or a file name (those stay with the agent,
     in its quarantine folder). One row follows a file from PENDING through APPLIED to RESTORED.

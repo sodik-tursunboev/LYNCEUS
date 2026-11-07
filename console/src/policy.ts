@@ -32,28 +32,28 @@ export function consequence(verb: Verb, days: number | null, kind: string = "FIL
   switch (verb) {
     case "approve":
     case "retry":
-      return "The MIRAGE agent will move this file out of its folder into MIRAGE's quarantine folder. Nothing is deleted, and you can restore it here.";
+      return "The Lynceus agent will move this file out of its folder into Lynceus's quarantine folder. Nothing is deleted, and you can restore it here.";
     case "dismiss":
-      return "The file stays where it is and MIRAGE will not propose moving it again. You can still change your mind.";
+      return "The file stays where it is and Lynceus will not propose moving it again. You can still change your mind.";
     case "restore":
       return "The agent will put the file back where it was (or beside it under a new name if that name is taken). It will be dangerous again.";
     case "restore_allow":
-      return `The agent will put the file back, and MIRAGE will stop flagging this exact file ${days === null ? "until you remove it from the allow list" : `for ${days} days`}.`;
+      return `The agent will put the file back, and Lynceus will stop flagging this exact file ${days === null ? "until you remove it from the allow list" : `for ${days} days`}.`;
   }
 }
 
 /** Email: what will happen, before it does. Only the message's place changes; nothing is deleted or sent. */
 function mailConsequence(verb: Verb, provider: string | null): string {
-  const where = provider === "outlook" ? "the MIRAGE Quarantine folder" : provider === "gmail" ? "the MIRAGE-Quarantine label" : "MIRAGE's quarantine place in your mailbox";
+  const where = provider === "outlook" ? "the Lynceus Quarantine folder" : provider === "gmail" ? "the LYNCEUS-Quarantine label" : "Lynceus's quarantine place in your mailbox";
   switch (verb) {
     case "approve":
     case "retry":
-      return `MIRAGE will move this message out of your inbox into ${where}. Nothing is deleted or sent, and you can move it back here.`;
+      return `Lynceus will move this message out of your inbox into ${where}. Nothing is deleted or sent, and you can move it back here.`;
     case "dismiss":
-      return "The message stays in your inbox and MIRAGE will not propose moving it again. You can still change your mind.";
+      return "The message stays in your inbox and Lynceus will not propose moving it again. You can still change your mind.";
     case "restore":
     case "restore_allow":
-      return "MIRAGE will move the message back into your inbox. It will be dangerous again.";
+      return "Lynceus will move the message back into your inbox. It will be dangerous again.";
   }
 }
 
@@ -73,10 +73,10 @@ const REASONS: Record<string, string> = {
   mail_unavailable: "The mail provider could not be reached after several tries.",
   no_write_access: "Write access to this mailbox is not connected.",
   mail_error: "Something unexpected stopped the move; the message was left as it is.",
-  changed: "The file changed after it was checked, so MIRAGE left it alone.",
+  changed: "The file changed after it was checked, so Lynceus left it alone.",
   missing: "The file was no longer there.",
   locked: "Another program was using the file.",
-  link: "The file is a link or sits behind one; MIRAGE does not follow links.",
+  link: "The file is a link or sits behind one; Lynceus does not follow links.",
   placeholder: "The file is a cloud placeholder that is not on this computer.",
   blocked: "Another security product blocked access to the file.",
   not_file: "That was not a file.",

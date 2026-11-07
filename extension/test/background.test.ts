@@ -28,7 +28,7 @@ describe("the service worker wiring", () => {
   it("registers its listeners as the worker starts and opens the native port", async () => {
     const { chromeFake, listeners } = installChrome();
     await import("../src/background");
-    expect(chromeFake.runtime.connectNative).toHaveBeenCalledWith("com.mirage.agent");
+    expect(chromeFake.runtime.connectNative).toHaveBeenCalledWith("com.lynceus.agent");
     for (const name of ["onBeforeNavigate", "onCommitted", "onRemoved", "onMessage"]) expect(listeners[name]).toHaveLength(1);
   });
 
@@ -108,7 +108,7 @@ describe("the built manifest", () => {
   it("the pinned key gives exactly the extension ID the native host allows", () => {
     const der = Buffer.from(readFileSync(new URL("../manifest-key.txt", import.meta.url), "utf8").trim(), "base64");
     const id = [...createHash("sha256").update(der).digest("hex").slice(0, 32)].map((c) => String.fromCharCode(97 + parseInt(c, 16))).join("");
-    const endpoints = readFileSync(new URL("../../agent/Mirage.Ipc/Endpoints.cs", import.meta.url), "utf8");
+    const endpoints = readFileSync(new URL("../../agent/Lynceus.Ipc/Endpoints.cs", import.meta.url), "utf8");
     expect(endpoints).toContain(`ExtensionId = "${id}"`);
   });
 });

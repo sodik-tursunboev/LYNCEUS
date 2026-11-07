@@ -94,7 +94,7 @@ def test_the_worker_runs_in_an_appcontainer() -> None:
 def test_the_worker_sees_no_user_paths_or_secrets() -> None:
     seen = probe(cmd="env")
     blob = json.dumps(seen["env"])  # the environment, not the working directory (below)
-    for private in (os.environ["USERNAME"], os.environ["USERPROFILE"], "MIRAGE_", "API_TOKEN"):
+    for private in (os.environ["USERNAME"], os.environ["USERPROFILE"], "LYNCEUS_", "API_TOKEN"):
         assert private.lower() not in blob.lower(), private
     assert set(seen["env"]) >= {"LOCALAPPDATA", "SYSTEMROOT"}
     # The worker's own folder is the one path it must know; a clone under the user profile puts the
@@ -266,7 +266,7 @@ def test_a_missing_sandbox_fails_closed(monkeypatch: pytest.MonkeyPatch, tmp_pat
 
 
 def test_a_container_that_will_not_start_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(sandbox, "CONTAINER", "mirage.notregistered")
+    monkeypatch.setattr(sandbox, "CONTAINER", "lynceus.notregistered")
     with pytest.raises(SandboxUnavailable, match="would not start"):
         sandbox.run("main.py", frame({"op": "ping"}))
 

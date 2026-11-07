@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Lynceus installer: per user, no administrator, installs to %LOCALAPPDATA%\Programs\Lynceus.
+     Build with deploy\msi\build-msi.ps1. Properties you can set on the msiexec command line:
+       INSTALLFOLDER=...   another folder
+       NOSTART=1           do not start the agent
+       NOREGISTER=1        do not register start-at-logon and the browser bridge
+       RESETCONFIG=1       point agent.json at this install even if it points elsewhere -->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Lynceus" Manufacturer="Lynceus" Version="$(Version)"
+           UpgradeCode="CFEBE4E2-B30C-4865-B7F6-9FECFFA89C32" Scope="perUser" Compressed="yes">
+    <SummaryInformation Description="Lynceus Phishing Solution Kit: local phishing detection for Windows" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Lynceus is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="NOSTART" Value="0" />
+    <Property Id="NOREGISTER" Value="0" />
+    <Property Id="RESETCONFIG" Value="0" />
+
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsDir" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="Lynceus" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="MenuDir" Name="Lynceus" />
+    </StandardDirectory>
+
+    <!-- agent\, shell\ (the native console window), extension\, engine\ (Python, the core, the console, the
+         built sandbox), Setup.ps1, Cleanup.ps1 -->
+    <ComponentGroup Id="Payload" Directory="INSTALLFOLDER">
+      <Files Include="$(StageDir)\**" />
+    </ComponentGroup>
+
+    <Component Id="MenuShortcut" Directory="MenuDir" Guid="*">
+      <Shortcut Id="ConsoleShortcut" Name="Lynceus" Description="Open the Lynceus console in its own window"
+                Target="[INSTALLFOLDER]shell\Lynceus.Console.exe" WorkingDirectory="INSTALLFOLDER" />
+      <Shortcut Id="BrowserConsoleShortcut" Name="Lynceus (in the browser)" Description="Open the Lynceus console in your browser"
+                Target="[INSTALLFOLDER]agent\Lynceus.Agent.exe" Arguments="--open-console"
+                WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveMenuDir" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\Lynceus\Installer" Name="MenuShortcut" Type="integer"
+                     Value="1" KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main" Title="Lynceus" Level="1">
+      <ComponentGroupRef Id="Payload" />
+      <ComponentRef Id="MenuShortcut" />
+    </Feature>
+
+    <!-- The trailing "." keeps the folder's closing backslash from escaping the closing quote. -->
+    <CustomAction Id="LynceusCleanup" Directory="INSTALLFOLDER" Return="ignore"
+      ExeCommand='"[WindowsFolder]System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "[INSTALLFOLDER]Cleanup.ps1" -InstallDir "[INSTALLFOLDER]."' />
+    <CustomAction Id="LynceusSetup" Directory="INSTALLFOLDER" Return="check"
+      ExeCommand='"[WindowsFolder]System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "[INSTALLFOLDER]Setup.ps1" -InstallDir "[INSTALLFOLDER]." -NoStart "[NOSTART]" -NoRegister "[NOREGISTER]" -ResetConfig "[RESETCONFIG]"' />
+
+    <InstallExecuteSequence>
+      <!-- Uninstall, and the removal of the old version during an upgrade -->
+      <Custom Action="LynceusCleanup" Before="RemoveFiles" Condition='REMOVE="ALL"' />
+      <!-- Install and upgrade -->
+      <Custom Action="LynceusSetup" After="InstallFinalize" Condition='NOT (REMOVE="ALL")' />
+    </InstallExecuteSequence>
+  </Package>
+</Wix>

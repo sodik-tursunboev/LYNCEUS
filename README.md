@@ -1,4 +1,6 @@
-# MIRAGE
+# Lynceus: Phishing Solution Kit
+
+*Renamed from MIRAGE (2026-11-06; [ADR-021](docs/DECISIONS.md)). Old `MIRAGE_` settings, the old data folder and old registrations are carried over.*
 
 A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail or Outlook, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes your files or email: quarantine moves a file (on another drive it copies first and removes the original only after the copy is verified byte for byte) and you can always restore it. Uninstalling with `-RemoveData` is the one way to delete the quarantine folder, and it refuses while quarantined files remain unless you force it.
 
@@ -38,17 +40,17 @@ The core listens on `127.0.0.1` only. The agent starts and supervises the core, 
 You need Windows 11, Python 3.14, the .NET 10 SDK, Node 24 and PostgreSQL (`python tasks.py up` starts one in Docker).
 
 ```
-git clone <this repository> mirage
-cd mirage
+git clone <this repository> lynceus
+cd lynceus
 python -m venv .venv
-copy .env.example .env      # then edit: set MIRAGE_API_TOKEN, MIRAGE_DATABASE_URL
+copy .env.example .env      # then edit: set LYNCEUS_API_TOKEN, LYNCEUS_DATABASE_URL
 python tasks.py up
 .\deploy\install.ps1
 ```
 
-`deploy\install.ps1` builds everything, installs the agent and the extension to `%LOCALAPPDATA%\Programs\Mirage`, registers start at logon and the browser bridge, starts the agent and waits for the core. Running it again is an upgrade; your data is never touched. `deploy\uninstall.ps1` removes it. Details, settings and troubleshooting: [docs/OPERATIONS.md](docs/OPERATIONS.md).
+`deploy\install.ps1` builds everything, installs the agent and the extension to `%LOCALAPPDATA%\Programs\Lynceus`, registers start at logon and the browser bridge, starts the agent and waits for the core. Running it again is an upgrade; your data is never touched. `deploy\uninstall.ps1` removes it. Details, settings and troubleshooting: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-Then load the extension (`edge://extensions`, Developer mode, Load unpacked, the folder the script prints) and open the console with `Mirage.Agent.exe --open-console`.
+Then load the extension (`edge://extensions`, Developer mode, Load unpacked, the folder the script prints) and open the console with `Lynceus.Agent.exe --open-console`.
 
 ## For developers
 
@@ -58,7 +60,7 @@ python tasks.py test        # Python tests (Postgres tests skip without a databa
 python tasks.py lint        # ruff + mypy
 python tasks.py eval        # precision / recall on the labelled corpus
 python -m eval.perf         # latency and throughput on this machine
-dotnet test agent/Mirage.slnx
+dotnet test agent/Lynceus.slnx
 cd extension && npm ci --ignore-scripts && npm test      # and: npm run test:e2e (real Edge)
 cd console   && npm ci --ignore-scripts && npm test      # and: npm run test:e2e (real Edge)
 ```

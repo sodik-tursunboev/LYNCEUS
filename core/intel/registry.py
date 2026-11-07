@@ -1,6 +1,6 @@
 """Build the enabled providers from settings. Nothing is enabled by default.
 
-Naming a provider in MIRAGE_INTEL_PROVIDERS *is* the operator's authorization for what it sends
+Naming a provider in LYNCEUS_INTEL_PROVIDERS *is* the operator's authorization for what it sends
 (ADR-015); an unknown or not-yet-built name stops start-up instead of being ignored, so a typo can
 never silently mean "protected by a provider that is not running".
 """
@@ -27,7 +27,7 @@ def _rdap(_settings: Settings) -> Provider:
 def _virustotal(settings: Settings) -> Provider:
     key = settings.virustotal_api_key
     if key is None or not key.get_secret_value():
-        raise ValueError("virustotal is enabled but MIRAGE_VIRUSTOTAL_API_KEY is not set")
+        raise ValueError("virustotal is enabled but LYNCEUS_VIRUSTOTAL_API_KEY is not set")
     return VirusTotal(make_client(), key.get_secret_value())
 
 
@@ -44,7 +44,7 @@ def build_providers(settings: Settings) -> list[Provider]:
     unknown = names - known()
     if unknown:
         raise ValueError(
-            f"unknown intelligence provider(s) in MIRAGE_INTEL_PROVIDERS: "
+            f"unknown intelligence provider(s) in LYNCEUS_INTEL_PROVIDERS: "
             f"{', '.join(sorted(unknown))} (known: {', '.join(sorted(known()))})"
         )
     store = FeedStore(settings.data_dir / "feeds")

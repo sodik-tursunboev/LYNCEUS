@@ -14,7 +14,7 @@ if (!base || !token || !out) throw new Error("usage: node tools/shoot.mjs <base 
 const EDGE = ["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe", "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe"].find(existsSync);
 if (!EDGE) throw new Error("Microsoft Edge was not found");
 mkdirSync(out, { recursive: true });
-const profile = mkdtempSync(join(tmpdir(), "mirage-shoot-"));
+const profile = mkdtempSync(join(tmpdir(), "lynceus-shoot-"));
 const browser = await puppeteer.launch({ executablePath: EDGE, headless: true, userDataDir: profile, defaultViewport: { width: Number(w), height: Number(h), deviceScaleFactor: 1 } });
 const page = await browser.newPage();
 if (process.env.SCHEME === "light") await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);

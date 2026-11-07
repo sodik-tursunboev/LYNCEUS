@@ -1,7 +1,7 @@
 [package]
-name = "mirage-console"
+name = "lynceus-console"
 version = "0.1.0"
-description = "A native window around the MIRAGE console"
+description = "A native window around the Lynceus console"
 edition = "2021"
 publish = false
 
