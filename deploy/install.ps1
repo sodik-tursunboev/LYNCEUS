@@ -106,7 +106,15 @@ Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
 $agentExe = Join-Path $installFull 'agent\Lynceus.Agent.exe'
 
 # ---- configuration (never overwrites yours unless asked) ---------------------------------------------------
-$home_ = if ($env:LYNCEUS_AGENT_HOME) { $env:LYNCEUS_AGENT_HOME } else { Join-Path $env:LOCALAPPDATA 'Lynceus' }
+$agentHome = if ($env:LYNCEUS_AGENT_HOME) { $env:LYNCEUS_AGENT_HOME } else { $env:MIRAGE_AGENT_HOME }   # the old name still works
+$home_ = if ($agentHome) { $agentHome } else { Join-Path $env:LOCALAPPDATA 'Lynceus' }
+# The product used to be called MIRAGE: bring its data folder (config, token, quarantine, logs) along, once.
+# (Creating the new folder first would hide the old one.)
+$legacyHome = Join-Path $env:LOCALAPPDATA 'Mirage'
+if ((-not $agentHome) -and (-not (Test-Path $home_)) -and (Test-Path $legacyHome)) {
+    try { Move-Item -LiteralPath $legacyHome -Destination $home_ -ErrorAction Stop; Say "moved your data from $legacyHome to $home_" }
+    catch { $home_ = $legacyHome; Say "could not move $legacyHome ($($_.Exception.GetType().Name)); the old folder stays in use" }
+}
 New-Item -ItemType Directory -Force $home_ | Out-Null
 $config = Join-Path $home_ 'agent.json'
 if ((-not (Test-Path $config)) -or $ResetConfig) {

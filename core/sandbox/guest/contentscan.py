@@ -22,8 +22,8 @@ from limits import (
     MAX_CONTENT_BYTES,
     MAX_CONTENT_CHARS,
     MAX_CONTENT_URLS,
-    MAX_DECODED_TOTAL,
     MAX_LAYERS,
+    MAX_SCAN_DECODED_TOTAL,
 )
 
 PROGRAM = {"vbscript", "jscript", "powershell", "batch", "hta", "wsf", "html"}
@@ -231,7 +231,7 @@ def _inflate(data: bytes) -> bytes | None:
     """Raw deflate or zlib, as PowerShell loaders use; never more than the decoded budget."""
     for wbits in (-15, 15):
         try:
-            out = zlib.decompressobj(wbits).decompress(data, MAX_DECODED_TOTAL)
+            out = zlib.decompressobj(wbits).decompress(data, MAX_SCAN_DECODED_TOTAL)
         except zlib.error:
             continue
         if out:
@@ -246,7 +246,7 @@ class _State:
         self.embedded: dict[str, int] = {}
         self.layers = 0
         self.obfuscation = 0
-        self.left = MAX_DECODED_TOTAL
+        self.left = MAX_SCAN_DECODED_TOTAL
         self.seen: set[bytes] = set()
         self.truncated = False
 

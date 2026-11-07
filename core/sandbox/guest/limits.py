@@ -42,7 +42,9 @@ MAX_MEMBER_BYTES = 512 * 1024  # one archive member read in full (to hash it and
 MAX_MEMBERS = 64  # archive members hashed and examined per archive
 MAX_MEMBER_TOTAL = 3 * 1024 * 1024  # all member bytes examined for one archive
 MAX_LAYERS = 4  # encoded layers unwrapped (base64 inside base64 inside ...)
-MAX_DECODED_TOTAL = 4 * 1024 * 1024  # all bytes produced by decoding, for one file
+# all bytes produced by decoding, for one file (not MAX_DECODED_TOTAL above, which is the whole
+# message: the two shared a name once and the smaller one silently capped every message)
+MAX_SCAN_DECODED_TOTAL = 4 * 1024 * 1024
 MAX_BLOBS = 16  # encoded blocks tried per layer
 MAX_CONTENT_URLS = 50
 MAX_OLE_STREAMS = 400  # directory entries read from an OLE compound file
