@@ -133,13 +133,13 @@ if ((-not (Test-Path $config)) -or $ResetConfig) {
 if (-not $SkipMigrate) {
     $envFile = Join-Path $repo '.env'
     $url = $null
-    if (Test-Path $envFile) { $m = Select-String -Path $envFile -Pattern '^LYNCEUS_DATABASE_URL=(.+)$' | Select-Object -First 1; if ($m) { $url = $m.Matches[0].Groups[1].Value } }
+    if (Test-Path $envFile) { $m = Select-String -Path $envFile -Pattern '^(?:LYNCEUS|MIRAGE)_DATABASE_URL=(.+)$' | Select-Object -First 1; if ($m) { $url = $m.Matches[0].Groups[1].Value } }
     if ($url) {
         Say 'applying database migrations'
         $env:LYNCEUS_DATABASE_URL = $url
         Push-Location $repo
         try { & $python -m alembic upgrade head 2>&1 | Select-Object -Last 2 | ForEach-Object { Say $_ } } finally { Pop-Location; Remove-Item Env:\LYNCEUS_DATABASE_URL -ErrorAction SilentlyContinue }
-    } else { Say 'no LYNCEUS_DATABASE_URL in .env: skipping migrations (responses and the console lists need a database)' }
+    } else { Say 'no database URL (LYNCEUS_DATABASE_URL, or the old MIRAGE_ name) in .env: skipping migrations (responses and the console lists need a database)' }
 }
 
 # ---- register -----------------------------------------------------------------------------------------------
