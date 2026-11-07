@@ -32,6 +32,8 @@ def _rule_id(r: IntelResult, cfg: dict[str, Any]) -> str | None:
     f, t = r.facts, cfg["thresholds"]
     if "listed" in f and "feed" in f:
         return f"intel.{f['feed']}.{f['listed']}"
+    if f.get("urlscan") in ("malicious", "suspicious"):
+        return f"intel.urlscan.{f['urlscan']}"
     if isinstance(f.get("detections"), int):
         n = f["detections"]
         if n <= 0:

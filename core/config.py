@@ -92,12 +92,15 @@ class Settings(BaseSettings):
 
     # Threat intelligence (M3, ADR-015). Everything is off until the operator names a provider.
     data_dir: Path = Path(".data")  # downloaded feeds live here
-    intel_providers: str = ""  # comma-separated: phishtank,openphish,urlhaus,rdap,virustotal
+    intel_providers: str = (
+        ""  # comma-separated: phishtank,openphish,urlhaus,rdap,virustotal,urlscan
+    )
     intel_deadline: float = 2.0  # seconds a caller waits for providers before moving on
     intel_email_links: bool = False  # let links found in messages reach outside services
     phishtank_key: SecretStr | None = None
     urlhaus_auth_key: SecretStr | None = None
     virustotal_api_key: SecretStr | None = None
+    urlscan_api_key: SecretStr | None = None
 
     console_dir: Path = Path(
         "console/dist"

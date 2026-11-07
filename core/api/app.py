@@ -43,6 +43,7 @@ from core.email.engine import EmailReport
 from core.files.engine import FileReport, analyze_file
 from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
+from core.intel.refresh import feed_keys, keep_fresh
 from core.intel.registry import build_intel
 from core.log import configure
 from core.mailbox.quarantine import MailQuarantineRunner
@@ -213,6 +214,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "settings still use the old MIRAGE_ names (%s): rename them to LYNCEUS_", ", ".join(old)
         )
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
+    feed_store = FeedStore(settings.data_dir / "feeds")
+    feed_names = sorted(settings.intel_enabled() & FEEDS.keys())  # the lists to keep downloaded
 
     mailboxes: list[MailboxService] = []  # filled below, once the database exists
     quarantine: list[MailQuarantineRunner] = []  # M6b: at most one, carries out approved mail moves
@@ -223,7 +226,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             service.start()
         for runner in quarantine:
             runner.start()
+        refresh = (
+            asyncio.create_task(keep_fresh(feed_store, feed_names, feed_keys(settings)))
+            if feed_names
+            else None
+        )
         yield
+        if refresh is not None:
+            refresh.cancel()
+            await asyncio.gather(refresh, return_exceptions=True)
         for runner in quarantine:
             await run_in_threadpool(runner.stop)
         for service in mailboxes:
@@ -260,7 +271,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     runner = build_quarantine(mailboxes, db)
     if runner is not None:
         quarantine.append(runner)
-    feed_store = FeedStore(settings.data_dir / "feeds")
     hashlists.configure(settings.data_dir / "hashes")  # known-bad file hashes (offline lookup)
     if intel is not None and db is not None:
         for p in intel.providers:

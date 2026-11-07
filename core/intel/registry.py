@@ -14,6 +14,7 @@ from core.intel.feeds import FEEDS, FeedStore, ListFeed
 from core.intel.http import make_client
 from core.intel.orchestrator import Intel
 from core.intel.rdap import Rdap
+from core.intel.urlscan import UrlScan
 from core.intel.virustotal import VirusTotal
 
 log = logging.getLogger(__name__)
@@ -31,8 +32,19 @@ def _virustotal(settings: Settings) -> Provider:
     return VirusTotal(make_client(), key.get_secret_value())
 
 
+def _urlscan(settings: Settings) -> Provider:
+    key = settings.urlscan_api_key
+    if key is None or not key.get_secret_value():
+        raise ValueError("urlscan is enabled but LYNCEUS_URLSCAN_API_KEY is not set")
+    return UrlScan(make_client(), key.get_secret_value())
+
+
 # Providers that ask an outside service. Each sends one public registered domain, nothing else.
-QUERY_BUILDERS: dict[str, Builder] = {"rdap": _rdap, "virustotal": _virustotal}
+QUERY_BUILDERS: dict[str, Builder] = {
+    "rdap": _rdap,
+    "virustotal": _virustotal,
+    "urlscan": _urlscan,
+}
 
 
 def known() -> frozenset[str]:

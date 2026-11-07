@@ -19,6 +19,7 @@ age_quarter = 90
 "intel.openphish" = 0.9
 "intel.urlhaus" = 0.9
 "intel.virustotal" = 0.8
+"intel.urlscan" = 0.8
 "intel.domain_age" = 0.6
 
 # rule id = intel.<provider>.<what was found>. "url": the exact URL is listed; "host": the host has
@@ -32,6 +33,8 @@ age_quarter = 90
 "intel.urlhaus.host" = 0.3
 "intel.virustotal.detections_many" = 0.7
 "intel.virustotal.detections_few" = 0.4
+"intel.urlscan.malicious" = 0.7
+"intel.urlscan.suspicious" = 0.4
 "intel.domain_age.week" = 0.55
 "intel.domain_age.month" = 0.4
 "intel.domain_age.quarter" = 0.15

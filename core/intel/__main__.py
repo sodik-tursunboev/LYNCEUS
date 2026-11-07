@@ -23,14 +23,8 @@ from core.intel.base import Subject
 from core.intel.feeds import FEEDS, FeedStore, ListFeed, sync
 from core.intel.http import make_client
 from core.intel.orchestrator import Intel
+from core.intel.refresh import feed_keys
 from core.urls.parse import ParsedUrl, parse_url
-
-
-def _keys(s: Settings) -> dict[str, str | None]:
-    def secret(v: object) -> str | None:
-        return v.get_secret_value() if v is not None and hasattr(v, "get_secret_value") else None
-
-    return {"phishtank": secret(s.phishtank_key), "urlhaus": secret(s.urlhaus_auth_key)}
 
 
 async def _sync(settings: Settings, names: list[str], force: bool) -> int:
@@ -43,7 +37,7 @@ async def _sync(settings: Settings, names: list[str], force: bool) -> int:
     if not chosen:
         print("no list feeds are enabled (set LYNCEUS_INTEL_PROVIDERS)")
         return 0
-    store, keys, failed = FeedStore(settings.data_dir / "feeds"), _keys(settings), False
+    store, keys, failed = FeedStore(settings.data_dir / "feeds"), feed_keys(settings), False
     async with make_client(timeout=30.0) as client:
         for name in chosen:
             out = await sync(FEEDS[name], store, client, key=keys.get(name), force=force)
