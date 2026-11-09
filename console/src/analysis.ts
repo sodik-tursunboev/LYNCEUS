@@ -183,6 +183,17 @@ export const FACT_HELP: Record<string, string> = {
   "pe injection apis": "imports functions for injecting into other programs",
   "pe downloader apis": "imports functions for downloading and starting a program",
   "pe overlay": "has a large hidden tail after the program",
+  "macro hidden behavior": "its own code builds a command that is not visible in its text",
+  "macro autoexec reaches sink": "starts by itself and leads to code that runs programs or downloads",
+  "macro dynamic dispatch": "calls things whose names it works out while running",
+  "macro hidden data source": "reads data from document properties, form fields or hidden parts",
+  "macro file drop": "writes files into temporary or start-up folders",
+  "macro obfuscated code": "its code looks scrambled on purpose",
+  "win32 api import": "imports Windows functions that load or run code",
+  "vba pcode only": "carries compiled macro code with no readable source",
+  "vba stomped": "compiled macro code says something the readable source does not",
+  "xlm macro": "has an Excel 4.0 macro sheet (formulas that can run programs)",
+  "xlm hidden": "keeps its Excel 4.0 macro sheet hidden",
 };
 
 /** A plain-English sentence for one fact ("2x exec shell" counts the same as "exec shell"), or null. */

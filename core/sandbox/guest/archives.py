@@ -17,6 +17,7 @@ import zlib
 from typing import Any
 
 import contentscan
+import xlmscan
 from filetype import detect_magic
 from limits import (
     MAX_ARCHIVE_BUDGET,
@@ -81,6 +82,10 @@ class _State:
         self.remote_template = False
         self.dde = False
         self.external_refs: list[str] = []
+        self.xlm_auto = (
+            False  # the workbook has an Auto_Open name (its Excel 4.0 macros run on opening)
+        )
+        self.xlm_hidden: set[str] = set()  # macro sheets (by part name) the workbook hides
 
     def member(self, name: str, body: bytes, magic: str | None) -> None:
         """Hash one entry and, for the kinds that can hold code, look inside it."""
@@ -90,7 +95,15 @@ class _State:
         pieces = name[:MAX_NAME_CHARS].strip().lower().split(".")
         ext = pieces[-1].strip() if len(pieces) > 1 else ""
         content = None
-        if magic in _LOOK_INSIDE and self.member_left >= len(body):
+        part = name.replace("\\", "/").lower()
+        if (
+            part.startswith("xl/macrosheets/")
+            and part.endswith(".xml")
+            and self.member_left >= len(body)
+        ):
+            self.member_left -= len(body)  # an Excel 4.0 macro sheet: formulas, read as such
+            content = xlmscan.scan_xlm_xml(body, self.xlm_auto, part in self.xlm_hidden)
+        elif magic in _LOOK_INSIDE and self.member_left >= len(body):
             self.member_left -= len(body)
             found = contentscan.scan_content(body, magic)
             content = None if found.get("kind") == "none" else found
@@ -264,6 +277,39 @@ def _office_facts(zf: zipfile.ZipFile, infos: list[zipfile.ZipInfo], st: _State)
             _read_part(zf, info, 524_288)
         ):
             st.dde = True
+    _xlm_facts(zf, names, st)
+
+
+_SHEET_TAG = re.compile(r"<sheet\b[^>]*>", re.IGNORECASE)
+_REL_TAG = re.compile(r"<Relationship\b[^>]*>", re.IGNORECASE)
+
+
+def _attr(tag: str, name: str) -> str:
+    m = re.search(rf'(?i)\b{name}\s*=\s*"([^"]*)"', tag)
+    return m.group(1) if m else ""
+
+
+def _xlm_facts(zf: zipfile.ZipFile, names: dict[str, zipfile.ZipInfo], st: _State) -> None:
+    """Does the workbook run its Excel 4.0 macros on opening (an Auto_Open name), and which macro
+    sheets does it hide? Read from workbook.xml and its relationships, so a macro sheet can be
+    reported as hidden when it is scanned."""
+    book = names.get("xl/workbook.xml")
+    if book is None:
+        return
+    xml = _read_part(zf, book, 262_144).decode("utf-8", "replace")
+    st.xlm_auto = bool(re.search(r"(?i)_xlnm\.auto_open|name\s*=\s*\"auto_open\"", xml))
+    rels = names.get("xl/_rels/workbook.xml.rels")
+    targets: dict[str, str] = {}
+    if rels is not None:
+        for tag in _REL_TAG.findall(_read_part(zf, rels, 65_536).decode("utf-8", "replace")):
+            targets[_attr(tag, "Id")] = _attr(tag, "Target")
+    for tag in _SHEET_TAG.findall(xml):
+        if _attr(tag, "state").lower() in ("hidden", "veryhidden"):
+            target = targets.get(_attr(tag, "r:id"), "").replace("\\", "/").lstrip("/")
+            if target:
+                st.xlm_hidden.add(
+                    (target if target.lower().startswith("xl/") else "xl/" + target).lower()
+                )
 
 
 def _tar(data: bytes, depth: int, st: _State) -> None:

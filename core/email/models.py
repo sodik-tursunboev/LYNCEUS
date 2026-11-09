@@ -146,7 +146,7 @@ Url = Annotated[str, Field(min_length=1, max_length=2048)]
 
 Family = Literal[
     "vbscript", "jscript", "powershell", "batch", "hta", "wsf", "html", "lnk", "pe", "ole", "rtf",
-    "text", "binary",
+    "text", "binary", "xlm",
 ]  # fmt: skip
 # What a file or macro can be seen to do (a closed list: the sandbox cannot make up a new word).
 Indicator = Literal[
@@ -156,6 +156,10 @@ Indicator = Literal[
     "string_obfuscation", "high_entropy_blob", "autoexec", "macro_code", "remote_template",
     "dde", "ole_object", "equation_editor", "lnk_interpreter", "lnk_hidden_args", "lnk_icon_lure",
     "pe_packed", "pe_rwx", "pe_injection_apis", "pe_downloader_apis", "pe_overlay",
+    # a macro read as a program (vbaanalyze.py, vbaeval.py) and Excel 4.0 / p-code checks
+    "macro_hidden_behavior", "macro_autoexec_reaches_sink", "macro_dynamic_dispatch",
+    "macro_hidden_data_source", "macro_file_drop", "macro_obfuscated_code", "win32_api_import",
+    "vba_pcode_only", "vba_stomped", "xlm_macro", "xlm_hidden",
 ]  # fmt: skip
 Embedded = Literal["exe", "elf", "zip"]
 Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
@@ -169,7 +173,7 @@ class ContentScan(_Strict):
     kind: Literal["content"]
     family: Family
     truncated: bool  # a size or depth limit stopped the search early
-    indicators: Annotated[dict[Indicator, Count], Field(max_length=40)]
+    indicators: Annotated[dict[Indicator, Count], Field(max_length=60)]
     layers: Annotated[int, Field(ge=0, le=10)]  # encoded layers unwrapped to reach hidden code
     embedded: Annotated[dict[Embedded, Count], Field(max_length=5)]  # programs found inside
     urls: Annotated[list[Url], Field(max_length=50)]  # addresses found in the code: attacker text

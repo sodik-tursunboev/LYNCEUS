@@ -266,7 +266,9 @@ def test_every_reference_in_a_verdict_resolves() -> None:
     assert set(r.verdict.evidence_ids) == ids
     assert all(set(s.evidence_ids) <= ids for s in r.verdict.signals)
     assert r.verdict.engine_version == ENGINE_VERSION
-    assert r.verdict.ruleset_version.startswith("1.2.0+")
+    assert r.verdict.ruleset_version.startswith(
+        "1.3.0+"
+    )  # 1.3.0: macros read as programs (ADR-023)
 
 
 def test_what_storage_gets_is_hashes_and_hosts() -> None:

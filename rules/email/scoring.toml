@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.2.0"
+version = "1.3.0"
 
 [thresholds]
 suspicious = 45
@@ -32,6 +32,7 @@ deception = 0.8
 credential = 0.75
 attachment = 0.85
 active_content = 0.6
+api_abuse = 0.6
 structure = 0.4
 content = 0.3
 "link.host" = 0.6
@@ -104,6 +105,17 @@ content = 0.3
 "content.embedded_executable" = 0.75
 "content.office_macro" = 0.45
 "content.office_macro_autoexec" = 0.85
+"content.macro_hidden_behavior" = 0.7
+"content.macro_autoexec_reaches_sink" = 0.8
+"content.macro_api_import" = 0.5
+"content.macro_dynamic_dispatch" = 0.45
+"content.macro_hidden_data_source" = 0.5
+"content.macro_file_drop" = 0.5
+"content.macro_obfuscated" = 0.45
+"content.vba_stomped" = 0.8
+"content.vba_pcode_only" = 0.55
+"content.xlm_macro" = 0.4
+"content.xlm_hidden" = 0.6
 "content.office_remote_template" = 0.7
 "content.office_dde" = 0.65
 "content.equation_editor" = 0.7

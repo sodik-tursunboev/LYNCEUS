@@ -46,6 +46,14 @@ MAX_LAYERS = 4  # encoded layers unwrapped (base64 inside base64 inside ...)
 # message: the two shared a name once and the smaller one silently capped every message)
 MAX_SCAN_DECODED_TOTAL = 4 * 1024 * 1024
 MAX_BLOBS = 16  # encoded blocks tried per layer
+# The macro evaluator (vbaeval.py): runs only a macro's own text-building code, with no I/O
+MAX_EVAL_STEPS = 400_000  # statements and expression nodes evaluated, all entry points together
+MAX_EVAL_SECONDS = 3.0  # wall clock for the whole evaluation
+MAX_EVAL_STRING = 256 * 1024  # one value; a longer one is cut (and reported)
+MAX_EVAL_STRINGS = 400  # recovered strings kept for searching
+MAX_EVAL_ARRAY = 200_000  # elements of one array
+MAX_EVAL_DEPTH = 24  # nested calls
+MAX_EVAL_ROOTS = 40  # entry points run (every procedure nobody calls, plus the auto-run ones)
 MAX_CONTENT_URLS = 50
 MAX_OLE_STREAMS = 400  # directory entries read from an OLE compound file
 MAX_VBA_CHARS = 300_000  # macro source examined

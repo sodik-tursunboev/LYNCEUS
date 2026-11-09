@@ -12,6 +12,7 @@ import struct
 from typing import Any
 
 import contentscan
+import vbaanalyze
 from limits import MAX_CONTENT_BYTES, MAX_OLE_STREAMS, MAX_VBA_CHARS
 
 _END = 0xFFFFFFFE
@@ -211,6 +212,67 @@ def _vba_modules(streams: dict[str, bytes]) -> list[tuple[str, int]]:
     return modules[:100]
 
 
+# ---- compiled code that does not match the source (VBA stomping) -------------------------------
+_PCODE_RUN = re.compile(rb"[\x20-\x7e]{10,200}")
+_PCODE_HIT = re.compile(
+    r"(?i)powershell|cmd(?:\.exe)?\s*/|https?://|wscript|createobject|\.exe\b|\bshell\b|mshta"
+    r"|regsvr32|certutil|bitsadmin|urldownloadtofile"
+)
+
+
+def _pcode_checks(pcode: bytes, source: str, st: Any) -> None:
+    """A module is stored twice: as source text and as compiled "p-code" that Office runs when its
+    version matches. An attacker can keep harmless source and ship different p-code ("stomping"), or
+    ship no source at all. Neither can be seen by reading the source, so the compiled part's text is
+    compared with it: a command word the compiled part contains and the source does not, or a
+    large compiled part with an empty source, is reported (and what the compiled part says is
+    searched)."""
+    code = "\n".join(
+        line for line in source.splitlines() if not line.strip().lower().startswith("attribute ")
+    ).strip()
+    low = code.lower()
+    stomped = 0
+    for m in _PCODE_RUN.finditer(pcode[:200_000]):
+        run = m.group(0).decode("ascii")
+        hit = _PCODE_HIT.search(run)
+        if hit and hit.group(0).lower() not in low:
+            stomped += 1
+            contentscan._scan_text(run, st, 1)  # noqa: SLF001
+    if len(pcode) >= 1500 and not code:
+        st.add("vba_pcode_only")
+    if stomped and code:
+        st.add("vba_stomped", min(stomped, 10))
+
+
+# ---- Excel 4.0 (XLM) macro sheets in the old binary format --------------------------------------
+def _scan_biff(streams: dict[str, bytes], st: Any) -> None:
+    """The workbook's sheet list: a sheet of type "macro" is an Excel 4.0 macro (formulas that can
+    run programs, no VBA involved), and a hidden one is how it is usually shipped. A built-in name
+    Auto_Open makes it run when the file is opened."""
+    book = next((b for p, b in streams.items() if p.lower() in ("workbook", "book")), b"")
+    pos, macro, hidden, auto, seen = 0, 0, 0, False, 0
+    while pos + 4 <= len(book) and seen < 20_000:
+        rid, size = struct.unpack_from("<HH", book, pos)
+        data = book[pos + 4 : pos + 4 + size]
+        pos += 4 + size
+        seen += 1
+        if rid == 0x000A:  # EOF of the workbook-global part: the sheets are listed before it
+            break
+        if rid == 0x0085 and len(data) >= 8 and data[5] == 1:  # BoundSheet8, sheet type "macro"
+            macro += 1
+            hidden += (data[4] & 3) != 0
+        elif rid == 0x0018 and len(data) >= 16:  # Lbl: a defined name
+            built_in = struct.unpack_from("<H", data, 0)[0] & 0x20 and data[3] == 1
+            auto = auto or bool(built_in and data[15] == 1)  # name 1 = Auto_Open
+    if macro:
+        st.add("xlm_macro", macro)
+        st.add("macro_code")
+        if hidden:
+            st.add("xlm_hidden", hidden)
+        if auto:
+            st.add("autoexec")
+
+
 def scan_ole(data: bytes) -> dict[str, Any]:
     st = contentscan._State()  # noqa: SLF001
     try:
@@ -222,6 +284,7 @@ def scan_ole(data: bytes) -> dict[str, Any]:
         p.endswith("vba/dir") or "/vba/" in "/" + p or p.startswith("vba/") for p in names
     )
     source_found = False
+    sources: list[str] = []
     if has_vba:
         for stream_name, offset in _vba_modules(streams):
             body = next(
@@ -229,12 +292,17 @@ def scan_ole(data: bytes) -> dict[str, Any]:
                 b"",
             )
             source = ovba_decompress(body[offset:]).decode("cp1252", "replace")[:MAX_VBA_CHARS]
+            _pcode_checks(body[:offset], source, st)
             if not source.strip():
                 continue
             source_found = True
+            sources.append(source)
             if _AUTOEXEC.search(source):
                 st.add("autoexec", len(_AUTOEXEC.findall(source)))
             contentscan._scan_text(source, st, 0)  # noqa: SLF001
+        if sources:
+            vbaanalyze.analyze(sources, st)
+    _scan_biff(streams, st)
     if has_vba or source_found:
         st.add("macro_code")
     if any(n.endswith(("ole10native", "package")) or n.startswith("objectpool/") for n in names):

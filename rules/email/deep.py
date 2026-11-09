@@ -21,6 +21,7 @@ from rules.email import (
     INJECTION,
     MALICIOUS_FILE,
     MASQUERADE_FILE_TYPE,
+    NATIVE_API,  # noqa: E402  (kept apart: one more name for the macro rules)
     OBFUSCATION,
     OFFICE_STARTUP,
     PACKING,
@@ -29,6 +30,7 @@ from rules.email import (
     SANDBOX_EVASION,
     SCRIPTING,
     TEMPLATE_INJECTION,
+    VBA_STOMPING,
     Ctx,
     rule,
 )
@@ -220,7 +222,7 @@ def disguised_program(ctx: Ctx) -> str | None:
 
 # ---- Office files and RTF ----------------------------------------------------------------------
 def _macro(s: ContentScan) -> bool:
-    return s.family == "ole" and _has(s, "macro_code")
+    return s.family in ("ole", "xlm") and _has(s, "macro_code")
 
 
 def _archives(ctx: Ctx, test: Callable[[ArchiveScan], bool]) -> int:
@@ -252,6 +254,118 @@ def office_macro_autoexec(ctx: Ctx) -> str | None:
 
     n, _ = _count(ctx, test)
     return _said(n, "{n} Office file(s) with a macro that runs on opening and starts programs")
+
+
+# ---- macros no list knows: what reading their code gives away (ADR-023) -------------------------
+_RUNS: tuple[Indicator, ...] = (
+    "exec_shell", "download", "execute_dynamic", "process_injection", "lolbin_proxy",
+)  # fmt: skip
+
+
+@rule("content.macro_hidden_behavior", "obfuscation", OBFUSCATION)
+def macro_hidden_behavior(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _macro(s) and _has(s, "macro_hidden_behavior"))
+    return _said(
+        n,
+        "{n} macro(s) whose own decoder builds a command that cannot be seen in their text "
+        "(it only appears when their string-building code is followed)",
+    )
+
+
+@rule("content.macro_autoexec_reaches_sink", "code_behavior", MALICIOUS_FILE)
+def macro_autoexec_reaches_sink(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _macro(s) and _has(s, "macro_autoexec_reaches_sink"))
+    return _said(
+        n,
+        "{n} macro(s) that start by themselves and, through the code they call, run programs, "
+        "download something or inject code",
+    )
+
+
+@rule("content.macro_api_import", "api_abuse", NATIVE_API)
+def macro_api_import(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _macro(s) and _has(s, "win32_api_import", "process_injection"))
+    return _said(
+        n, "{n} macro(s) that import Windows functions for loading code or running programs"
+    )
+
+
+@rule("content.macro_dynamic_dispatch", "evasion", OBFUSCATION)
+def macro_dynamic_dispatch(ctx: Ctx) -> str | None:
+    n, _ = _count(
+        ctx, lambda s: _macro(s) and _has(s, "macro_dynamic_dispatch") and _has(s, "autoexec")
+    )
+    return _said(
+        n, "{n} self-starting macro(s) that call things whose names they work out while running"
+    )
+
+
+@rule("content.macro_hidden_data_source", "evasion", OBFUSCATION)
+def macro_hidden_data_source(ctx: Ctx) -> str | None:
+    def test(s: ContentScan) -> bool:
+        return (
+            _macro(s)
+            and _has(s, "macro_hidden_data_source")
+            and (
+                _has(s, *_RUNS) or _has(s, "macro_dynamic_dispatch", "macro_autoexec_reaches_sink")
+            )
+        )
+
+    n, _ = _count(ctx, test)
+    return _said(
+        n,
+        "{n} macro(s) that read data from document properties, form fields or hidden parts "
+        "and run things",
+    )
+
+
+@rule("content.macro_file_drop", "persistence", INGRESS_TOOL)
+def macro_file_drop(ctx: Ctx) -> str | None:
+    n, _ = _count(
+        ctx,
+        lambda s: (
+            _macro(s)
+            and _has(s, "macro_file_drop")
+            and _has(s, *_RUNS, "macro_autoexec_reaches_sink")
+        ),
+    )
+    return _said(
+        n, "{n} macro(s) that write a file into a temporary or start-up folder and run things"
+    )
+
+
+@rule("content.macro_obfuscated", "obfuscation", OBFUSCATION)
+def macro_obfuscated(ctx: Ctx) -> str | None:
+    n, _ = _count(
+        ctx, lambda s: _macro(s) and _has(s, "macro_obfuscated_code") and _has(s, "autoexec")
+    )
+    return _said(n, "{n} self-starting macro(s) whose code looks scrambled on purpose")
+
+
+@rule("content.vba_stomped", "evasion", VBA_STOMPING)
+def vba_stomped(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _has(s, "vba_stomped"))
+    return _said(n, "{n} macro(s) whose compiled code says something the readable source does not")
+
+
+@rule("content.vba_pcode_only", "evasion", VBA_STOMPING)
+def vba_pcode_only(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _has(s, "vba_pcode_only"))
+    return _said(n, "{n} macro(s) that carry compiled code and no readable source")
+
+
+@rule("content.xlm_macro", "active_content", OFFICE_STARTUP)
+def xlm_macro(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _has(s, "xlm_macro"))
+    return _said(
+        n, "{n} workbook(s) with an Excel 4.0 macro sheet (formulas that can run programs)"
+    )
+
+
+@rule("content.xlm_hidden", "evasion", OBFUSCATION)
+def xlm_hidden(ctx: Ctx) -> str | None:
+    n, _ = _count(ctx, lambda s: _has(s, "xlm_hidden"))
+    return _said(n, "{n} workbook(s) that hide their Excel 4.0 macro sheet")
 
 
 @rule("content.office_remote_template", "code_behavior", TEMPLATE_INJECTION)

@@ -5,6 +5,7 @@ the real engine; only the sandbox is replaced (tests/sandbox/test_email_sandbox.
 
 import deephelp as dh
 import filehelp as fh
+import macrosamples as ms
 import pytest
 from mailhelp import PHISH_LINK, analyze, eml, fired, multipart
 
@@ -27,6 +28,9 @@ ATTACK_IDS = {
     "T1027.006",
     "T1036.007",
     "T1036.002",
+    # macros read as programs (ADR-023), confirmed by name on attack.mitre.org on 2026-11-09:
+    "T1564.007",  # Hide Artifacts: VBA Stomping
+    "T1106",  # Native API
     # deep content rules (ADR-020). Confirmed by name on attack.mitre.org (content v20.1):
     "T1027",
     "T1027.002",
@@ -349,6 +353,78 @@ TWO_CATEGORIES = {
     "content.lnk_disguised",
     "content.pe_injection_or_downloader",
 }
+
+
+def _scrambled() -> str:
+    names = [
+        "xkqzvbnw",
+        "rtpsdfgh",
+        "bvcxzlkj",
+        "qwrtypsd",
+        "zxcvbnml",
+        "hgfdsatr",
+        "mnbvcxzq",
+        "plkjhgfd",
+    ]
+    body = "".join(f"  {n} = Chr(65) & Chr(66) & Chr(67)\r\n" for n in names * 3)
+    return "Sub AutoOpen()\r\n" + body + "End Sub\r\n"
+
+
+_STUB = (
+    'Attribute VB_Name = "ThisDocument"\r\nSub Helper()\r\n  Range("A1").Value = 1\r\nEnd Sub\r\n'
+)
+CASES.update(
+    {  # macros read as programs (ADR-023)
+        "content.macro_hidden_behavior": (
+            blob(dh.ole_with_macro(ms.MIN_HIDDEN)),
+            blob(dh.ole_with_macro(dh.MACRO_QUIET)),
+        ),
+        "content.macro_autoexec_reaches_sink": (
+            blob(dh.ole_with_macro(dh.MACRO_AUTOEXEC_SHELL)),
+            blob(dh.ole_with_macro(dh.MACRO_QUIET)),
+        ),
+        "content.macro_api_import": (
+            blob(dh.ole_with_macro(ms.MIN_API)),
+            blob(dh.ole_with_macro(ms.B_TIMING_API)),
+        ),
+        "content.macro_dynamic_dispatch": (
+            blob(dh.ole_with_macro(ms.M_PROPERTIES_LOADER)),
+            blob(dh.ole_with_macro(ms.B_RUN_BY_NAME)),
+        ),
+        "content.macro_hidden_data_source": (
+            blob(dh.ole_with_macro(ms.M_PROPERTIES_LOADER)),
+            blob(dh.ole_with_macro(ms.B_STAMP_PROPERTIES)),
+        ),
+        "content.macro_file_drop": (
+            blob(dh.ole_with_macro(ms.MIN_DROP)),
+            blob(dh.ole_with_macro(ms.B_FSO_EXPORT)),
+        ),
+        "content.macro_obfuscated": (
+            blob(dh.ole_with_macro(_scrambled())),
+            blob(dh.ole_with_macro(ms.B_HTML_BUILDER)),
+        ),
+        "content.vba_stomped": (
+            blob(
+                dh.ole_with_macro(
+                    _STUB, pcode=b"\x00" * 300 + b"powershell -nop -w hidden" + b"\x00" * 99
+                )
+            ),
+            blob(dh.ole_with_macro(_STUB)),
+        ),
+        "content.vba_pcode_only": (
+            blob(dh.ole_with_macro('Attribute VB_Name = "T"\r\n', pcode=b"\x00" * 2000)),
+            blob(dh.ole_with_macro(dh.MACRO_QUIET)),
+        ),
+        "content.xlm_macro": (
+            blob(dh.biff_workbook([(0, 1, "Macro1")])),
+            blob(dh.biff_workbook([(0, 0, "Sheet1")])),
+        ),
+        "content.xlm_hidden": (
+            blob(dh.biff_workbook([(2, 1, "Macro1")])),
+            blob(dh.biff_workbook([(0, 1, "Macro1")])),
+        ),
+    }
+)
 
 
 def test_every_rule_has_a_case() -> None:

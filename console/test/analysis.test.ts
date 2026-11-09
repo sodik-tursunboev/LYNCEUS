@@ -145,6 +145,8 @@ describe("what was found inside a file", () => {
       "lolbin proxy", "defense evasion", "process injection", "credential access", "credential prompt", "anti analysis", "string obfuscation",
       "high entropy blob", "autoexec", "macro code", "remote template", "dde", "ole object", "equation editor", "lnk interpreter",
       "lnk hidden args", "lnk icon lure", "pe packed", "pe rwx", "pe injection apis", "pe downloader apis", "pe overlay",
+      "macro hidden behavior", "macro autoexec reaches sink", "macro dynamic dispatch", "macro hidden data source", "macro file drop",
+      "macro obfuscated code", "win32 api import", "vba pcode only", "vba stomped", "xlm macro", "xlm hidden",
     ];
     for (const name of indicators) expect(explainFact(name), name).not.toBeNull();
   });

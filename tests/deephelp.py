@@ -136,17 +136,19 @@ def _record(record_id: int, payload: bytes) -> bytes:
     return struct.pack("<HI", record_id, len(payload)) + payload
 
 
-def vba_streams(source: str, module: str = "ThisDocument") -> dict[str, bytes]:
+def vba_streams(source: str, module: str = "ThisDocument", pcode: bytes = b"") -> dict[str, bytes]:
+    """The streams of a macro project. `pcode` stands in for the compiled part stored before the
+    source (its length is the module's source offset, as in a real project)."""
     directory = (
         _record(0x0004, b"VBAProject")
         + _record(0x0019, module.encode())
         + _record(0x001A, module.encode())
-        + _record(0x0031, struct.pack("<I", 0))
+        + _record(0x0031, struct.pack("<I", len(pcode)))
         + _record(0x002B, b"")
     )
     return {
         "VBA/dir": ovba_compress(directory),
-        f"VBA/{module}": ovba_compress(source.encode("cp1252")),
+        f"VBA/{module}": pcode + ovba_compress(source.encode("cp1252")),
         "PROJECT": b'ID="{00000000-0000-0000-0000-000000000000}"\r\n',
     }
 
@@ -257,8 +259,27 @@ def cfb(streams: dict[str, bytes]) -> bytes:
     )
 
 
-def ole_with_macro(source: str) -> bytes:
-    return cfb(vba_streams(source))
+def ole_with_macro(source: str, pcode: bytes = b"") -> bytes:
+    return cfb(vba_streams(source, pcode=pcode))
+
+
+def biff_workbook(sheets: list[tuple[int, int, str]], auto_open: bool = False) -> bytes:
+    """A compound file holding a BIFF8 workbook stream: only the workbook-global part, with
+    BoundSheet8 records (state, type, name) and optionally the built-in Auto_Open name. Type 1 is
+    an Excel 4.0 macro sheet; state 0 visible, 1 hidden, 2 very hidden."""
+
+    def rec(rid: int, data: bytes = b"") -> bytes:
+        return struct.pack("<HH", rid, len(data)) + data
+
+    out = rec(0x0809, struct.pack("<HHHHII", 0x0600, 0x0005, 0, 0, 0, 0x06))
+    for state, kind, name in sheets:
+        out += rec(
+            0x0085, struct.pack("<IBB", 0, state, kind) + bytes([len(name), 0]) + name.encode()
+        )
+    if auto_open:
+        out += rec(0x0018, struct.pack("<HBBHHH", 0x0020, 0, 1, 0, 0, 1) + bytes(4) + b"\x00\x01")
+    out += rec(0x000A)
+    return cfb({"Workbook": out})
 
 
 MACRO_AUTOEXEC_SHELL = (
