@@ -32,7 +32,7 @@ module = [
 ignore_missing_imports = true  # sandbox guest modules run with their own folder as the path
 
 [[tool.mypy.overrides]]
-module = ["contentscan", "lnkscan", "pescan", "olescan", "vbaeval", "vbaanalyze", "xlmscan"]
+module = ["contentscan", "lnkscan", "pescan", "olescan", "vbaeval", "vbaanalyze", "xlmscan", "macrosamples"]
 ignore_missing_imports = true  # more sandbox guest modules (deep content analysis)
 
 [[tool.mypy.overrides]]

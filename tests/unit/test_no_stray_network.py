@@ -6,7 +6,9 @@ core/mailbox/gmail.py, oauth.py, graph.py and ms_oauth.py are the only places th
 talks to Google or Microsoft (fixed hosts, GET-only to the mail APIs), and only when the operator
 connected an account (M5, M5b); core/mailbox/write.py is the one place a mailbox is changed (M6b),
 behind its own narrow request guard that the tests try with every forbidden request;
-eval/perf.py is a measurement tool that talks only to a local server it starts itself (M7)."""
+eval/perf.py is a measurement tool that talks only to a local server it starts itself (M7);
+core/llm/ollama.py reaches a local model through core/intel/http.py and only on a loopback address
+(ADR-023)."""
 
 import ast
 from pathlib import Path
@@ -62,14 +64,26 @@ def test_the_api_has_no_fetch_option() -> None:
 
 
 def test_only_intelligence_code_uses_the_intelligence_http_module() -> None:
-    """Whatever calls out does so through the bounded, redirect-free client and nowhere else."""
+    """Whatever calls out does so through the bounded, redirect-free client and nowhere else. The
+    one user outside core/intel is the local-model client (ADR-023), which can only be built for a
+    loopback address: tests/unit/test_llm_advisor.py tries every other kind of address."""
     users = {
         path.relative_to(ROOT).as_posix()
         for package in ("core", "rules", "eval")
         for path in (ROOT / package).rglob("*.py")
         if "core.intel.http" in imports(path)
     }
-    assert all(u.startswith("core/intel/") for u in users), users
+    assert all(u.startswith("core/intel/") or u == "core/llm/ollama.py" for u in users), users
+
+
+def test_the_analysis_engines_do_not_import_the_local_model() -> None:
+    """The engines decide by rules. The model's advice is added around them (the API), never inside,
+    and never in the mailbox poller or the rules."""
+    for path in [*(ROOT / "rules").rglob("*.py"), *(ROOT / "core").rglob("*.py")]:
+        rel = path.relative_to(ROOT).as_posix()
+        if rel.startswith("core/llm/") or rel == "core/api/app.py":
+            continue
+        assert not any(n.startswith("core.llm") for n in imports(path)), rel
 
 
 def test_the_analysis_engines_do_not_import_intelligence() -> None:

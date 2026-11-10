@@ -106,6 +106,37 @@ def test_a_sink_nobody_calls_from_the_entry_is_not_reached() -> None:
     assert "exec_shell" in found and "macro_autoexec_reaches_sink" not in found
 
 
+@pytest.mark.parametrize(
+    "line",
+    ['Shell p, vbHide', 'Shell "calc.exe"', 'If ok Then Shell cmd, 0', 'x = 1: Shell cmd', 'Call Shell(cmd, 0)', 'r = Shell(cmd)'],
+)  # fmt: skip
+def test_the_shell_statement_counts_as_running_a_program_in_every_form(line: str) -> None:
+    found = indicators(f"Sub AutoOpen()\n  {line}\nEnd Sub\n")
+    assert {"exec_shell", "macro_autoexec_reaches_sink"} <= found
+
+
+@pytest.mark.parametrize(
+    "line",
+    ["Shell = 5", 'ShellPath = "C:\\x"', "Dim Shell As Long", "' Shell cmd, 0", 'MsgBox "use Shell cmd"', "n = ShellCount + 1"],
+)  # fmt: skip
+def test_words_that_only_look_like_the_shell_statement_do_not(line: str) -> None:
+    found = indicators(f"Sub AutoOpen()\n  {line}\nEnd Sub\n")
+    assert not found & {"exec_shell", "macro_autoexec_reaches_sink"}
+
+
+def test_the_held_out_macros_are_judged_as_recorded() -> None:
+    """Macros written after the analysis, in other styles. Measured BEFORE any change on 2026-11-10:
+    2 of 3 hostile ones were MALICIOUS and one (the Shell statement without brackets) was only "a
+    file with a macro"; that gap is fixed above, so this set has now been used once and is no
+    longer a blind test. No ordinary held-out macro fired a macro-analysis rule, then or now."""
+    for name, (label, source) in ms.HELDOUT.items():
+        state, _risk, rules = judge(source)
+        if label == "malicious":
+            assert state == "MALICIOUS", (name, state, sorted(rules))
+        else:
+            assert state != "MALICIOUS" and not rules & NEW_RULES, (name, sorted(rules & NEW_RULES))
+
+
 def test_calls_that_go_in_circles_end() -> None:
     loop = (
         "Sub AutoOpen()\n  A\nEnd Sub\nSub A()\n  B\nEnd Sub\nSub B()\n  A\n  AutoOpen\nEnd Sub\n"

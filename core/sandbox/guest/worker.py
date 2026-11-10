@@ -47,6 +47,21 @@ def handle(header: dict[str, Any], body: bytes) -> dict[str, Any]:
         import filescan
 
         return {"ok": True, **filescan.inspect_standalone(body)}
+    if op == "macro_excerpt":  # the macro code of a file, or of one part of a message
+        import filescan
+        import mailparse
+
+        path = header.get("path")
+        data = (
+            body
+            if path is None
+            else mailparse.part_bytes(body, path)
+            if isinstance(path, str)
+            else None
+        )
+        if data is None:
+            return {"error": "no_such_part"}
+        return {"ok": True, "excerpt": filescan.macro_excerpt(data)}
     return {"error": "unknown_op"}
 
 

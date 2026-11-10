@@ -50,6 +50,8 @@ export const CATEGORY: Record<string, { icon: IconName; label: string }> = {
   evasion: { icon: "ShieldSlash", label: "Evasion" },
   persistence: { icon: "ArrowsClockwise", label: "Stays on the computer" },
   known_bad: { icon: "Skull", label: "Known malware" },
+  api_abuse: { icon: "Code", label: "Windows functions it imports" },
+  llm_review: { icon: "Sparkle", label: "Local model's advice (never decides)" },
 };
 
 /** A category, or a category of a link inside a message ("link.impersonation"): the same icon, said as "in a link". */

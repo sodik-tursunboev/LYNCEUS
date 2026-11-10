@@ -34,7 +34,14 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'Acl.ps1')
+. (Join-Path $PSScriptRoot 'RegistryView.ps1')
 function Say($text) { Write-Host "[install] $text" }
+# A terminal inside a packaged app writes to a private copy of the registry: start-at-logon and the browser
+# bridge would look registered from here and never reach Windows (ADR-024). Refuse before changing anything.
+if (-not $NoRegister -and (Test-RegistryReachesWindows) -eq $false) {
+    throw ("This window writes to a private copy of the registry (it runs inside a packaged app), so what this script registers " +
+        "would never reach Windows. Run it from a normal PowerShell window (Start menu), or add -NoRegister to only build and copy.")
+}
 function Need($name) { if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "$name is required and was not found on PATH." } }
 
 Need dotnet; Need node; Need npm
@@ -143,7 +150,11 @@ if (-not $SkipMigrate) {
 }
 
 # ---- register -----------------------------------------------------------------------------------------------
-if (-not $NoRegister) { Say 'registering start-at-logon and the browser bridge'; & $agentExe --install; Start-Sleep -Milliseconds 500 }
+if (-not $NoRegister) {
+    Say 'registering start-at-logon and the browser bridge'; & $agentExe --install; Start-Sleep -Milliseconds 500
+    $seen = Get-LynceusRegistration   # what Windows itself has, not what this shell reads back
+    if (-not ($seen.RunLynceus -and $seen.EdgeBridge)) { throw 'Windows does not show the start-at-logon entry or the browser bridge after registering. Run deploy\go-live.ps1 from a normal PowerShell window.' }
+}
 
 # ---- start and wait -----------------------------------------------------------------------------------------
 if (-not $NoStart) {

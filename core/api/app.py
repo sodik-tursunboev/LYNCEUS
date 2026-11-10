@@ -45,6 +45,7 @@ from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.refresh import feed_keys, keep_fresh
 from core.intel.registry import build_intel
+from core.llm.build import build_advisor
 from core.log import configure
 from core.mailbox.quarantine import MailQuarantineRunner
 from core.mailbox.service import MailboxService, combined_status
@@ -216,6 +217,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
     feed_store = FeedStore(settings.data_dir / "feeds")
     feed_names = sorted(settings.intel_enabled() & FEEDS.keys())  # the lists to keep downloaded
+    advisor = build_advisor(settings)  # None unless the local model review is on (ADR-023)
 
     mailboxes: list[MailboxService] = []  # filled below, once the database exists
     quarantine: list[MailQuarantineRunner] = []  # M6b: at most one, carries out approved mail moves
@@ -241,6 +243,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await run_in_threadpool(service.stop)
         if intel is not None:
             await intel.aclose()
+        if advisor is not None:
+            await advisor.aclose()
 
     app = FastAPI(
         title="Lynceus",
@@ -402,15 +406,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             links = link_analyzer(intel) if intel is not None else None
             analyze = partial(email_engine.analyze_message, raw, link_analyzer=links)
             analysis = await run_in_threadpool(analyze)
-            persisted = False
-            if db is not None:
-                try:
-                    await run_in_threadpool(save_email_analysis, db, analysis, EventSource.API)
-                    persisted = True
-                except Exception:  # a storage failure must not cost the caller the verdict
-                    log.exception("could not persist message analysis")
         finally:
             parser_slots.release()
+        if advisor is not None:  # advice only, never raises; no parser slot is held while it reads
+            analysis = await advisor.advise_message(analysis, raw)
+        persisted = False
+        if db is not None:
+            try:
+                await run_in_threadpool(save_email_analysis, db, analysis, EventSource.API)
+                persisted = True
+            except Exception:  # a storage failure must not cost the caller the verdict
+                log.exception("could not persist message analysis")
         return EmailResponse(**analysis.report.model_dump(), persisted=persisted)
 
     async def _file_verdict(
@@ -435,15 +441,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 analyze_file, name, size, sha256, data, claimed_magic=magic, origin_host=host
             )
             analysis = await run_in_threadpool(analyze)
-            persisted = False
-            if db is not None:
-                try:
-                    await run_in_threadpool(save_file_analysis, db, analysis, EventSource.AGENT)
-                    persisted = True
-                except Exception:  # a storage failure must not cost the caller the verdict
-                    log.exception("could not persist file analysis")
         finally:
             parser_slots.release()
+        if advisor is not None and data is not None:  # advice only, never raises (see above)
+            analysis = await advisor.advise_file(analysis, data)
+        persisted = False
+        if db is not None:
+            try:
+                await run_in_threadpool(save_file_analysis, db, analysis, EventSource.AGENT)
+                persisted = True
+            except Exception:  # a storage failure must not cost the caller the verdict
+                log.exception("could not persist file analysis")
         action_id: uuid.UUID | None = None
         allowed = False
         if persisted and db is not None:

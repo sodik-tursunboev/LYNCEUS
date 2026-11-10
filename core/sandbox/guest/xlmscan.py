@@ -132,6 +132,20 @@ class _Sheet:
         return ""
 
 
+def excerpt(data: bytes, limit: int = 6000) -> str:
+    """The sheet's formulas, in order, with what they spell out, as plain text for a reader."""
+    xml = data[:MAX_CONTENT_BYTES].decode("utf-8", "replace")
+    formulas: dict[str, str] = {}
+    for n, m in enumerate(_CELL.finditer(xml)):
+        if n >= _MAX_CELLS:
+            break
+        f = _FORMULA.search(m.group(2) or "")
+        if f:
+            formulas[m.group(1)] = html.unescape(f.group(1))
+    lines = [f"{ref}: ={text[:300]}" for ref, text in list(formulas.items())[:150]]
+    return "\n".join(lines)[:limit]
+
+
 def scan_xlm_xml(data: bytes, auto: bool = False, hidden: bool = False) -> dict[str, Any]:
     """Scan one macro sheet. `auto`: the workbook has an Auto_Open name. `hidden`: it is hidden."""
     st = contentscan._State()  # noqa: SLF001

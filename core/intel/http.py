@@ -52,9 +52,12 @@ async def fetch(
     max_bytes: int,
     headers: Mapping[str, str] | None = None,
     params: Mapping[str, Any] | None = None,
+    json_body: Any = None,
 ) -> Fetched:
     try:
-        async with client.stream(method, url, headers=headers, params=params) as response:
+        async with client.stream(
+            method, url, headers=headers, params=params, json=json_body
+        ) as response:
             declared = response.headers.get("content-length", "")
             if declared.isdigit() and int(declared) > max_bytes:
                 raise FetchError("response too large")

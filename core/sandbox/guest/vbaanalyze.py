@@ -63,6 +63,12 @@ _DROP_PATH = re.compile(
     r"(?i)environ\s*\(\s*\"?(?:temp|tmp|appdata|public|programdata)"
     r"|\\(?:temp|appdata|programdata|public)\\|\\startup\\|%(?:temp|appdata|programdata)%"
 )
+# VBA's own Shell statement written without brackets (Shell cmd, 0): it runs a program, and the
+# script patterns only know the bracketed form. Not an assignment (Shell = ...), not a name that
+# merely starts with the word (ShellPath), not an object (Shell.Run).
+_VBA_SHELL = re.compile(
+    r"(?im)(?:^|:|\bthen\b|\belse\b)[ \t]*(?:call[ \t]+)?shell[ \t]+(?!=)[^\s=]"
+)
 _STRING = re.compile(r'"(?:[^"]|"")*"')
 _IDENT = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]{6,}\b")
 _CHR = re.compile(r"(?i)\bchrw?\$?\s*\(")
@@ -150,9 +156,11 @@ def analyze(sources: list[str], st: contentscan._State) -> None:  # noqa: SLF001
             blob += "\n" + "\n".join(ev.by_root.get(entry, []))
             probe = contentscan._State()  # noqa: SLF001
             contentscan._scan_text(blob, probe, 0)  # noqa: SLF001
-            reached += any(probe.counts.get(n) for n in SINKS)
+            reached += any(probe.counts.get(n) for n in SINKS) or bool(_VBA_SHELL.search(blob))
         if reached:
             st.add("macro_autoexec_reaches_sink", reached)
+    if n := len(_VBA_SHELL.findall("\n".join(vbaeval.logical_lines(text)))):
+        st.add("exec_shell", n)
     norm, _ = contentscan.normalize(text)
     if n := _api_imports(norm):
         st.add("win32_api_import", n)

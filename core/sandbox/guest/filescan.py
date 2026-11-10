@@ -29,6 +29,46 @@ def inspect_standalone(data: bytes) -> dict[str, Any]:
     return {"magic": magic, "file": inspect_data(data), "html": html}
 
 
+def macro_excerpt(data: bytes) -> str:
+    """The macro code of one file as bounded plain text (the old Office format, or an Office zip
+    holding a macro project and/or Excel 4.0 sheets), for the local model. Empty when there is no
+    macro. Never returned to a caller that stores or logs it: the host passes it straight on."""
+    import io
+    import zipfile
+
+    import olescan
+    import vbaanalyze
+    import xlmscan
+    from limits import MAX_MEMBER_BYTES
+
+    magic = detect_magic(data[:600])
+    sources: list[str] = []
+    sheets: list[str] = []
+    if magic == "ole":
+        sources = olescan.macro_sources(data)
+    elif magic == "zip":
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as zf:
+                for info in zf.infolist()[:2000]:
+                    low = info.filename.replace("\\", "/").lower()
+                    if info.file_size > MAX_MEMBER_BYTES or not (
+                        low.endswith("vbaproject.bin") or low.startswith("xl/macrosheets/")
+                    ):
+                        continue
+                    with zf.open(info) as f:
+                        body = f.read(MAX_MEMBER_BYTES + 1)
+                    if low.endswith("vbaproject.bin"):
+                        sources += olescan.macro_sources(body)
+                    else:
+                        sheets.append(xlmscan.excerpt(body))
+        except (zipfile.BadZipFile, ValueError, OSError, RuntimeError):
+            return ""
+    text = vbaanalyze.excerpt(sources, 9000) if sources else ""
+    if sheets:
+        text += "\n' --- Excel 4.0 macro sheet formulas ---\n" + "\n".join(sheets)
+    return text.strip()[:12_000]
+
+
 def inspect_data(data: bytes) -> dict[str, Any]:
     magic = detect_magic(data[:600])
     if magic in ARCHIVES:

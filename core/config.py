@@ -102,6 +102,16 @@ class Settings(BaseSettings):
     virustotal_api_key: SecretStr | None = None
     urlscan_api_key: SecretStr | None = None
 
+    # A local language model that reads the recovered code of a macro and gives ADVICE (ADR-023).
+    # Off until enabled. It only talks to this computer (a loopback address; anything else stops
+    # start-up), and its answer can raise suspicion but never lower a verdict or decide one alone.
+    llm_review: bool = False
+    llm_url: str = "http://127.0.0.1:11434"  # Ollama's default address
+    llm_model: str = "llama3.2:3b"
+    # seconds the review of one verdict may take in all, waiting included, before the verdict goes
+    # out without it (the agent waits 90 s for an answer, and the analysis itself comes first)
+    llm_timeout: float = 45.0
+
     console_dir: Path = Path(
         "console/dist"
     )  # the built console, served at /console/ if it exists (M6)

@@ -146,3 +146,52 @@ def test_remove_data_keeps_quarantined_files_unless_forced_and_never_deletes_a_f
     result = uninstall(install, foreign, "-RemoveData", "-Force")
     assert result.returncode != 0 and "does not look like a Lynceus data folder" in result.stderr
     assert (foreign / "thesis.docx").read_bytes() == b"years of work"
+
+
+# ---- registration is checked through Windows' own view (ADR-024) --------------------------------
+def registry(body: str) -> str:
+    return f". '{DEPLOY / 'RegistryView.ps1'}'; {body}"
+
+
+def test_the_registry_probe_answers_and_leaves_nothing_behind() -> None:
+    script = (
+        "$r = Test-RegistryReachesWindows; "
+        "$left = @(Get-ChildItem HKCU:\\Software | "
+        "Where-Object { $_.PSChildName -like 'Lynceus.RegistryProbe*' }).Count; "
+        "if ($null -eq $r) { 'unknown' } else { [string]$r }; $left"
+    )
+    done = ps(registry(script))
+    answer, left = done.stdout.split()
+    assert done.returncode == 0 and answer in ("True", "False", "unknown") and left == "0", (
+        done.stderr
+    )
+
+
+def test_what_windows_has_registered_is_read_as_nine_plain_facts() -> None:
+    done = ps(registry("Get-LynceusRegistration | ConvertTo-Json -Compress"))
+    facts = json.loads(done.stdout)
+    assert set(facts) == {
+        "RunLynceus", "RunTarget", "RunOldName", "EdgeBridge", "ChromeBridge", "EdgeOldName",
+        "ChromeOldName", "Sandbox", "SandboxOld",
+    }  # fmt: skip
+    assert all(isinstance(v, bool) for k, v in facts.items() if k != "RunTarget")
+
+
+def test_go_live_check_only_changes_nothing_and_says_how_it_stands() -> None:
+    def state() -> str:
+        return ps(registry("Get-LynceusRegistration | ConvertTo-Json -Compress")).stdout
+
+    before = state()
+    done = ps(f"& '{DEPLOY / 'go-live.ps1'}' -CheckOnly")
+    assert done.returncode in (0, 1) and "GO-LIVE" in done.stdout, done.stderr
+    assert "starts at logon" in done.stdout and state() == before
+
+
+def test_the_installer_and_go_live_refuse_a_private_registry_before_changing_anything() -> None:
+    """Both scripts ask first whether what they register would reach Windows (the text is checked,
+    since whether THIS shell has a private registry depends on where the tests are run from)."""
+    for name in ("install.ps1", "go-live.ps1"):
+        text = (DEPLOY / name).read_text(encoding="utf-8")
+        guard = text.index("Test-RegistryReachesWindows")
+        for later in ("taskkill", "--install", "Start-Process", "Copy-Item"):
+            assert later not in text[:guard], (name, later)

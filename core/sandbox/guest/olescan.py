@@ -273,6 +273,24 @@ def _scan_biff(streams: dict[str, bytes], st: Any) -> None:
             st.add("autoexec")
 
 
+def macro_sources(data: bytes) -> list[str]:
+    """The readable VBA source of every module of an old-format Office file (for a reader that is
+    not this scanner: the local model). Empty when there is none."""
+    try:
+        streams = _Cfb(data).streams()
+    except (ValueError, struct.error, IndexError, RecursionError):
+        return []
+    out: list[str] = []
+    for stream_name, offset in _vba_modules(streams):
+        body = next(
+            (b for p, b in streams.items() if p.lower().endswith("vba/" + stream_name.lower())), b""
+        )
+        source = ovba_decompress(body[offset:]).decode("cp1252", "replace")[:MAX_VBA_CHARS]
+        if source.strip():
+            out.append(source)
+    return out
+
+
 def scan_ole(data: bytes) -> dict[str, Any]:
     st = contentscan._State()  # noqa: SLF001
     try:
