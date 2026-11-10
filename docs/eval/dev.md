@@ -1,6 +1,6 @@
 # Eval report (url)
 
-Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+960efe1e20f7`. 2026-11-06 07:21Z.
+Split `dev`, n=150. Engine `1.0.0`, ruleset `1.1.0+33f432fb4220`. 2026-11-10 13:38Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
@@ -18,7 +18,7 @@ Split `dev`, n=150. Engine `1.0.0`, ruleset `1.0.0+960efe1e20f7`. 2026-11-06 07:
 | Abstain rate | 0.333 | 0.263 to 0.412 |
 | Error rate | 0.000 | |
 
-Latency per URL: p50 1.399 ms, p95 2.717 ms, max 33.006 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per URL: p50 0.779 ms, p95 1.427 ms, max 19.160 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
@@ -40,12 +40,11 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 | `url.mixed_script` | 9 | 9 | 0 | 1.000 | 0.701 to 1.000 |
 | `url.odd_port` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |
 | `url.open_redirect` | 13 | 13 | 0 | 1.000 | 0.772 to 1.000 |
-| `url.parser_tricks` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
 | `url.prefilled_identity` | 11 | 11 | 0 | 1.000 | 0.741 to 1.000 |
 | `url.shortener` | 6 | 3 | 3 | 0.500 | 0.188 to 0.812 |
 | `url.typosquat` | 13 | 13 | 0 | 1.000 | 0.772 to 1.000 |
 | `url.userinfo_deception` | 9 | 9 | 0 | 1.000 | 0.701 to 1.000 |
 
-Rules with no hits on this split: `url.credential_bait`.
+Rules with no hits on this split: `url.credential_bait`, `url.parser_tricks`.
 
 FN counts abstentions and errors on malicious samples (ADR-005). `n/a` means undefined (zero denominator).

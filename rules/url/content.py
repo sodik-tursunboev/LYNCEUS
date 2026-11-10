@@ -15,6 +15,7 @@ MALICIOUS_LINK = "T1204.001"  # ATT&CK v20: User Execution: Malicious Link
 
 _MAX_PARAMS = 100  # bounded work on hostile input; a URL has 8192 characters at most
 _BASE64 = re.compile(r"[A-Za-z0-9+/_-]{12,}={0,2}")
+_DOUBLE_ENCODED = re.compile(r"%25[0-9A-Fa-f]{2}")
 _WORD = re.compile(r"[^a-z0-9]+")
 _TRICKS = {
     UrlFlag.BACKSLASH: "backslash in the URL",
@@ -95,8 +96,26 @@ def shortener(u: ParsedUrl) -> str | None:
     return None
 
 
+def _share_dialog(u: ParsedUrl) -> bool:
+    """An official site's share dialog: its url parameter is the page being shared, shown to the
+    visitor in a dialog; nobody is sent there. Only on official domains, whose endpoints are known,
+    and only for the listed paths, so a real redirector (google.com/url, linkedin.com/redir/...) is
+    unaffected. Found on real browsing in E1 (four LinkedIn share links flagged)."""
+    if not _official(u):
+        return False
+    path = u.path.lower().rstrip("/") or "/"
+    names = {name.lower() for name, _ in _params(u)}
+    for entry in lists()["share_paths"]:
+        share_path, _, needs = entry.lower().partition("?")
+        if path == share_path and (not needs or needs in names):
+            return True
+    return False
+
+
 @rule("url.open_redirect", "redirect")
 def open_redirect(u: ParsedUrl) -> str | None:
+    if _share_dialog(u):
+        return None
     for name, _, target in _targets(u):
         if name in lists()["redirect_params"]:
             return f"parameter '{name}' sends the visitor to another site ({target.host})"
@@ -200,5 +219,13 @@ def host_shape(u: ParsedUrl) -> str | None:
 
 @rule("url.parser_tricks", "obfuscation")
 def parser_tricks(u: ParsedUrl) -> str | None:
-    found = [text for flag, text in _TRICKS.items() if u.has(flag)]
+    """Ways of writing a URL that make filters and people read it differently. Double encoding
+    counts only in the path, where it hides from path filters: inside a query value it is how a
+    sign-in page carries an already-encoded return address (E1: five of the owner's sign-in pages
+    were flagged for it). An off-site address hidden that way is url.encoded_target's job."""
+    found = [
+        text
+        for flag, text in _TRICKS.items()
+        if u.has(flag) and (flag is not UrlFlag.DOUBLE_ENCODED or _DOUBLE_ENCODED.search(u.path))
+    ]
     return "; ".join(found) or None

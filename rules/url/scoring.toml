@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.0.0"
+version = "1.1.0"  # 1.1.0 (E1): double encoding counts in the path only; share dialogs are not redirects
 
 [thresholds]
 suspicious = 45       # score at or above: SUSPICIOUS

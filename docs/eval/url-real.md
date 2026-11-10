@@ -1,6 +1,6 @@
 # The URL engine on real data (E1)
 
-2026-11-10 13:29Z. Engine 1.0.0, ruleset 1.0.0+960efe1e20f7. 299,460 URLs (train and test splits; the reserve split, about 10%, is sealed). Every URL was parsed as text only: none was opened. Sources and licences: `.data/eval/sources.json`. Intervals are Wilson 95%.
+2026-11-10 13:38Z. Engine 1.0.0, ruleset 1.1.0+33f432fb4220. 299,460 URLs (train and test splits; the reserve split, about 10%, is sealed). Every URL was parsed as text only: none was opened. Sources and licences: `.data/eval/sources.json`. Intervals are Wilson 95%.
 
 **Real data, not written by this project.** UNKNOWN counts as a miss, never as safe.
 
@@ -21,15 +21,15 @@
 |---|---|
 | all | 0.3% (0.3 to 0.3), n=166,265 |
 | home pages | 0.3% (0.3 to 0.3), n=166,181 |
-| with a path | 9.5% (4.9 to 17.7), n=84 |
+| with a path | 0.0% (0.0 to 4.4), n=84 |
 
-Rules behind the false alarms on legitimate URLs with a path: `url.login_path` 5, `url.parser_tricks` 5, `url.open_redirect` 3.
+Rules behind the false alarms on legitimate URLs with a path: none.
 
 ## By source
 
 | Source | Label | n | Result |
 |---|---|---|---|
-| edge_history legit | legit | 87 | 9.2% (4.7 to 17.1), n=87 |
+| edge_history legit | legit | 87 | 0.0% (0.0 to 4.2), n=87 |
 | openphish phish | phish | 266 | 22.9% (18.3 to 28.3), n=266 |
 | phishtank phish | phish | 42,455 | 3.1% (2.9 to 3.3), n=42,455 |
 | phiusiil legit | legit | 121,258 | 0.1% (0.1 to 0.1), n=121,258 |
@@ -46,7 +46,7 @@ Rules behind the false alarms on legitimate URLs with a path: `url.login_path` 5
 | Host | n | Caught | No rule fired |
 |---|---|---|---|
 | own domain | 84,106 | 2.9% (2.8 to 3.0), n=84,106 | 93.5% (93.3 to 93.6), n=84,106 |
-| platform | 41,461 | 1.1% (1.0 to 1.2), n=41,461 | 92.9% (92.7 to 93.2), n=41,461 |
+| platform | 41,461 | 1.1% (1.0 to 1.2), n=41,461 | 93.0% (92.7 to 93.2), n=41,461 |
 | shortener | 6,860 | 0.2% (0.1 to 0.4), n=6,860 | 60.4% (59.3 to 61.6), n=6,860 |
 | ip address | 611 | 73.7% (70.0 to 77.0), n=611 | 0.0% (0.0 to 0.6), n=611 |
 | punycode | 157 | 7.6% (4.4 to 12.9), n=157 | 90.5% (84.8 to 94.1), n=157 |
@@ -60,13 +60,13 @@ Rules behind the false alarms on legitimate URLs with a path: `url.login_path` 5
 | `url.host_shape` | 2,204 | 21 | 0.0165 | 0.0001 |
 | `url.login_path` | 2,111 | 7 | 0.0158 | 0.0 |
 | `url.typosquat` | 365 | 495 | 0.0027 | 0.003 |
-| `url.open_redirect` | 852 | 3 | 0.0064 | 0.0 |
+| `url.open_redirect` | 852 | 0 | 0.0064 | 0.0 |
 | `url.credential_bait` | 824 | 0 | 0.0062 | 0.0 |
 | `url.brand_in_subdomain` | 776 | 3 | 0.0058 | 0.0 |
 | `url.ip_literal` | 611 | 0 | 0.0046 | 0.0 |
 | `url.combosquat` | 297 | 5 | 0.0022 | 0.0 |
 | `url.prefilled_identity` | 278 | 0 | 0.0021 | 0.0 |
-| `url.parser_tricks` | 34 | 5 | 0.0003 | 0.0 |
+| `url.parser_tricks` | 16 | 0 | 0.0001 | 0.0 |
 | `url.userinfo_deception` | 14 | 0 | 0.0001 | 0.0 |
 | `url.odd_port` | 13 | 0 | 0.0001 | 0.0 |
 | `url.excessive_length` | 9 | 3 | 0.0001 | 0.0 |

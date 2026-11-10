@@ -25,6 +25,13 @@ redirect_params = [
   "target", "to", "link", "out", "q",
 ]
 
+# Share dialogs on official domains (E1): their url parameter is the page being shared, shown in a
+# dialog; the visitor is not sent there. "path?param" also needs that query parameter.
+share_paths = [
+  "/sharer/sharer.php", "/sharer.php", "/sharing/share-offsite", "/sharearticle", "/share",
+  "/share/url", "/intent/tweet", "/intent/post", "/pin/create/button", "/feed?shareactive",
+]
+
 # Query parameters that prefill a victim's identity on a fake login page.
 identity_params = ["email", "e-mail", "mail", "user", "username", "userid", "login", "login_hint"]
 

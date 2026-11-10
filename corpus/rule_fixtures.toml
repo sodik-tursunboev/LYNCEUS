@@ -43,7 +43,7 @@ negative = ["https://shorty-reviews.test/", "https://example.test/abc123"]
 
 ["url.open_redirect"]
 positive = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://go.portal.test/r?next=//phish.invalid/x"]
-negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.example.test/o?url=https%3A%2F%2Fb.example.test%2F", "https://www.google.com/out?to=https%3A%2F%2Fmail.google.com%2F", "https://x.test/track?dl=https%3A%2F%2Fy.test%2F"]
+negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.example.test/o?url=https%3A%2F%2Fb.example.test%2F", "https://www.google.com/out?to=https%3A%2F%2Fmail.google.com%2F", "https://x.test/track?dl=https%3A%2F%2Fy.test%2F", "https://www.linkedin.com/shareArticle?url=https%3A%2F%2Fnews.example.test%2Fa&title=t&summary=s", "https://www.linkedin.com/feed/?shareActive=true&url=https%3A%2F%2Fnews.example.test%2Fa", "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnews.example.test%2Fa"]
 
 ["url.encoded_target"]
 positive = ["https://go.portal.test/r?x=aHR0cDovL3BoaXNoLmludmFsaWQvbG9naW4=", "https://go.portal.test/r?x=http%253A%252F%252Fphish.invalid%252Flogin"]
@@ -78,5 +78,5 @@ positive = ["https://a-b-c-d-e.test/", "https://a.b.c.d.e.example.test/"]
 negative = ["https://a-b.test/", "https://a.b.c.example.test/", "http://203.0.113.5/", "https://xn--mnchen-3ya.test/"]
 
 ["url.parser_tricks"]
-positive = ["http://evil.test\\@good.test/", "https://example.test/?q=%2525", "http://exa%6Dple.test/", "https://exa\tmple.test/"]
-negative = ["https://example.test/", "https://example.test/?q=%25"]
+positive = ["http://evil.test\\@good.test/", "https://example.test/a%252Fb/login", "http://exa%6Dple.test/", "https://exa\tmple.test/"]
+negative = ["https://example.test/", "https://example.test/?q=%25", "https://example.test/?q=%2525", "https://app.example.test/en/login?next=%252Fdashboard%253Ftab%253D1"]
