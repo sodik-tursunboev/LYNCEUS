@@ -148,5 +148,17 @@ Two reviewers who had not seen the code before read it adversarially; `docs/mile
 - **Mail backlog:** a burst is read over several polls without losing position, but more than 5,000 unread messages in one range can cause the oldest to be read again (the list of already-read ids is capped at 5,000).
 - **The HTML scanner reads one level of Outlook conditional comments and VML links,** `formaction`, `embed` and `object`; it still does not treat images, style sheets, media or `<a ping>` as links.
 
+## Macros read as programs, and the local model (ADR-023)
+
+- **Measured on synthetic macros only.** Every macro in the tests was written for them, to published file layouts. No real Office file and no real malware has been through this analysis. The corpus numbers (8 of 8 unknown-malicious macros flagged, 7 MALICIOUS; 0 of 10 ordinary ones firing a new rule) show the design works as intended, not how it does in the wild.
+- **The evaluator runs only the macro's own text-building code.** It does not model objects (`Collection`, `Dictionary`, class modules, `With` targets), `GoTo`/`GoSub`, `On Error` flow, `Like`, user-defined types or dates. A command built from cells, form captions or document properties exists only in the real document, so it is reported as "reads from a hidden store", not spelled out.
+- **Excel 4.0 macros in old binary workbooks (`.xls`):** the macro sheet, whether it is hidden and the built-in `Auto_Open` name are found; the formulas themselves are not read. In `.xlsm` (XML) they are.
+- **P-code is compared with the source by its readable text,** not disassembled. Password-protected (encrypted) documents are not opened.
+- **The local model is advice, off by default.** On `llama3.2:3b` it answered all 24 test macros in the fixed form and agreed with all of them, but only 6 of those were written independently of its briefing; six is a small number. It runs only on files the agent or the Analyze page send and on messages posted to the API, **not** in the mailbox poller. A first answer after the model has been idle can take 15 to 35 seconds; past 45 seconds a verdict goes out without it.
+- **What the model sees:** the macro's code (comments removed) and the strings its decoders build, sent to `127.0.0.1` only. It is not stored. Whatever the model says, a verdict can go up by at most one weak signal, never down, and never to MALICIOUS on the model's word.
+
+## Installing from inside another app (ADR-024)
+
+- **A terminal inside a packaged (MSIX) app writes to a private copy of your registry.** An install run from there looks registered and is not: start-at-logon, the browser bridge and the sandbox profile never reach Windows. This happened to this project's own cutover on 2026-11-07 and left the machine unprotected until 2026-11-10. `install.ps1` and `go-live.ps1` now refuse to run from such a window and check Windows' own view (through WMI) afterwards. `Lynceus.Agent.exe --status` still reads the registry as the calling process sees it. The MSI's setup step was not given the check (Windows Installer is expected to run it outside the calling app; **not verified**).
 ## Next
 `docs/milestones/R1.md` and `docs/milestones/M6b.md` (email quarantine, built, not run live). Not started: the WiX MSI installer and a Tauri window around the console.

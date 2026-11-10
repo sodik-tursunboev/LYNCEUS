@@ -11,6 +11,7 @@ Written from the code (database models, the agent's file formats, the log statem
 | Requests to read your mail | only after you connect Gmail | `gmail.googleapis.com`, `oauth2.googleapis.com`, `accounts.google.com`, read-only, GET only (enforced in code) |
 | Requests to read your mail | only after you connect Outlook | `graph.microsoft.com` (GET only, enforced in code), `login.microsoftonline.com` (sign-in and token refresh), read-only `Mail.Read` |
 | Requests that move a message in your mail | only after you give the **separate write permission** (`connect --write`) **and** click Approve on a MALICIOUS message | the same hosts as above. Gmail: list or create the label `LYNCEUS-Quarantine`, change one message's labels. Outlook: list or create the folder `Lynceus Quarantine`, read one message's folder, move it. Nothing else (no delete, send, draft, trash: refused in code before sending). The message id goes to the provider, because that is how the message is named |
+| The readable code of a macro (comments removed) and the strings its own decoders build | only if you set `LYNCEUS_LLM_REVIEW=true`, and only for a file the rules already found a macro in | a language model on **this computer** (Ollama on `127.0.0.1`; any other address stops the core from starting). Not stored. See ADR-023 |
 | A Windows toast, a browser warning page | always, but local | your screen |
 
 The agent talks to the core only over loopback (no proxy, no redirects, the resolved address is checked on every connection). The extension makes no network requests of its own.
