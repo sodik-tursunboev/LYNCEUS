@@ -43,9 +43,11 @@ function Get-EnvSetting([string]$name) {
     return $null
 }
 
+$script:private = $null
 if (-not $CheckOnly) {
     if (-not ((Test-Path $agentExe) -and (Test-Path $python))) { throw "Lynceus is not installed from this checkout yet: run deploy\install.ps1 first." }
     $reaches = Test-RegistryReachesWindows
+    $script:private = $reaches -eq $false
     if ($reaches -eq $false) {
         Write-Host ''
         Write-Host 'STOPPED: this window writes to a private copy of the registry, so nothing it registers would reach Windows.' -ForegroundColor Yellow
@@ -97,9 +99,15 @@ Check 'browser bridge for Chrome' $reg.ChromeBridge
 Check 'old browser bridges are gone' (-not ($reg.EdgeOldName -or $reg.ChromeOldName))
 Check 'parser sandbox profile (lynceus.parser)' $reg.Sandbox
 Check 'old sandbox profile (mirage.parser) is gone' (-not $reg.SandboxOld) '' -Advice
-$engineCmd = $null
-try { if (Test-Path $agentConfig) { $engineCmd = (Get-Content $agentConfig -Raw | ConvertFrom-Json).CoreCommand } } catch { }
-Check 'the agent is set to start the engine (agent.json)' ([bool]($engineCmd -and (Test-Path $engineCmd))) "$agentConfig"
+if ($null -eq $script:private) { $script:private = (Test-RegistryReachesWindows) -eq $false }
+if ($script:private) {
+    # This window sees private copies of AppData files too, so it cannot read the agent's real agent.json.
+    Check 'the agent is set to start the engine (agent.json)' $false 'cannot be read from this window: it sees a private copy; run -CheckOnly from a normal PowerShell window' -Advice
+} else {
+    $engineCmd = $null
+    try { if (Test-Path $agentConfig) { $engineCmd = (Get-Content $agentConfig -Raw | ConvertFrom-Json).CoreCommand } } catch { }
+    Check 'the agent is set to start the engine (agent.json)' ([bool]($engineCmd -and (Test-Path $engineCmd))) "$agentConfig"
+}
 $running = @(Get-Process -Name 'Lynceus.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and (Test-IsUnder $_.Path $install) })
 Check 'the Lynceus agent is running' ($running.Count -ge 1)
 Check 'no agent under the old name is running' (@(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue).Count -eq 0)
@@ -112,6 +120,7 @@ if ((Get-EnvSetting 'LLM_REVIEW') -match '^(1|true|yes|on)$') {
 }
 
 Write-Host ''
+Write-Host "  (this window: $(if ($script:private) { 'INSIDE a packaged app - registry and AppData are private copies here' } else { 'a normal window' }); run at $(Get-Date -Format 'yyyy-MM-dd HH:mm'))"
 foreach ($r in $results) {
     $mark = if ($r.Ok) { 'OK  ' } elseif ($r.Advice) { 'NOTE' } else { 'FAIL' }
     $color = if ($r.Ok) { 'Green' } elseif ($r.Advice) { 'Yellow' } else { 'Red' }
