@@ -25,6 +25,8 @@ function Say($text) { Write-Host "[go-live] $text" }
 
 $install = Join-Path $env:LOCALAPPDATA 'Programs\Lynceus'
 $agentExe = Join-Path $install 'agent\Lynceus.Agent.exe'
+$agentHome = if ($env:LYNCEUS_AGENT_HOME) { $env:LYNCEUS_AGENT_HOME } else { Join-Path $env:LOCALAPPDATA 'Lynceus' }
+$agentConfig = Join-Path $agentHome 'agent.json'
 $python = Join-Path $repo '.venv\Scripts\python.exe'
 $results = New-Object System.Collections.Generic.List[object]
 function Check([string]$what, [bool]$ok, [string]$detail = '', [switch]$Advice) {
@@ -69,6 +71,17 @@ if (-not $CheckOnly) {
 
     Say 'registering start-at-logon and the browser bridge'
     & $agentExe --install
+
+    # The agent starts the engine only if agent.json says how. Bring the old data folder along first (the
+    # agent would do the same on start), then fill in the engine settings if they are missing.
+    $legacyHome = Join-Path $env:LOCALAPPDATA 'Mirage'
+    if (-not $env:LYNCEUS_AGENT_HOME -and -not (Test-Path $agentHome) -and (Test-Path $legacyHome)) {
+        Move-Item -LiteralPath $legacyHome -Destination $agentHome
+        Say "moved your data folder from $legacyHome to $agentHome"
+    }
+    if ((Set-AgentCoreConfig -ConfigPath $agentConfig -Python $python -WorkingDir $repo -Port $CorePort) -eq 'written') {
+        Say "wrote the engine settings into $agentConfig (the agent starts the engine from $repo)"
+    }
     Say 'starting the agent'
     Start-Process -FilePath $agentExe -WindowStyle Hidden
     $up = $false
@@ -84,10 +97,13 @@ Check 'browser bridge for Chrome' $reg.ChromeBridge
 Check 'old browser bridges are gone' (-not ($reg.EdgeOldName -or $reg.ChromeOldName))
 Check 'parser sandbox profile (lynceus.parser)' $reg.Sandbox
 Check 'old sandbox profile (mirage.parser) is gone' (-not $reg.SandboxOld) '' -Advice
+$engineCmd = $null
+try { if (Test-Path $agentConfig) { $engineCmd = (Get-Content $agentConfig -Raw | ConvertFrom-Json).CoreCommand } } catch { }
+Check 'the agent is set to start the engine (agent.json)' ([bool]($engineCmd -and (Test-Path $engineCmd))) "$agentConfig"
 $running = @(Get-Process -Name 'Lynceus.Agent' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and (Test-IsUnder $_.Path $install) })
 Check 'the Lynceus agent is running' ($running.Count -ge 1)
 Check 'no agent under the old name is running' (@(Get-Process -Name 'Mirage.Agent' -ErrorAction SilentlyContinue).Count -eq 0)
-Check "the engine answers on port $CorePort" (Test-CoreUp)
+Check "the engine answers on port $CorePort" (Test-CoreUp) "see $(Join-Path $agentHome 'agent.log') and core.log"
 if ((Get-EnvSetting 'LLM_REVIEW') -match '^(1|true|yes|on)$') {
     $model = Get-EnvSetting 'LLM_MODEL'; if (-not $model) { $model = 'llama3.2:3b' }
     $names = @()

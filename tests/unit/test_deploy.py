@@ -195,3 +195,44 @@ def test_the_installer_and_go_live_refuse_a_private_registry_before_changing_any
         guard = text.index("Test-RegistryReachesWindows")
         for later in ("taskkill", "--install", "Start-Process", "Copy-Item"):
             assert later not in text[:guard], (name, later)
+
+
+def test_the_engine_settings_are_written_only_when_missing_and_other_settings_are_kept(
+    tmp_path: Path,
+) -> None:
+    """go-live fills in how the agent starts the engine (found 2026-11-10: a data folder without
+    agent.json left the agent running with no engine)."""
+
+    def run(config: Path) -> str:
+        script = (
+            f"Set-AgentCoreConfig -ConfigPath '{config}' -Python 'C:\\x\\python.exe' "
+            f"-WorkingDir 'C:\\x' -Port 8765"
+        )
+        done = ps(helpers(script))
+        assert done.returncode == 0, done.stderr
+        return done.stdout.strip()
+
+    missing = tmp_path / "a" / "agent.json"
+    assert run(missing) == "written"
+    written = json.loads(missing.read_text(encoding="utf-8"))
+    assert written["CoreCommand"] == "C:\\x\\python.exe" and written["CoreWorkingDir"] == "C:\\x"
+    assert (
+        written["CoreUrl"] == "http://127.0.0.1:8765"
+        and "core.api.app:create_app" in written["CoreArgs"]
+    )
+
+    partial = tmp_path / "b" / "agent.json"
+    partial.parent.mkdir()
+    partial.write_text('{"ResponseMode": "auto"}', encoding="utf-8")
+    assert run(partial) == "written"
+    assert json.loads(partial.read_text(encoding="utf-8"))["ResponseMode"] == "auto"
+    assert json.loads((tmp_path / "b" / "agent.json.bak").read_text(encoding="utf-8")) == {
+        "ResponseMode": "auto"
+    }
+
+    mine = tmp_path / "c" / "agent.json"
+    mine.parent.mkdir()
+    original = '{"CoreCommand": "D:\\\\engine\\\\python.exe", "ResponseMode": "off"}'
+    mine.write_text(original, encoding="utf-8")
+    assert run(mine) == "kept" and mine.read_text(encoding="utf-8") == original
+    assert not (tmp_path / "c" / "agent.json.bak").exists()

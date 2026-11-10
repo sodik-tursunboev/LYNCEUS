@@ -85,6 +85,32 @@ function Get-UnrestoredCount {
     return $count
 }
 
+# Make sure agent.json tells the agent how to start the engine. Keys already there are kept; only when there is
+# no CoreCommand at all are the four engine settings written (the old file is kept as agent.json.bak).
+# Returns 'written' or 'kept'.
+function Set-AgentCoreConfig {
+    param(
+        [Parameter(Mandatory)][string]$ConfigPath,
+        [Parameter(Mandatory)][string]$Python,
+        [Parameter(Mandatory)][string]$WorkingDir,
+        [int]$Port = 8765
+    )
+    $cfg = if (Test-Path -LiteralPath $ConfigPath) { Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json } else { $null }
+    if ($null -eq $cfg) { $cfg = [pscustomobject]@{} }
+    if ($cfg.PSObject.Properties['CoreCommand'] -and $cfg.CoreCommand) { return 'kept' }
+    if (Test-Path -LiteralPath $ConfigPath) { Copy-Item -LiteralPath $ConfigPath "$ConfigPath.bak" -Force }
+    $values = [ordered]@{
+        CoreUrl        = "http://127.0.0.1:$Port"
+        CoreCommand    = $Python
+        CoreWorkingDir = $WorkingDir
+        CoreArgs       = @('-m', 'uvicorn', 'core.api.app:create_app', '--factory', '--host', '127.0.0.1', '--port', "$Port", '--no-access-log', '--no-server-header')
+    }
+    foreach ($k in $values.Keys) { $cfg | Add-Member -NotePropertyName $k -NotePropertyValue $values[$k] -Force }
+    New-Item -ItemType Directory -Force (Split-Path -Parent $ConfigPath) | Out-Null
+    [IO.File]::WriteAllText($ConfigPath, ($cfg | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
+    return 'written'
+}
+
 # True when $child is $parent or lies below it (a separator is required, so C:\a\bc is not under C:\a\b).
 function Test-IsUnder {
     param([Parameter(Mandatory)][string]$Child, [Parameter(Mandatory)][string]$Parent)
