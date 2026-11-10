@@ -31,7 +31,7 @@ Written to be read before trusting anything in the repo. "Not verified" means co
 - **The Analyze page (UI1)** reads a dropped file in the browser and sends it to the core exactly as the agent does; a pasted message is re-encoded as UTF-8 (drop the `.eml` for an exact analysis); files over 16 MB and messages over 10 MB are refused; its history lasts for the session. Colour contrast was computed (AA in both themes) but the page was **not tested with a screen reader**. See `docs/milestones/UI1.md`.
 ## Deployment and CI (M7)
 
-- **The installer is a script, not an MSI.** `deploy\install.ps1` is reproducible and per-user, but it needs the .NET SDK, Node, Python and a checkout on the machine, is unsigned, and the core keeps running from the checkout. A packaged installer and code signing are not done.
+- **The installer is unsigned, and the core runs from the checkout.** `deploy\install.ps1` is reproducible and per-user, but it needs the .NET SDK, Node, Python and a checkout on the machine. A per-user WiX MSI is built (`deploy\msi\build-msi.ps1`, ADR-019), also unsigned. Code signing is not done.
 - **CI has never run.** The Windows job added in M7 is `continue-on-error` and unverified; whether the sandbox (an AppContainer) works on a hosted runner is unknown.
 - **Performance numbers are one machine, one run, a shared desktop.** They are an order of magnitude, not a guarantee. A mailbox burst and a large download backlog were not load-tested.
 - **Fuzzing is bounded** (fixed seeds, thousands of cases); it is not coverage-guided and it did not cover the native parsers inside the sandbox beyond the existing fixtures.
@@ -163,4 +163,4 @@ Two reviewers who had not seen the code before read it adversarially; `docs/mile
 
 - **A terminal inside a packaged (MSIX) app writes to a private copy of your registry.** An install run from there looks registered and is not: start-at-logon, the browser bridge and the sandbox profile never reach Windows. This happened to this project's own cutover on 2026-11-07 and left the machine unprotected until 2026-11-10. `install.ps1` and `go-live.ps1` now refuse to run from such a window and check Windows' own view (through WMI) afterwards. `Lynceus.Agent.exe --status` still reads the registry as the calling process sees it. The MSI's setup step was not given the check (Windows Installer is expected to run it outside the calling app; **not verified**).
 ## Next
-`docs/milestones/R1.md` and `docs/milestones/M6b.md` (email quarantine, built, not run live). Not started: the WiX MSI installer and a Tauri window around the console.
+`docs/milestones/R1.md` and `docs/milestones/M6b.md` (email quarantine, built, not run live). The WiX MSI and the Tauri window are built (ADR-019). What is not built yet: `docs/FEATURES.md` §19.
