@@ -1,5 +1,7 @@
 # Known limitations (v0.1: M0 to M3; M4 to M7 added below)
 
+> **Measured on real data (E1, 2026-11-10, `docs/eval/url-real.md`): the URL rules catch 2.5% of real phishing URLs; on 91% of them no URL rule fires at all.** The high figures elsewhere in this repository come from samples written by the same author as the rules. Lynceus catches a new phishing link today mainly when a list (OpenPhish, PhishTank) already has it. On the owner's own browsing 9.2% of 87 URLs were flagged (sign-in pages and redirect parameters).
+
 Written to be read before trusting anything in the repo. "Not verified" means code or config exists that was never run.
 
 ## The Windows agent and browser extension (M4): what they are and are not

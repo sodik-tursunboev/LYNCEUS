@@ -1,0 +1,521 @@
+{
+ "generated_at": "2026-11-10 13:29Z",
+ "engine_version": "1.0.0",
+ "ruleset_version": "1.0.0+960efe1e20f7",
+ "seed": "lynceus-e1-2026-11-10",
+ "scorer_mismatches": 0,
+ "measure": {
+  "evaluated": 299460,
+  "sources": {
+   "edge_history legit": {
+    "label": "legit",
+    "n": 87,
+    "states": {
+     "UNKNOWN": 44,
+     "BENIGN": 35,
+     "SUSPICIOUS": 8
+    },
+    "false_alarms": {
+     "k": 8,
+     "n": 87,
+     "rate": 0.092,
+     "ci": [
+      0.0473,
+      0.1711
+     ]
+    }
+   },
+   "openphish phish": {
+    "label": "phish",
+    "n": 266,
+    "states": {
+     "UNKNOWN": 205,
+     "SUSPICIOUS": 61
+    },
+    "flagged": {
+     "k": 61,
+     "n": 266,
+     "rate": 0.2293,
+     "ci": [
+      0.1829,
+      0.2835
+     ]
+    },
+    "malicious": {
+     "k": 0,
+     "n": 266,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.0142
+     ]
+    }
+   },
+   "phishtank phish": {
+    "label": "phish",
+    "n": 42455,
+    "states": {
+     "SUSPICIOUS": 1278,
+     "UNKNOWN": 39889,
+     "BENIGN": 1250,
+     "MALICIOUS": 38
+    },
+    "flagged": {
+     "k": 1316,
+     "n": 42455,
+     "rate": 0.031,
+     "ci": [
+      0.0294,
+      0.0327
+     ]
+    },
+    "malicious": {
+     "k": 38,
+     "n": 42455,
+     "rate": 0.0009,
+     "ci": [
+      0.0007,
+      0.0012
+     ]
+    }
+   },
+   "phiusiil legit": {
+    "label": "legit",
+    "n": 121258,
+    "states": {
+     "UNKNOWN": 121135,
+     "SUSPICIOUS": 88,
+     "BENIGN": 35
+    },
+    "false_alarms": {
+     "k": 88,
+     "n": 121258,
+     "rate": 0.0007,
+     "ci": [
+      0.0006,
+      0.0009
+     ]
+    }
+   },
+   "phiusiil phish": {
+    "label": "phish",
+    "n": 90474,
+    "states": {
+     "UNKNOWN": 88403,
+     "SUSPICIOUS": 1777,
+     "MALICIOUS": 198,
+     "BENIGN": 96
+    },
+    "flagged": {
+     "k": 1975,
+     "n": 90474,
+     "rate": 0.0218,
+     "ci": [
+      0.0209,
+      0.0228
+     ]
+    },
+    "malicious": {
+     "k": 198,
+     "n": 90474,
+     "rate": 0.0022,
+     "ci": [
+      0.0019,
+      0.0025
+     ]
+    }
+   },
+   "tranco legit": {
+    "label": "legit",
+    "n": 44920,
+    "states": {
+     "BENIGN": 148,
+     "UNKNOWN": 44355,
+     "SUSPICIOUS": 417
+    },
+    "false_alarms": {
+     "k": 417,
+     "n": 44920,
+     "rate": 0.0093,
+     "ci": [
+      0.0084,
+      0.0102
+     ]
+    }
+   }
+  },
+  "phishing": {
+   "all": {
+    "k": 3352,
+    "n": 133195,
+    "rate": 0.0252,
+    "ci": [
+     0.0243,
+     0.026
+    ]
+   },
+   "fresh_feeds": {
+    "k": 1377,
+    "n": 42721,
+    "rate": 0.0322,
+    "ci": [
+     0.0306,
+     0.0339
+    ]
+   },
+   "historical_phiusiil": {
+    "k": 1975,
+    "n": 90474,
+    "rate": 0.0218,
+    "ci": [
+     0.0209,
+     0.0228
+    ]
+   },
+   "on_home_pages": {
+    "k": 1102,
+    "n": 76492,
+    "rate": 0.0144,
+    "ci": [
+     0.0136,
+     0.0153
+    ]
+   },
+   "with_a_path": {
+    "k": 2250,
+    "n": 56703,
+    "rate": 0.0397,
+    "ci": [
+     0.0381,
+     0.0413
+    ]
+   },
+   "malicious": {
+    "k": 236,
+    "n": 133195,
+    "rate": 0.0018,
+    "ci": [
+     0.0016,
+     0.002
+    ]
+   }
+  },
+  "legitimate": {
+   "all": {
+    "k": 513,
+    "n": 166265,
+    "rate": 0.0031,
+    "ci": [
+     0.0028,
+     0.0034
+    ]
+   },
+   "home_pages": {
+    "k": 505,
+    "n": 166181,
+    "rate": 0.003,
+    "ci": [
+     0.0028,
+     0.0033
+    ]
+   },
+   "with_a_path": {
+    "k": 8,
+    "n": 84,
+    "rate": 0.0952,
+    "ci": [
+     0.0491,
+     0.1768
+    ]
+   },
+   "rules_on_flagged_urls_with_a_path": {
+    "url.login_path": 5,
+    "url.parser_tricks": 5,
+    "url.open_redirect": 3
+   }
+  },
+  "lexical_ceiling": {
+   "no_rule_fired": {
+    "k": 121418,
+    "n": 133195,
+    "rate": 0.9116,
+    "ci": [
+     0.91,
+     0.9131
+    ]
+   },
+   "rules_fired_but_not_flagged": {
+    "k": 8425,
+    "n": 133195,
+    "rate": 0.0633,
+    "ci": [
+     0.062,
+     0.0646
+    ]
+   }
+  },
+  "phishing_by_host_kind": {
+   "own_domain": {
+    "n": 84106,
+    "flagged": {
+     "k": 2412,
+     "n": 84106,
+     "rate": 0.0287,
+     "ci": [
+      0.0276,
+      0.0298
+     ]
+    },
+    "no_rule_fired": {
+     "k": 78598,
+     "n": 84106,
+     "rate": 0.9345,
+     "ci": [
+      0.9328,
+      0.9362
+     ]
+    }
+   },
+   "platform": {
+    "n": 41461,
+    "flagged": {
+     "k": 461,
+     "n": 41461,
+     "rate": 0.0111,
+     "ci": [
+      0.0102,
+      0.0122
+     ]
+    },
+    "no_rule_fired": {
+     "k": 38533,
+     "n": 41461,
+     "rate": 0.9294,
+     "ci": [
+      0.9269,
+      0.9318
+     ]
+    }
+   },
+   "shortener": {
+    "n": 6860,
+    "flagged": {
+     "k": 17,
+     "n": 6860,
+     "rate": 0.0025,
+     "ci": [
+      0.0015,
+      0.004
+     ]
+    },
+    "no_rule_fired": {
+     "k": 4145,
+     "n": 6860,
+     "rate": 0.6042,
+     "ci": [
+      0.5926,
+      0.6157
+     ]
+    }
+   },
+   "ip_address": {
+    "n": 611,
+    "flagged": {
+     "k": 450,
+     "n": 611,
+     "rate": 0.7365,
+     "ci": [
+      0.7002,
+      0.7699
+     ]
+    },
+    "no_rule_fired": {
+     "k": 0,
+     "n": 611,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.0062
+     ]
+    }
+   },
+   "punycode": {
+    "n": 157,
+    "flagged": {
+     "k": 12,
+     "n": 157,
+     "rate": 0.0764,
+     "ci": [
+      0.0443,
+      0.1288
+     ]
+    },
+    "no_rule_fired": {
+     "k": 142,
+     "n": 157,
+     "rate": 0.9045,
+     "ci": [
+      0.8484,
+      0.9412
+     ]
+    }
+   }
+  },
+  "rules": {
+   "url.shortener": {
+    "on_phish": 2715,
+    "on_legit": 17,
+    "phish_rate": 0.0204,
+    "legit_rate": 0.0001
+   },
+   "url.brand_in_domain": {
+    "on_phish": 1794,
+    "on_legit": 567,
+    "phish_rate": 0.0135,
+    "legit_rate": 0.0034
+   },
+   "url.host_shape": {
+    "on_phish": 2204,
+    "on_legit": 21,
+    "phish_rate": 0.0165,
+    "legit_rate": 0.0001
+   },
+   "url.login_path": {
+    "on_phish": 2111,
+    "on_legit": 7,
+    "phish_rate": 0.0158,
+    "legit_rate": 0.0
+   },
+   "url.typosquat": {
+    "on_phish": 365,
+    "on_legit": 495,
+    "phish_rate": 0.0027,
+    "legit_rate": 0.003
+   },
+   "url.open_redirect": {
+    "on_phish": 852,
+    "on_legit": 3,
+    "phish_rate": 0.0064,
+    "legit_rate": 0.0
+   },
+   "url.credential_bait": {
+    "on_phish": 824,
+    "on_legit": 0,
+    "phish_rate": 0.0062,
+    "legit_rate": 0.0
+   },
+   "url.brand_in_subdomain": {
+    "on_phish": 776,
+    "on_legit": 3,
+    "phish_rate": 0.0058,
+    "legit_rate": 0.0
+   },
+   "url.ip_literal": {
+    "on_phish": 611,
+    "on_legit": 0,
+    "phish_rate": 0.0046,
+    "legit_rate": 0.0
+   },
+   "url.combosquat": {
+    "on_phish": 297,
+    "on_legit": 5,
+    "phish_rate": 0.0022,
+    "legit_rate": 0.0
+   },
+   "url.prefilled_identity": {
+    "on_phish": 278,
+    "on_legit": 0,
+    "phish_rate": 0.0021,
+    "legit_rate": 0.0
+   },
+   "url.parser_tricks": {
+    "on_phish": 34,
+    "on_legit": 5,
+    "phish_rate": 0.0003,
+    "legit_rate": 0.0
+   },
+   "url.userinfo_deception": {
+    "on_phish": 14,
+    "on_legit": 0,
+    "phish_rate": 0.0001,
+    "legit_rate": 0.0
+   },
+   "url.odd_port": {
+    "on_phish": 13,
+    "on_legit": 0,
+    "phish_rate": 0.0001,
+    "legit_rate": 0.0
+   },
+   "url.excessive_length": {
+    "on_phish": 9,
+    "on_legit": 3,
+    "phish_rate": 0.0001,
+    "legit_rate": 0.0
+   },
+   "url.encoded_target": {
+    "on_phish": 7,
+    "on_legit": 0,
+    "phish_rate": 0.0001,
+    "legit_rate": 0.0
+   },
+   "url.mixed_script": {
+    "on_phish": 4,
+    "on_legit": 1,
+    "phish_rate": 0.0,
+    "legit_rate": 0.0
+   }
+  }
+ },
+ "fit": {
+  "method": "coordinate search over each rule's weight (0.05 to 0.95), thresholds, caps and the two-category rule unchanged; objective: recall on train without more false alarms on train than today's weights",
+  "patterns": 68,
+  "test_hand_set": {
+   "recall": {
+    "k": 1126,
+    "n": 44257,
+    "rate": 0.0254,
+    "ci": [
+     0.024,
+     0.027
+    ]
+   },
+   "false_alarms": {
+    "k": 177,
+    "n": 55630,
+    "rate": 0.0032,
+    "ci": [
+     0.0027,
+     0.0037
+    ]
+   }
+  },
+  "test_fitted": {
+   "recall": {
+    "k": 1185,
+    "n": 44257,
+    "rate": 0.0268,
+    "ci": [
+     0.0253,
+     0.0283
+    ]
+   },
+   "false_alarms": {
+    "k": 177,
+    "n": 55630,
+    "rate": 0.0032,
+    "ci": [
+     0.0027,
+     0.0037
+    ]
+   }
+  },
+  "changed_weights": {
+   "url.ip_literal": [
+    0.3,
+    0.45
+   ]
+  },
+  "adopt": false,
+  "rule_for_adopting": "fitted recall interval entirely above today's, and false alarms not worse"
+ }
+}
