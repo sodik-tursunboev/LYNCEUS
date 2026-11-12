@@ -69,6 +69,8 @@ export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAut
     intelHealth: () => call<IntelHealth>("GET", "/v1/intel/health"),
     // The analysis workbench. A URL goes as JSON; a message or a file goes as raw bytes, exactly as the agent sends them.
     analyzeUrl: async (url: string): Promise<UrlAnalysis> => ({ ...(await call<Omit<UrlAnalysis, "type">>("POST", "/v1/urls/analyze", { url })), type: "url" }),
+    // D1: opens the page in the sandboxed browser container; the core refuses unless detonation is on.
+    detonateUrl: async (url: string): Promise<UrlAnalysis> => ({ ...(await call<Omit<UrlAnalysis, "type">>("POST", "/v1/urls/detonate", { url })), type: "url" }),
     analyzeEmail: async (bytes: ArrayBuffer): Promise<EmailAnalysis> => ({
       ...(await call<Omit<EmailAnalysis, "type">>("POST", "/v1/emails/analyze", bytes, { type: "message/rfc822" })), type: "email",
     }),

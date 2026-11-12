@@ -129,6 +129,24 @@ export interface UrlAnalysis extends Common {
   flags: string[];
   intel_skipped: Array<{ provider: string; reason: string }>;
   anatomy: Anatomy | null;
+  page?: PageSummary; // present after "Open in sandbox" (D1)
+}
+/** What the sandboxed browser saw (D1). Shown once, never stored. */
+export interface PageSummary {
+  status: "ok" | "partial" | "dead" | "error";
+  error: string | null;
+  http_status: number | null;
+  final_url: string;
+  chain_hosts: string[];
+  title: string;
+  forms: number;
+  password_fields: number;
+  markers: string[];
+  downloads: string[];
+  hosts_contacted: number;
+  tls_valid_from: number | null;
+  screenshot_jpeg: string | null;
+  elapsed_ms: number;
 }
 export interface EmailAnalysis extends Common {
   type: "email";

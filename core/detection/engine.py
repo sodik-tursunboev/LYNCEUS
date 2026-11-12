@@ -90,11 +90,13 @@ def _verdict(
     )
 
 
-def _explain(scored: Scored, signals: list[Signal], allowlisted: bool) -> str:
+def _explain(
+    scored: Scored, signals: list[Signal], allowlisted: bool, not_safe: str = _NOT_SAFE
+) -> str:
     if scored.state is VerdictState.UNKNOWN:
         if signals:
-            return f"{len(signals)} weak signal(s), not enough to call it. {_NOT_SAFE}"
-        return f"No rule fired. {_NOT_SAFE}"
+            return f"{len(signals)} weak signal(s), not enough to call it. {not_safe}"
+        return f"No rule fired. {not_safe}"
     if scored.state is VerdictState.BENIGN:
         return "Official domain of a known brand." if allowlisted else "No risk found."
     names = ", ".join(s.rule_id for s in signals)
@@ -169,9 +171,12 @@ def rescore(
     note: str,
     version_suffix: str,
     confidence_floor: Confidence | None = None,
+    engine_suffix: str = "intel",
+    not_safe: str = _NOT_SAFE,
 ) -> UrlAnalysis:
-    """The same analysis with intelligence added: more signals, the providers' results, and a
-    verdict scored again over all of them. Local signals are kept exactly as they were."""
+    """The same analysis with more evidence added (intelligence, or the opened page): more signals,
+    the providers' results, and a verdict scored again over all of them. Earlier signals are kept
+    exactly as they were."""
     if a.url is None:
         return a
     all_signals = [*a.verdict.signals, *signals]
@@ -195,8 +200,8 @@ def rescore(
         provider_results=provider_results,
         recommended_response=scored.recommended_response,
         applied_response=ResponseAction.NONE,
-        explanation=_explain(scored, all_signals, allow) + note,
-        engine_version=f"{old.engine_version}+intel",
+        explanation=_explain(scored, all_signals, allow, not_safe) + note,
+        engine_version=f"{old.engine_version}+{engine_suffix}",
         ruleset_version=f"{old.ruleset_version}+{version_suffix}",
     )
     return a.model_copy(update={"verdict": verdict, "evidence": tuple(all_evidence)})

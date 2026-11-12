@@ -37,7 +37,8 @@ from core.config import Settings, legacy_env_names
 from core.contracts import EventSource, VerdictState
 from core.db import audit
 from core.db.store import save_analysis, save_email_analysis, save_file_analysis
-from core.detection.engine import ENGINE_VERSION, UrlReport
+from core.detection.engine import ENGINE_VERSION, UrlAnalysis, UrlReport
+from core.detonate import PageReport, detonate_url, safe_screenshot
 from core.email import engine as email_engine
 from core.email.engine import EmailReport
 from core.files.engine import FileReport, analyze_file
@@ -96,6 +97,58 @@ class AnalyzeResponse(UrlReport):
     persisted: bool  # False when storage is off or failed; the verdict still stands
     intel_skipped: list[Skipped]  # providers that were enabled but not asked, and why
     anatomy: UrlAnatomy | None = None  # None when the input could not be parsed as a URL
+
+
+class PageSummary(BaseModel):
+    """What the sandboxed browser saw (D1). Shown to the caller once; not stored."""
+
+    status: str  # ok, partial, dead, error
+    error: str | None
+    http_status: int | None
+    final_url: str
+    chain_hosts: list[str]  # hosts of the redirect chain, in order
+    title: str
+    forms: int
+    password_fields: int
+    markers: list[str]
+    downloads: list[str]  # extensions of downloads the page tried to start (none were kept)
+    hosts_contacted: int
+    tls_valid_from: int | None
+    screenshot_jpeg: str | None  # base64, re-encoded in the parser sandbox
+    elapsed_ms: int
+
+
+class DetonateResponse(AnalyzeResponse):
+    page: PageSummary
+
+
+def anatomy_of(u: ParsedUrl | None) -> UrlAnatomy | None:
+    if u is None:
+        return None
+    return UrlAnatomy(
+        scheme=u.scheme, username=u.username, has_password=u.has_password, host=u.host,
+        host_unicode=u.host_unicode, host_kind=str(u.host_kind.value), subdomain=u.subdomain,
+        registered_domain=u.registered_domain, public_suffix=u.public_suffix,
+        private_suffix=u.private_suffix, port=u.port, path=u.path, query=u.query,
+        fragment=u.fragment,
+    )  # fmt: skip
+
+
+def page_summary(r: PageReport) -> PageSummary:
+    hosts: list[str] = []
+    for url in r.chain:
+        parsed = parse_url(url)
+        host = parsed.host if isinstance(parsed, ParsedUrl) else None
+        if host and (not hosts or hosts[-1] != host):
+            hosts.append(host)
+    return PageSummary(
+        status=r.status, error=r.error, http_status=r.http_status, final_url=r.final_url,
+        chain_hosts=hosts, title=r.title, forms=len(r.forms),
+        password_fields=sum(f.type == "password" for f in r.fields()), markers=list(r.markers),
+        downloads=[d.ext for d in r.downloads], hosts_contacted=len(r.hosts),
+        tls_valid_from=r.tls.valid_from if r.tls else None,
+        screenshot_jpeg=safe_screenshot(r.screenshot), elapsed_ms=r.elapsed_ms,
+    )  # fmt: skip
 
 
 class ProviderHealth(BaseModel):
@@ -340,30 +393,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 log.exception("could not persist analysis")
         skipped = [Skipped(provider=n, reason=why) for n, why in outcome.skipped]
         report = analysis.report().model_dump()
-        u = analysis.url
-        anatomy = (
-            UrlAnatomy(
-                scheme=u.scheme,
-                username=u.username,
-                has_password=u.has_password,
-                host=u.host,
-                host_unicode=u.host_unicode,
-                host_kind=str(u.host_kind.value),
-                subdomain=u.subdomain,
-                registered_domain=u.registered_domain,
-                public_suffix=u.public_suffix,
-                private_suffix=u.private_suffix,
-                port=u.port,
-                path=u.path,
-                query=u.query,
-                fragment=u.fragment,
-            )  # fmt: skip
-            if u is not None
-            else None
-        )
+        anatomy = anatomy_of(analysis.url)
         return AnalyzeResponse(
             **report, persisted=persisted, intel_skipped=skipped, anatomy=anatomy
         )
+
+    detonate_limiter = RateLimit(settings.detonation_per_minute)
+
+    @app.post("/v1/urls/detonate", dependencies=[Depends(require_token), Depends(detonate_limiter)])
+    async def detonate(request: AnalyzeRequest) -> DetonateResponse:
+        """D1: the URL verdict, then the page opened in the sandboxed browser container, then one
+        verdict over both. Off unless LYNCEUS_DETONATION is set: it visits the page from this
+        computer's internet connection."""
+        if not settings.detonation:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "page detonation is off")
+        start, outcome = await analyze_with_intel(request.url, intel)
+        analysis: UrlAnalysis
+        analysis, page = await run_in_threadpool(detonate_url, request.url, start)
+        persisted = False
+        if db is not None:
+            try:
+                await run_in_threadpool(save_analysis, db, analysis, EventSource.API)
+                persisted = True
+            except Exception:  # a storage failure must not cost the caller the verdict
+                log.exception("could not persist analysis")
+        summary = await run_in_threadpool(page_summary, page)
+        return DetonateResponse(
+            **analysis.report().model_dump(), persisted=persisted,
+            intel_skipped=[Skipped(provider=n, reason=why) for n, why in outcome.skipped],
+            anatomy=anatomy_of(analysis.url), page=summary,
+        )  # fmt: skip
 
     @app.get("/v1/mailbox/status", dependencies=[Depends(require_token)])
     def mailbox_status() -> dict[str, object]:

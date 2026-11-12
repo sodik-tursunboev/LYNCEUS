@@ -374,6 +374,86 @@
         "title": "Confidence",
         "type": "string"
       },
+      "DetonateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "anatomy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UrlAnatomy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/UrlFlag"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "intel_skipped": {
+            "items": {
+              "$ref": "#/components/schemas/Skipped"
+            },
+            "title": "Intel Skipped",
+            "type": "array"
+          },
+          "normalized_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Normalized Url"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageSummary"
+          },
+          "persisted": {
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/Verdict"
+          }
+        },
+        "required": [
+          "verdict",
+          "evidence",
+          "normalized_url",
+          "flags",
+          "reason",
+          "persisted",
+          "intel_skipped",
+          "page"
+        ],
+        "title": "DetonateResponse",
+        "type": "object"
+      },
       "EmailResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1222,6 +1302,122 @@
           "stored_in"
         ],
         "title": "OverrideResponse",
+        "type": "object"
+      },
+      "PageSummary": {
+        "description": "What the sandboxed browser saw (D1). Shown to the caller once; not stored.",
+        "properties": {
+          "chain_hosts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Chain Hosts",
+            "type": "array"
+          },
+          "downloads": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Downloads",
+            "type": "array"
+          },
+          "elapsed_ms": {
+            "title": "Elapsed Ms",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "final_url": {
+            "title": "Final Url",
+            "type": "string"
+          },
+          "forms": {
+            "title": "Forms",
+            "type": "integer"
+          },
+          "hosts_contacted": {
+            "title": "Hosts Contacted",
+            "type": "integer"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "markers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "password_fields": {
+            "title": "Password Fields",
+            "type": "integer"
+          },
+          "screenshot_jpeg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screenshot Jpeg"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "tls_valid_from": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tls Valid From"
+          }
+        },
+        "required": [
+          "status",
+          "error",
+          "http_status",
+          "final_url",
+          "chain_hosts",
+          "title",
+          "forms",
+          "password_fields",
+          "markers",
+          "downloads",
+          "hosts_contacted",
+          "tls_valid_from",
+          "screenshot_jpeg",
+          "elapsed_ms"
+        ],
+        "title": "PageSummary",
         "type": "object"
       },
       "ProviderHealth": {
@@ -2742,6 +2938,50 @@
           }
         ],
         "summary": "Analyze"
+      }
+    },
+    "/v1/urls/detonate": {
+      "post": {
+        "description": "D1: the URL verdict, then the page opened in the sandboxed browser container, then one\nverdict over both. Off unless LYNCEUS_DETONATION is set: it visits the page from this\ncomputer's internet connection.",
+        "operationId": "detonate_v1_urls_detonate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetonateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Detonate"
       }
     }
   }

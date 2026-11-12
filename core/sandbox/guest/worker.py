@@ -62,6 +62,18 @@ def handle(header: dict[str, Any], body: bytes) -> dict[str, Any]:
         if data is None:
             return {"error": "no_such_part"}
         return {"ok": True, "excerpt": filescan.macro_excerpt(data)}
+    if op == "reencode_jpeg":  # a detonator screenshot: decoded here, never in the core (D1)
+        import base64
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(body)) as im:
+            if im.format != "JPEG" or not (0 < im.width <= 4000 and 0 < im.height <= 4000):
+                return {"error": "not_a_screenshot"}
+            out = io.BytesIO()
+            im.convert("RGB").save(out, "JPEG", quality=70)
+        return {"ok": True, "jpeg": base64.b64encode(out.getvalue()).decode("ascii")}
     return {"error": "unknown_op"}
 
 

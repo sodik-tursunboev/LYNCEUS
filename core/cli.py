@@ -2,6 +2,9 @@
 
 python -m core.cli analyze-url <url> [--json]
 python -m core.cli analyze-eml <path> [--json]
+python -m core.cli detonate <url> [--json] [--screenshot FILE]
+    (D1: opens the page in the sandbox container from this computer's internet connection;
+    needs Docker and `python tasks.py detonator`)
 """
 
 import argparse
@@ -63,6 +66,28 @@ def _read(path: Path) -> bytes | None:
     return raw
 
 
+def _detonate(url: str, as_json: bool, shot: Path | None) -> int:
+    import base64
+
+    from core.detonate import detonate_url, safe_screenshot
+
+    analysis, page = detonate_url(url)
+    report = analysis.report()
+    if shot is not None and (jpeg := safe_screenshot(page.screenshot)):
+        shot.write_bytes(base64.b64decode(jpeg))
+    if as_json:
+        print(report.model_dump_json(indent=2))
+    else:
+        print(_text(report))
+        where = page.final_url or "-"
+        print(
+            f"Page:     {page.status} {page.http_status or ''} -> {where}  ({page.elapsed_ms} ms)"
+        )
+        if page.error:
+            print(f"          not analysed: {page.error}")
+    return 1 if report.verdict.state is VerdictState.ERROR else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m core.cli")
     commands = ap.add_subparsers(dest="command", required=True)
@@ -70,7 +95,10 @@ def main(argv: list[str] | None = None) -> int:
     url_cmd.add_argument("url")
     eml_cmd = commands.add_parser("analyze-eml", help="analyze one .eml file in the sandbox")
     eml_cmd.add_argument("path", type=Path)
-    for cmd in (url_cmd, eml_cmd):
+    det_cmd = commands.add_parser("detonate", help="open one URL in the sandboxed browser (D1)")
+    det_cmd.add_argument("url")
+    det_cmd.add_argument("--screenshot", type=Path, help="save the page's screenshot (JPEG) here")
+    for cmd in (url_cmd, eml_cmd, det_cmd):
         cmd.add_argument("--json", action="store_true", help="print the full report as JSON")
     args = ap.parse_args(argv)
 
@@ -80,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
         report = analyze_url(args.url).report()
         print(report.model_dump_json(indent=2) if args.json else _text(report))
         return 1 if report.verdict.state is VerdictState.ERROR else 0
+    if args.command == "detonate":
+        return _detonate(args.url, args.json, args.screenshot)
 
     raw = _read(args.path)
     if raw is None:

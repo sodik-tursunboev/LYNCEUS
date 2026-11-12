@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>never ends</title></head>
+<body>
+<script>
+  // limits fixture (D1): dialogs, popups and a page that never stops working
+  alert("one"); confirm("two"); prompt("three");
+  for (var i = 0; i < 5; i++) { window.open("about:blank"); }
+  var big = document.createElement("div");
+  for (var j = 0; j < 20000; j++) { var p = document.createElement("p"); p.textContent = "row " + j; big.appendChild(p); }
+  document.body.appendChild(big);
+  setInterval(function () { fetch("/ping?" + Math.random()).catch(function () {}); }, 50);
+</script>
+</body>
+</html>

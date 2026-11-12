@@ -4,7 +4,7 @@
 
 A local-first phishing detector for Windows. It watches your downloads and your browser and (if you connect it) your Gmail or Outlook, decides what looks like phishing or malware using rules you can read, explains every decision, and, only if you let it, quarantines a dangerous file in a way you can undo. It runs in the background without any window open. It is **not** an antivirus, and it never deletes your files or email: quarantine moves a file (on another drive it copies first and removes the original only after the copy is verified byte for byte) and you can always restore it. Uninstalling with `-RemoveData` is the one way to delete the quarantine folder, and it refuses while quarantined files remain unless you force it.
 
-**Status:** built and verified on one Windows 11 machine with Edge, as one person's local tool. **On real phishing URLs (E1) the URL rules catch 2.5%; the rest is caught only if a list already knows the URL** (see `docs/eval/url-real.md`). Several parts have never been run against a real outside service (Gmail, Outlook, the threat-intelligence providers) and CI has never run. The honest list is in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
+**Status:** built and verified on one Windows 11 machine with Edge, as one person's local tool. **On real phishing URLs (E1) the URL rules catch 2.5%; the rest is caught only if a list already knows the URL** (see `docs/eval/url-real.md`). Opening the page in the sandbox (D1, on request) raises the share of live phishing pages caught from 16.9% to 37.3% (`docs/eval/detonate.md`). Several parts have never been run against a real outside service (Gmail, Outlook, the threat-intelligence providers) and CI has never run. The honest list is in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
 
 ## What it does
 
@@ -14,6 +14,7 @@ A local-first phishing detector for Windows. It watches your downloads and your 
 | Message and file engines | parses email and files **inside a sandbox** (AppContainer + job limits), reads links, QR codes, PDFs, archives; hostile input never touches the main process | `core/email`, `core/files`, `core/sandbox` |
 | Threat intelligence | optional: list feeds matched locally, query providers asked about a bare domain only; a provider failure is never "safe" | `core/intel` |
 | Windows agent | watches Downloads, judges each new file, answers the browser, shows notifications, carries out your decisions | `agent/` (.NET) |
+| Page detonation | on request, opens a page in a throwaway, locked-down browser container (no route to your network) and judges what it shows: brand impersonation, where a password form sends it, phishing-kit endpoints, hiding tricks | `core/detonate`, `rules/page`, `infra/detonator` |
 | Browser extension | Edge/Chrome MV3: warns before a page that looks like phishing, fails open and says so when the agent is down | `extension/` |
 | Analysis workbench and console | paste a link or drop an email or file and see the verdict, the signs, the anatomy of the link and the evidence; review and undo responses | `console/` |
 | Live Gmail and Outlook | read-only; new mail is analysed once and missed mail is found again (both tested against fakes only) | `core/mailbox` |

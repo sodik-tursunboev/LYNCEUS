@@ -8,7 +8,8 @@ connected an account (M5, M5b); core/mailbox/write.py is the one place a mailbox
 behind its own narrow request guard that the tests try with every forbidden request;
 eval/perf.py is a measurement tool that talks only to a local server it starts itself (M7);
 core/llm/ollama.py reaches a local model through core/intel/http.py and only on a loopback address
-(ADR-023)."""
+(ADR-023); eval/detonate.py downloads the two public phishing lists for the D1 measurement and
+nothing else (the pages themselves are opened only inside the detonator container, ADR-025)."""
 
 import ast
 from pathlib import Path
@@ -27,6 +28,7 @@ ALLOWED = {
     ROOT / "core" / "mailbox" / "ms_oauth.py",
     ROOT / "core" / "mailbox" / "write.py",  # the narrow write guard and the two movers (M6b)
     ROOT / "eval" / "perf.py",  # loopback only: checked by the test below
+    ROOT / "eval" / "detonate.py",  # the two phishing lists only: checked by the test below
 }
 
 
@@ -129,3 +131,18 @@ def test_the_measurement_tool_only_ever_connects_to_this_machine() -> None:
                 targets.append(str(first.value))
     assert len(targets) >= 2, targets
     assert all(str(x).startswith("http://127.0.0.1:") for x in targets), targets
+
+
+def test_the_detonation_measurement_only_downloads_the_two_phishing_lists() -> None:
+    """eval/detonate.py may use httpx in refresh() only, and only for its fixed SOURCES (OpenPhish
+    and PhishTank, as in E1). Pages are never fetched here: they are opened in the container."""
+    from urllib.parse import urlsplit
+
+    from eval.detonate import SOURCES
+
+    hosts = {urlsplit(u).hostname for u in SOURCES.values()}
+    assert hosts == {"raw.githubusercontent.com", "data.phishtank.com"}, hosts
+    tree = ast.parse((ROOT / "eval" / "detonate.py").read_text(encoding="utf-8"))
+    for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+        uses = any(isinstance(x, ast.Name) and x.id == "httpx" for x in ast.walk(fn))
+        assert not uses or fn.name == "refresh", fn.name

@@ -56,7 +56,7 @@ A **modular monolith** (ADR-001): one Python process holds all detection logic; 
                          │                          ├─ local model reviewer ──loopback──> Ollama :11434   │
                          │                          ├─ response engine (actions, audit)                   │
                          │                          ├─ console (React) at /console/  <── browser / Tauri  │
-                         │                          └─ PostgreSQL 17 (Docker, 127.0.0.1:5432)             │
+                         │                          └─ PostgreSQL 17 (Docker, 127.0.0.1:55432)             │
                          └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -76,6 +76,7 @@ Three layers, as the mission statement puts it: **Sensors** (extension, file wat
 | Native console window | Rust, Tauri 2 | `shell/` | optional desktop window around the console |
 | Database | PostgreSQL 17 | `infra/docker-compose.yml` | Docker container, loopback only |
 | Local language model | Ollama, `llama3.2:3b` | `core/llm/` (client) | separate Ollama server, loopback only, optional |
+| Page detonator (D1) | Chromium via Playwright 1.64.1, in Docker | `infra/detonator/`, `core/detonate/`, `rules/page/` | one throwaway container per page plus the egress-proxy container, on request |
 | Installer | PowerShell scripts, WiX 5 MSI | `deploy/` | per-user, no administrator rights |
 | Evaluation harness | Python | `eval/`, `corpus/` | on demand |
 
@@ -141,8 +142,9 @@ Central package management (`Directory.Packages.props`), solution `agent/Lynceus
 |---|---|
 | Tauri | 2 (`shell/src-tauri`, Rust 1.99.1) |
 | WiX Toolset | 5.0.2 (per-user MSI, `deploy/msi/Lynceus.wxs`; last built `Lynceus-0.4.0-x64.msi`, unsigned) |
-| PostgreSQL | 17 in Docker (`infra/docker-compose.yml`, `127.0.0.1:5432`, volume `mirage_pgdata`) |
+| PostgreSQL | 17 in Docker (`infra/docker-compose.yml`, `127.0.0.1:55432`, volume `mirage_pgdata`) |
 | Ollama + `llama3.2:3b` | local model server on `127.0.0.1:11434` (optional) |
+| Playwright image | `mcr.microsoft.com/playwright/python:v1.64.1-noble` pinned by digest (about 3.5 GB), plus `playwright==1.64.1` from hash-pinned wheels; built as `lynceus-detonator:1.0.0` (D1) |
 
 ---
 
@@ -159,6 +161,7 @@ The core is one FastAPI application. It listens on **`127.0.0.1` only**, accepts
 | `POST /v1/emails/analyze` | judge one raw message (`.eml`, up to 10 MiB) |
 | `POST /v1/files/analyze` | judge one file (up to 16 MiB minus 4 KiB) |
 | `POST /v1/files/check` | judge a file by name, size and hashes only (larger files) |
+| `POST /v1/urls/detonate` | D1: the URL verdict, then the page opened in the sandboxed browser, one verdict over both, plus a summary and screenshot of the page (off until `LYNCEUS_DETONATION=true`; 6 a minute) |
 | `GET /v1/events`, `GET /v1/events/{verdict_id}` | stored verdicts with their signals and evidence |
 | `GET /v1/actions`, `GET /v1/actions/{id}` | response actions |
 | `POST /v1/actions/{id}/approve` `/dismiss` `/restore` | user decisions |
@@ -405,6 +408,51 @@ Local lists of SHA-256, SHA-1 and MD5 (`python -m core.intel hashes import|check
 
 ---
 
+## 9b. Page detonation (D1, ADR-025)
+
+Reading the address alone misses most real phishing (E1: no URL rule fires on 91.2%). On request, the page is opened in a throwaway browser and judged by what it shows.
+
+**Layout** (created on first use by `core/detonate/runner.py`):
+
+```
+ core ──docker run (argument list, no shell)──> browser container  (one per page, --rm)
+                                                 network: lynceus-dn-inner (--internal: no route anywhere)
+                                                       │ HTTP proxy, the only reachable thing
+                                                       v
+                                                 lynceus-egress  (egress.py, stdlib)
+                                                 networks: inner + lynceus-dn-outer
+                                                 resolves names itself; public IPv4, ports 80/443 only;
+                                                 connects to the address it checked
+                                                       │
+                                                       v  the public web (from this computer's connection)
+```
+
+**Browser container hardening:** `pwuser` (non-root), Chromium's sandbox **on** (`chromium_sandbox=True`; Playwright's default is off) under Playwright's seccomp profile, `--read-only` with a 256 MB tmpfs `/tmp`, `--cap-drop ALL --cap-add SYS_CHROOT` (the sandbox's chroot), `no-new-privileges`, 1 GB memory and no swap, 1.5 CPUs, 512 processes, 1 GB shared memory, `--init`, no logs, nothing mounted, no published ports; killed at 32 s; at most 3 at once. Chromium flags: QUIC off, WebRTC limited to proxied traffic, loopback sent to the proxy too.
+
+**In the page** (`infra/detonator/detonate.py`): a normal Chrome user agent (the headless one makes kits hide), downloads cancelled, service workers blocked, no permissions, dialogs dismissed, pop-ups closed; navigation 15 s, then up to 4 s for the page to settle; the watchdog ends it at 26 s. It records the redirect chain, title, headings, logo text, visible text (20,000 characters), forms (action, method, field types and names, never values), frames, contacted hosts, script hosts, URLs written in the page's own scripts, anti-analysis markers, attempted downloads, the TLS certificate dates and a JPEG screenshot.
+
+**Back in the core:** the reply is validated against a closed pydantic schema with a size on every field (`core/detonate/models.py`); the screenshot is decoded only in the AppContainer parser sandbox (op `reencode_jpeg`) and is never stored.
+
+**Page rules** (`rules/page`, ruleset 1.0.0):
+
+| Rule | Category | Weight | Fires when |
+|---|---|---|---|
+| `page.brand_credential` | page.impersonation | 0.80 | the page presents itself as a listed brand (title or headings; not "sign in **with** Google"; logos are not used, payment and app-store marks are everywhere) and asks for credentials (a password, an account on a sign-in page, or a payment card) on a host that brand does not own (its shared hosting counts as not owned). Brands: the URL list plus `rules/page/brands.toml` (commonly impersonated brands; 164 brands in all) |
+| `page.form_offsite` | page.exfiltration | 0.65 | a password form posts to another registered domain or a bare IP (single sign-on providers and official domains excepted) |
+| `page.collection_endpoint` | page.exfiltration | 0.75 | a page asking for credentials names a Telegram bot, a Discord or Slack webhook, a form-relay service |
+| `page.hosting_platform_login` | page.hosting | 0.40 | a sign-in or card form on free hosting, a site builder, serverless hosting, IPFS, a tunnel or dynamic DNS |
+| `page.brand_on_hosting` | page.hosting | 0.40 | a page presenting itself as a brand on such hosting, before it asks for anything ("View the shared document") |
+| `page.evasion` | page.evasion | 0.45 | a page asking for credentials sets a debugger trap or a window-size check for developer tools, blocks keyboard shortcuts, or writes decoded content into itself (right-click blocking, `navigator.webdriver` checks and heavy decoding are recorded but not counted: legitimate pages do them as often) |
+| `page.geofence` | page.evasion | 0.30 | a page asking for credentials looks up the visitor's IP address |
+| `page.smuggling` | page.delivery | 0.60 | the page built a file in the browser and started its download |
+| `page.drive_by_download` | page.delivery | 0.50 | the page pushed a dangerous file type by itself |
+
+The landing address, when it is on another site, also goes through the 20 URL rules, unless the starting address was a brand's official site (its own redirect, such as visa.com to visa.pl). A sign-in page is one with a password field, a payment-card form, or an account field under a title or heading that talks about signing in. Everything is scored with the URL and intelligence signals by `core/risk/scoring.py`; MALICIOUS still needs two independent strong categories. There is deliberately no rule for "a password field" or "moved to another site" (every login page and single sign-on would trip it). A page that could not be opened adds nothing and the explanation says why.
+
+**Entry points:** `python -m core.cli detonate <url>`, `POST /v1/urls/detonate`, the console's "Open in sandbox" button. Not automatic (D1b).
+
+---
+
 ## 10. The Windows agent (`agent/`, ADR-016)
 
 A per-user .NET program (not a Windows service, so it needs no administrator rights and runs in the user's session where notifications work). Started at logon by `HKCU\...\Run\LynceusAgent`.
@@ -540,6 +588,7 @@ Core settings (`.env`, prefix `LYNCEUS_`; old `MIRAGE_` names still work):
 | `PHISHTANK_KEY`, `URLHAUS_AUTH_KEY`, `VIRUSTOTAL_API_KEY`, `URLSCAN_API_KEY` | none | provider keys |
 | `RESOLVE_REDIRECTS` | false | redirect resolver |
 | `LLM_REVIEW` / `LLM_URL` / `LLM_MODEL` / `LLM_TIMEOUT` | false / `http://127.0.0.1:11434` / `llama3.2:3b` / 45 s | local model reviewer |
+| `DETONATION` / `DETONATION_PER_MINUTE` | false / 6 | page detonation on request (D1) |
 | `GMAIL_ENABLED`, `OUTLOOK_ENABLED` (+ client ids, tenant, look-back, poll interval) | false | live mailboxes |
 | `DATA_DIR` | `.data` | lists, hashes, tokens |
 
@@ -554,6 +603,7 @@ Agent settings: `agent.json` (section 10). Scoring: `rules/*/scoring.toml`. Word
 | `python tasks.py up` | starts PostgreSQL 17 in Docker |
 | `python tasks.py migrate` | applies Alembic migrations |
 | `python tasks.py sandbox` | builds `.sandbox/` and registers the AppContainer profile |
+| `python tasks.py detonator` | builds the page-detonation image `lynceus-detonator:1.0.0` (D1) |
 | `deploy\install.ps1` | builds agent, extension and console; installs to `%LOCALAPPDATA%\Programs\Lynceus`; registers start at logon and the native-messaging host for Edge and Chrome; starts the agent and waits for the core; `-HardenAcl` restricts the checkout to the user, SYSTEM and Administrators. Running it again upgrades; data is never touched |
 | `deploy\go-live.ps1` | the cutover: refuses a private registry, stops old agents, rebuilds the sandbox, removes the old MIRAGE registration, installs, writes the engine settings, starts the agent, checks Windows' own view; `-CheckOnly` verifies without changing anything |
 | `deploy\uninstall.ps1` | removes registrations and programs; `-RemoveData` deletes data and refuses while files are still in quarantine |
@@ -582,6 +632,7 @@ Also: every rule has at least one positive and one negative fixture (`corpus/rul
 - `python -m eval` / `python tasks.py eval`: precision, recall, F1, abstain rate and Wilson 95% intervals on the labelled synthetic corpus (dev split; holdout runs are explicit and logged; the reserve split is sealed).
 - `python -m eval.realurl`: the real-data URL evaluation (E1).
 - `python -m eval.perf`: latency and throughput.
+- `python -m eval.detonate`: page detonation on live pages (D1); URLs split by a fixed hash into a dev half (the only one rules may be tuned on) and a test half (the headline); `--rescore` judges the kept pages again without opening anything.
 
 ### 19.3 Results
 
@@ -595,6 +646,8 @@ Also: every rule has at least one positive and one negative fixture (`corpus/rul
 | E1: owner's own browsing (local only, counts only) | 0 of 87 after ruleset 1.1.0 (was 9.2%) |
 | Macro corpus (synthetic) | 8/8 malicious flagged (7 MALICIOUS), 0/10 benign fire a new rule |
 | Local model on test macros | 24/24 valid and agreeing (6 held out) |
+| **Live phishing pages, URL rules + opened page (D1 test half, 118 alive)** | **37.3%** caught (URL rules alone 16.9%), 9.3% MALICIOUS |
+| Live legitimate pages flagged (D1 test half, 186 alive) | 3.8%; the page rules added 1 |
 
 The synthetic numbers measure that the rules do what they were written to do. The E1 number is the honest one for URLs: reading the address alone catches little real phishing; lists catch what they already know. E1 data sources: PhiUSIIL (CC BY 4.0), PhishTank, OpenPhish, Tranco top 1M, the owner's Edge history (read locally, never stored); split by a fixed hash seed into train 60 / test 30 / sealed reserve 10.
 

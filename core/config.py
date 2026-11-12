@@ -112,6 +112,12 @@ class Settings(BaseSettings):
     # out without it (the agent waits 90 s for an answer, and the analysis itself comes first)
     llm_timeout: float = 45.0
 
+    # Page detonation (D1, ADR-025): POST /v1/urls/detonate opens the page in the sandboxed browser
+    # container, from this computer's internet connection. Off until enabled; only on request (the
+    # Analyze page's button), never for the browser extension or mail by itself.
+    detonation: bool = False
+    detonation_per_minute: int = 6
+
     console_dir: Path = Path(
         "console/dist"
     )  # the built console, served at /console/ if it exists (M6)

@@ -1,0 +1,30 @@
+# Scoring for the page rules (D1). The same model as every other pack (ADR-013): noisy-OR inside a
+# category, capped, then across categories; MALICIOUS needs two independent strong categories, so a
+# convincing brand login page still needs a second kind of evidence (where it posts, a list, the URL).
+# Tune against the measurement in docs/eval/detonate.md only. Any change here changes ruleset_version.
+#
+# There is deliberately NO rule for "a password field on an unknown site" and none for "the page
+# moved to another site": every login page has the first and single sign-on does the second, and next
+# to url.login_path (0.4) any page weight at all would push ordinary login pages over 45. Where a
+# page lands is judged instead by running the URL rules on the landing address.
+
+[ruleset]
+version = "1.0.0"
+
+[category_caps]
+"page.impersonation" = 0.85
+"page.exfiltration" = 0.85
+"page.hosting" = 0.45
+"page.evasion" = 0.55
+"page.delivery" = 0.7
+
+[weights]
+"page.brand_credential" = 0.8
+"page.form_offsite" = 0.65
+"page.collection_endpoint" = 0.75
+"page.hosting_platform_login" = 0.4
+"page.brand_on_hosting" = 0.4
+"page.evasion" = 0.45
+"page.geofence" = 0.3
+"page.smuggling" = 0.6
+"page.drive_by_download" = 0.5

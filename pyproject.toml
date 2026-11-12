@@ -14,6 +14,7 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S104", "S105", "S106", "S311", "S603", "S607"]   # assert is pytest; fake secrets and seeded fuzz are test data
 "tasks.py" = ["S603", "S607"]   # fixed argv lists, no shell; git/docker come from PATH
+"core/detonate/runner.py" = ["S603", "S607", "S108"]   # fixed docker argv, no shell; /tmp is the container's own tmpfs
 
 [tool.mypy]
 python_version = "3.12"

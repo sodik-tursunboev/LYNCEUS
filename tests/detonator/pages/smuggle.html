@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Your document is ready</title></head>
+<body>
+<p>Downloading your invoice...</p>
+<script>
+  // HTML smuggling (D1 test fixture): a file built inside the page, then downloaded
+  var data = new Uint8Array([77, 90, 0, 0]);
+  var blob = new Blob([data], { type: "application/octet-stream" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "invoice.iso";
+  document.body.appendChild(a);
+  a.click();
+</script>
+</body>
+</html>

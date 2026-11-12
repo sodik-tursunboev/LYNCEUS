@@ -1,0 +1,65 @@
+# Lists for the page rules (D1). Drafted 2026-11-11 from general knowledge, unverified; measured in
+# docs/eval/detonate.md. Data, not code: a change here changes the ruleset version.
+
+# Places a phishing kit sends what it collects. A page asking for credentials that also names one of
+# these in its scripts or form actions is a kit, not a site. "host" or "host/first/path".
+collection_endpoints = [
+  "api.telegram.org/bot", "discord.com/api/webhooks", "discordapp.com/api/webhooks",
+  "formspree.io", "getform.io", "formsubmit.co", "submit-form.com", "formcarry.com",
+  "web3forms.com", "api.web3forms.com", "formspark.io", "basin.io", "usebasin.com",
+  "script.google.com/macros", "hooks.slack.com/services", "webhook.site", "pipedream.net",
+  "requestcatcher.com", "ntfy.sh",
+]
+
+# IP-address lookups that kits use to hide from scanners and to log victims.
+geo_lookups = [
+  "ipapi.co", "ip-api.com", "ipinfo.io", "api.ipify.org", "ipwho.is", "geolocation-db.com",
+  "extreme-ip-lookup.com", "api.db-ip.com", "freeipapi.com", "ipgeolocation.io",
+]
+
+# Free hosting, site builders, serverless and tunnels: anyone can publish a login page there.
+# Matched against the page's host as a suffix.
+hosting_platforms = [
+  "pages.dev", "workers.dev", "r2.dev", "web.app", "firebaseapp.com", "github.io", "netlify.app",
+  "vercel.app", "glitch.me", "replit.app", "repl.co", "weebly.com", "weeblysite.com",
+  "wixsite.com", "wixstudio.io", "webflow.io", "square.site", "godaddysites.com", "blogspot.com",
+  "ngrok.io", "ngrok-free.app", "ngrok.app", "trycloudflare.com", "loca.lt", "serveo.net",
+  "ipfs.io", "dweb.link", "cloudflare-ipfs.com", "w3s.link", "nftstorage.link", "fleek.co",
+  "azurewebsites.net", "herokuapp.com", "onrender.com", "fly.dev", "surge.sh", "000webhostapp.com",
+  "sites.google.com", "storage.googleapis.com", "firebasestorage.googleapis.com",
+  "blob.core.windows.net", "s3.amazonaws.com", "web.core.windows.net", "framer.website",
+  "notion.site", "carrd.co", "jimdosite.com", "mystrikingly.com", "yolasite.com", "webnode.page",
+  "translate.goog", "codesandbox.io", "csb.app", "stackblitz.io",
+  # PaaS, app and AI site builders, and free web hosts (added 2026-11-11, D1 dev half)
+  "cleverapps.io", "railway.app", "up.railway.app", "koyeb.app", "deno.dev", "adaptable.app",
+  "cyclic.app", "pythonanywhere.com", "appspot.com", "lovable.app", "replit.dev", "gitlab.io",
+  "bitbucket.io", "neocities.org", "canva.site", "gitbook.io", "telegra.ph", "bubbleapps.io",
+  "softr.app", "glide.page", "tilda.ws", "site123.me", "ukit.me", "weblium.site",
+  "mobirisesite.com", "infinityfreeapp.com", "rf.gd", "epizy.com", "wuaze.com", "free.nf",
+  # dynamic DNS: a home address with a name anyone can register
+  "ddns.net", "duckdns.org", "no-ip.org", "no-ip.biz", "hopto.org", "zapto.org", "sytes.net",
+  "myftp.org", "servehttp.com", "dynu.net", "freedns.afraid.org", "mooo.com",
+]
+
+# Where real sign-in forms legitimately post to another site (single sign-on providers).
+identity_providers = [
+  "auth0.com", "okta.com", "oktapreview.com", "onelogin.com", "pingidentity.com", "pingone.com",
+  "duosecurity.com", "jumpcloud.com", "b2clogin.com", "amazoncognito.com", "cognito-idp.amazonaws.com",
+  "keycloak.org", "fusionauth.io", "clerk.accounts.dev", "workos.com", "stytch.com", "descope.com",
+]
+
+# Words around a brand that mean "use your account there", not "this is that brand".
+brand_mentions = ["with", "via", "using", "or", "and", "through"]
+
+# A page that names an account and asks for it: sign-in words, in a few languages.
+sign_in_words = [
+  "sign in", "sign-in", "signin", "log in", "log-in", "login", "password", "passcode", "verify",
+  "verification", "account", "authenticate", "anmelden", "zaloguj", "logowanie", "hasło",
+  "connexion", "mot de passe", "iniciar sesión", "contraseña", "accedi", "entrar", "senha",
+]
+
+# Files a page should never hand you by itself.
+dangerous_downloads = [
+  "exe", "scr", "msi", "msix", "appx", "bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf", "hta",
+  "lnk", "iso", "img", "vhd", "vhdx", "one", "jar", "dll", "cpl", "zip", "rar", "7z", "svg", "html",
+]

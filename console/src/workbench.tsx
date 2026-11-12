@@ -6,7 +6,7 @@ import {
 import { when } from "./format";
 import { Icon, type IconName } from "./Icon";
 import { categoryMeta, flagText, kindIcon, verdictMeta } from "./theme";
-import type { Analysis, Anatomy, FileRow, FullSignal, HashMatch, IntelHealth, LinkRow } from "./types";
+import type { Analysis, Anatomy, FileRow, FullSignal, HashMatch, IntelHealth, LinkRow, PageSummary } from "./types";
 import { Badge, Chip, Confidence, CopyButton, Empty, ErrorLine, Gauge, Hash, PageTitle, Panel, Skeleton, Spinner, WeightBar } from "./ui";
 
 type Mode = "url" | "email" | "file";
@@ -71,6 +71,10 @@ export function AnalyzePage({ api }: { api: Api }) {
     setPhase({ name: "working", what: url, step: "Checking the link against the rules…" });
     api.analyzeUrl(url).then((r) => finish(url, r), fail);
   };
+  const runDetonate = (url: string) => {
+    setPhase({ name: "working", what: url, step: "Opening the page in the sandboxed browser (up to 30 seconds)…" });
+    api.detonateUrl(url).then((r) => finish(url, r), fail);
+  };
   const runEmail = async (name: string, bytes: ArrayBuffer) => {
     setPhase({ name: "working", what: name, step: "Opening the message in the sandbox…" });
     try { finish(name, await api.analyzeEmail(bytes)); } catch (e) { fail(e); }
@@ -126,7 +130,7 @@ export function AnalyzePage({ api }: { api: Api }) {
           <Panel className="working"><Spinner label={phase.step} /><Skeleton lines={4} /></Panel>
         ) : null}
         {phase.name === "error" ? <ErrorLine error={phase.message} /> : null}
-        {phase.name !== "working" && shown ? <Result done={shown} headingRef={heading} /> : null}
+        {phase.name !== "working" && shown ? <Result done={shown} headingRef={heading} onDetonate={runDetonate} /> : null}
         {phase.name === "idle" && !shown ? (
           <Empty icon="Binoculars" title="Nothing analysed yet">
             Paste a link above, or drop a message or file. Everything stays on this computer.
@@ -258,7 +262,7 @@ function FileIntake({ busy, onRun }: { busy: boolean; onRun: (name: string, byte
 
 // ---- the result -----------------------------------------------------------------------------------------------
 
-function Result({ done, headingRef }: { done: Done; headingRef: RefObject<HTMLDivElement | null> }) {
+function Result({ done, headingRef, onDetonate }: { done: Done; headingRef: RefObject<HTMLDivElement | null>; onDetonate: (url: string) => void }) {
   const r = done.result;
   const v = r.verdict;
   const meta = verdictMeta(v.state);
@@ -303,6 +307,9 @@ function Result({ done, headingRef }: { done: Done; headingRef: RefObject<HTMLDi
         </div>
       </div>
 
+      {r.type === "url" && r.page ? <PagePanel p={r.page} /> : null}
+      {r.type === "url" && !r.page && r.anatomy && /^https?$/.test(r.anatomy.scheme) ? <SandboxOffer onRun={() => onDetonate(done.what)} /> : null}
+
       {links.length > 0 ? <LinksPanel links={links} /> : null}
       {files.length > 0 ? <FilesPanel files={files} /> : null}
 
@@ -327,6 +334,54 @@ function Result({ done, headingRef }: { done: Done; headingRef: RefObject<HTMLDi
           : <span><Icon name="CircleDashed" size={14} />Not recorded (no database is configured)</span>}
       </footer>
     </div>
+  );
+}
+
+const MARKER_TEXT: Record<string, string> = {
+  devtools_trap: "traps or watches for developer tools",
+  key_block: "blocks keyboard shortcuts",
+  context_block: "blocks the right-click menu",
+  webdriver_check: "checks for an automated browser",
+  decoded_writer: "writes decoded content into the page",
+  heavy_decoding: "decodes a lot of hidden text",
+};
+const PAGE_STATUS: Record<string, string> = {
+  ok: "Opened",
+  partial: "Opened, but it did not finish loading",
+  dead: "Could not be opened (gone, or not reachable)",
+  error: "The sandboxed browser could not run",
+};
+
+/** D1: the opened page. The screenshot was re-encoded in the parser sandbox and is not stored. */
+function PagePanel({ p }: { p: PageSummary }) {
+  const asks = p.password_fields > 0
+    ? `a password (${p.password_fields} field${p.password_fields === 1 ? "" : "s"})`
+    : p.forms > 0 ? `${p.forms} form${p.forms === 1 ? "" : "s"}, no password` : "nothing";
+  return (
+    <Panel title="The page, opened in the sandbox" icon="Flask" actions={<span className="muted">{(p.elapsed_ms / 1000).toFixed(1)} s</span>}>
+      <ul className="facts">
+        <li><strong>{PAGE_STATUS[p.status] ?? p.status}</strong>{p.http_status ? ` · HTTP ${p.http_status}` : ""}{p.error ? ` · ${p.error.replaceAll("_", " ")}` : ""}</li>
+        {p.chain_hosts.length > 0 ? <li>Went through <span className="mono">{p.chain_hosts.join(" → ")}</span></li> : null}
+        {p.title ? <li>Title: <strong>{p.title}</strong></li> : null}
+        <li>Asks for {asks}</li>
+        {p.markers.length > 0 ? <li>Hides from analysis: it {p.markers.map((m) => MARKER_TEXT[m] ?? m).join("; ")}</li> : null}
+        {p.downloads.length > 0 ? <li>Tried to download {p.downloads.map((d) => `.${d || "?"}`).join(", ")} (nothing was kept)</li> : null}
+        <li>Contacted {p.hosts_contacted} host{p.hosts_contacted === 1 ? "" : "s"}</li>
+        {p.tls_valid_from ? <li>Certificate issued {new Date(p.tls_valid_from * 1000).toISOString().slice(0, 10)}</li> : null}
+      </ul>
+      {p.screenshot_jpeg ? <img className="page-shot" src={`data:image/jpeg;base64,${p.screenshot_jpeg}`} alt={`What the page showed${p.title ? `: ${p.title}` : ""}`} /> : null}
+      <p className="muted">Opened in a throwaway browser, from this computer's internet connection. Nothing was typed or sent to the page, and the screenshot is not stored.</p>
+    </Panel>
+  );
+}
+
+function SandboxOffer({ onRun }: { onRun: () => void }) {
+  return (
+    <Panel title="Look at the page itself" icon="Flask">
+      <p>The address alone often says nothing. Lynceus can open the page in a locked-down browser that is thrown away afterwards and judge what the page shows: a brand's sign-in form on someone else's site, where a form sends your password, code that hides from analysts.</p>
+      <p className="muted">The page is visited from this computer's internet connection, so whoever runs it sees your IP address. Nothing is typed into it.</p>
+      <button type="button" className="btn primary" onClick={onRun}><Icon name="Flask" size={16} />Open in sandbox</button>
+    </Panel>
   );
 }
 

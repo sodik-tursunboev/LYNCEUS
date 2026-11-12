@@ -52,10 +52,18 @@ export const CATEGORY: Record<string, { icon: IconName; label: string }> = {
   known_bad: { icon: "Skull", label: "Known malware" },
   api_abuse: { icon: "Code", label: "Windows functions it imports" },
   llm_review: { icon: "Sparkle", label: "Local model's advice (never decides)" },
+  // what the opened page showed (D1)
+  "page.impersonation": { icon: "Detective", label: "The page impersonates a brand" },
+  "page.exfiltration": { icon: "Target", label: "Where the page sends what you type" },
+  "page.hosting": { icon: "Cloud", label: "Where the page is hosted" },
+  "page.evasion": { icon: "EyeSlash", label: "The page hides from analysis" },
+  "page.delivery": { icon: "Paperclip", label: "The page pushes a file" },
 };
 
 /** A category, or a category of a link inside a message ("link.impersonation"): the same icon, said as "in a link". */
 export function categoryMeta(category: string): { icon: IconName; label: string } {
+  const exact = CATEGORY[category];
+  if (exact) return exact;
   const dot = category.indexOf(".");
   const base = dot >= 0 ? category.slice(dot + 1) : category;
   const known = CATEGORY[base];

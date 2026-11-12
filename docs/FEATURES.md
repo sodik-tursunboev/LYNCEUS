@@ -1,7 +1,7 @@
 # Lynceus: Features
 
-*Everything Lynceus can do, feature by feature, with an honest status for each.*
-Written 2026-11-10 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.0). How each part is built: [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md). What does not work: [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
+*Everything Lynceus can do, feature by feature, with an honest status for each, what was added most recently, and what is expected next.*
+Updated 2026-11-11 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.0, page ruleset 1.0.0). How each part is built: [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md). What does not work: [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
 
 ### Status labels
 
@@ -12,7 +12,51 @@ Written 2026-11-10 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.
 | **Fakes only** | built and tested against a fake of the outside service; never run against the real one |
 | **Needs key** | built; works only after you register with the provider and add your own key |
 | **Off by default** | built; you turn it on in `.env` |
-| **Not built** | planned or deferred |
+| **Built** | built, not yet checked in daily use |
+| **Planned** | expected future feature (section 20) |
+| **Not built** | known gap, not scheduled |
+
+---
+
+## What's new
+
+| Date | Added | Status |
+|---|---|---|
+| 2026-11-11 | **Page detonation (D1):** open a page in a throwaway, locked-down browser container and judge what it shows, not just its address (section 2b) | Verified (on request) |
+| 2026-11-11 | **10 page rules:** brand impersonation with a credential or **card** ask (164 brands), password forms posting elsewhere, phishing-kit endpoints (Telegram bots, webhooks, form relays), sign-in pages and brand pages on free hosting or dynamic DNS, anti-analysis code, IP lookups, HTML smuggling, drive-by downloads | Verified |
+| 2026-11-11 | **"Open in sandbox" in the console:** the page's route, title, forms, hiding tricks, certificate date and a screenshot, next to the verdict | Verified |
+| 2026-11-11 | **Live-page measurement** (`python -m eval.detonate`): real phishing pages and real legitimate pages, split into a tuning half and an untouched test half (section 19) | Verified |
+| 2026-11-10 | **False alarms fixed (URL ruleset 1.1.0):** sign-in pages with an encoded return address and share dialogs are no longer flagged; the owner's own browsing went from 9.2% flagged to 0 | Verified |
+| 2026-11-10 | **Real-data evaluation (E1):** the URL rules measured on about 300,000 real URLs; the result (2.5% of real phishing caught from the address alone) is what led to D1 | Verified |
+| 2026-11-10 | **Unknown macros read as programs:** a bounded VBA evaluator, call-graph analysis, Excel 4.0 macros, VBA stomping (section 5) | Tested |
+| 2026-11-10 | **Local AI reviewer for macros** (Ollama, on this computer only, advice that can never decide) (section 11) | Off by default |
+| 2026-11-10 | **Go-live safeguards:** installs refuse to run where Windows would not see them, and check Windows' own view afterwards | Verified |
+| 2026-11-10 | **Documentation:** this file and [TECHNICAL_SPEC.md](TECHNICAL_SPEC.md) | Done |
+
+---
+
+## Capabilities at a glance: what Lynceus can do
+
+**Detect**
+- Judge every web page you open in Edge (Chrome expected) and warn before a phishing page; stop known-bad pages before they load.
+- Judge every file that lands in Downloads, with no window open.
+- Open a suspicious page in a sandboxed browser and read what it really shows: whose brand it wears, what it asks for, where it sends your password, how it hides.
+- Read emails (an `.eml`, or a Gmail/Outlook inbox, so far tested against fakes only): sender tricks, authentication failures, hidden and lookalike links, QR codes, dangerous attachments.
+- Look inside files: scripts, shortcuts, programs, PDFs, archives, images, Office documents, and unknown macros, by reading their code.
+- Match known phishing and malware: OpenPhish and PhishTank lists, local hash lists, optional VirusTotal, urlscan, URLhaus, MalwareBazaar, domain age.
+
+**Investigate and explain**
+- One of five verdicts with a 0 to 100 score, a confidence, every reason in plain words, the evidence behind it, MITRE ATT&CK tags, and which source said what.
+- An analysis workbench: paste a link, drop a message or a file, or open the page in the sandbox, and see the full anatomy.
+
+**Respond**
+- Warning pages, Windows notifications, and reversible quarantine of malicious files and (with a separate permission) messages; nothing is ever deleted; every step audited.
+
+**Protect your privacy**
+- Everything runs on this computer; nothing about your browsing, mail or files leaves it unless you turn on a specific provider, and then only a bare domain.
+
+**Measure itself**
+- Published, reproducible measurements on synthetic samples and on real data, including the bad numbers.
 
 ---
 
@@ -23,6 +67,7 @@ Written 2026-11-10 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.
 | Your browsing (Edge, Chrome) | judges every page you open and shows a warning page before phishing | Verified (Edge); Chrome expected, not tested |
 | Your downloads | judges every new file in Downloads, notifies you, offers quarantine | Verified |
 | Files you are unsure about | drop them on the Analyze page for a full explanation | Verified |
+| Pages you are unsure about | open the page in a throwaway, locked-down browser and judge what it shows | Verified (on request) |
 | Your email | reads Gmail or Outlook (read-only) and judges every new message | Fakes only |
 | Unknown Office macros | reads the macro's code and works out what it would do | Tested (synthetic macros) |
 | Known phishing and malware | matches against OpenPhish, PhishTank and local hash lists | Verified (lists on) |
@@ -49,6 +94,32 @@ Every answer is one of five verdicts: **MALICIOUS**, **SUSPICIOUS**, **BENIGN**,
 | Firefox | not supported | Not built |
 
 ---
+
+## 2b. Page detonation: judging the page, not just the address (D1)
+
+Most real phishing shows nothing in its address (E1: no URL rule fires on 91.2%). The page gives it away. On request, Lynceus opens the page in a throwaway browser container and judges what it shows.
+
+| Feature | What it does | Status |
+|---|---|---|
+| Throwaway browser | each page gets a fresh Chromium container (Playwright 1.64.1), removed afterwards | Verified |
+| Locked down | non-root, Chromium's own sandbox on, seccomp, read-only, no capabilities but one, 1 GB, killed at 32 s, nothing from this computer mounted | Verified (tested) |
+| Cannot reach your network | the browser's network has no route out; its only exit is a proxy that accepts public web servers only (no LAN, router, Docker host, cloud metadata, loopback) | Verified (tested) |
+| Never interacts | nothing typed, clicked or submitted; downloads cancelled; dialogs dismissed; pop-ups closed | Verified |
+| Brand impersonation | a page presenting itself as a listed brand (title, heading) that asks for a password, an account or **card details** on a host the brand does not own (164 brands) | Verified |
+| Brand pages on shared hosting | a brand page on S3, Blogspot, a PaaS or dynamic DNS before any form appears (weak alone) | Verified |
+| Where your password goes | a password form that posts to another site or a bare IP | Verified |
+| Phishing-kit endpoints | a sign-in page that names a Telegram bot, a Discord webhook or a form-relay service | Verified |
+| Free-hosting sign-in pages | a sign-in form on pages.dev, workers.dev, web.app, github.io, IPFS gateways, site builders, tunnels | Verified |
+| Anti-analysis code | a sign-in page that sets a debugger trap, watches for developer tools, blocks keyboard shortcuts, writes decoded content into itself, or looks up the visitor's IP | Verified |
+| HTML smuggling and drive-by downloads | a file built inside the page, or a dangerous file pushed by the page | Verified |
+| Landing page | where redirects end is judged by the URL rules too | Verified |
+| Screenshot | shown in the console, decoded only inside the parser sandbox, never stored | Verified |
+| One verdict | page signals scored with the URL and intelligence signals by the same model; MALICIOUS still needs two independent kinds of evidence | Verified |
+| On request only | console "Open in sandbox", `python -m core.cli detonate`, `POST /v1/urls/detonate` (`LYNCEUS_DETONATION=true`) | Verified |
+| Automatic opening while browsing or for email links | a second visit can use up one-time links and tells senders your address is live | Not built (D1b, opt-in) |
+| Recognising a brand from its picture | a local vision model on the screenshot | Not built (D1b) |
+
+The rules are listed in section 18. Measured on live pages: section 19 and `docs/eval/detonate.md`.
 
 ## 3. Download and file protection (agent)
 
@@ -331,13 +402,35 @@ Full detail: [PRIVACY.md](PRIVACY.md).
 
 ---
 
-## 18. Quality measurement
+## 18. Page rules (10)
+
+What the opened page shows (D1). Each gives one reason in plain words; one alone never makes a page MALICIOUS.
+
+| Rule | Fires when |
+|---|---|
+| Brand impersonation | the page presents itself as a listed brand in its title or headings (not "sign in **with** Google", not a payment or app-store logo) and asks for a password, an account or card details on a host the brand does not own |
+| Password sent elsewhere | a password form posts to another site or a bare IP (single sign-on providers and official domains excepted) |
+| Phishing-kit endpoint | a page asking for credentials names a Telegram bot, a Discord or Slack webhook or a form-relay service |
+| Sign-in page on free hosting | a sign-in or card form on pages.dev, workers.dev, web.app, github.io, IPFS, a site builder, a PaaS, a tunnel or dynamic DNS |
+| Brand page on free hosting (weak) | a brand page on such hosting, or on S3 or Blogspot, before any form appears ("View the shared document") |
+| Hides from analysis | a sign-in page that sets a debugger trap, watches the window size for developer tools, blocks keyboard shortcuts or writes decoded content into itself |
+| Looks up your IP (weak) | a sign-in page that calls an IP-geolocation service (kits use it to hide from scanners) |
+| HTML smuggling | the page built a file inside the browser and started its download |
+| Drive-by download | the page pushed a dangerous file type by itself |
+| Landing address | where the redirects end is judged by the 20 URL rules (except when an official site chose the redirect) |
+
+Deliberately **not** rules: "a password field on an unknown site" and "the page moved to another site" (every login page and every single sign-on would trip them). Brand words: the URL list plus `rules/page/brands.toml` (164 brands).
+
+---
+
+## 19. Quality measurement
 
 | Tool | What it measures |
 |---|---|
 | `python -m eval` | precision, recall, F1, abstain rate and 95% intervals on the labelled synthetic corpus (dev / holdout / sealed reserve) |
 | `python -m eval.realurl` | the URL engine on ~300,000 real URLs (PhiUSIIL, PhishTank, OpenPhish, Tranco, your own browsing locally) |
 | `python -m eval.perf` | latency and throughput on this machine |
+| `python -m eval.detonate` | page detonation on live phishing and legitimate pages (1,100 pages opened on 2026-11-11; tuning half and test half kept apart; `--rescore` re-judges the kept pages without opening anything) |
 | Test suites | 2,540 Python tests, 349 agent tests, 114 + 7 extension tests, 60 + 12 console tests |
 | Rule fixtures | every rule has at least one positive and one negative example, enforced by a test |
 
@@ -348,27 +441,98 @@ Full detail: [PRIVACY.md](PRIVACY.md).
 | URL rules on synthetic samples | precision 1.000, recall 0.966 |
 | Email rules on synthetic samples | precision 1.000, recall 0.973 |
 | **URL rules on real phishing (E1, 133,195 URLs)** | **2.5% caught**; 22.9% of OpenPhish's fresh URLs |
+| **Live phishing pages, URL rules alone (D1 test half, 118 alive pages)** | 16.9% caught |
+| **Live phishing pages, URL rules + the opened page (D1 test half)** | **37.3% caught** (29.1 to 46.3), 9.3% MALICIOUS; 24 of the 44 caught only because of the page |
+| Live legitimate pages flagged, URL + page (D1 test half, 186 alive) | 3.8% (7): 6 by the URL rules alone (typosquat, login path), 1 added by the page |
+| Real sign-in pages with a password form flagged (D1 test half) | 1 of 26 |
 | Real phishing where no URL rule fires at all | 91.2% |
 | False alarms on real legitimate URLs (166,265) | 0.3% |
 | False alarms on the owner's own browsing | 0 of 87 (after ruleset 1.1.0) |
 
-The synthetic numbers show the rules do what they were written to do. The real-data number shows the limit of reading an address alone: today Lynceus catches a new phishing link mainly when OpenPhish or PhishTank already lists it.
+The synthetic numbers show the rules do what they were written to do. E1 shows the limit of reading an address alone. D1 shows what opening the page adds: on live phishing pages that no list is assumed to know, the share caught more than doubles (16.9% to 37.3%) while the page rules added one false alarm on 186 legitimate pages. About half of the listed phishing pages were already gone or refused the visit when opened, and 63% of the live ones still pass: they show no brand, no form, or something else to a scanner (cloaking). Domain age, visual brand matching and anti-cloaking are next (section 20). Full report: `docs/eval/detonate.md`.
 
 ---
 
-## 19. Not built yet (the road ahead)
+## 20. Expected future features (the road ahead)
 
-| Feature | Why it matters |
-|---|---|
-| Page detonation sandbox | 91% of real phishing URLs show nothing in the address; only the page itself does |
-| Visual brand matching | recognise a fake login page by how it looks |
-| Sender and relationship profiling | "this sender has never written to you before" |
-| AI intent analysis for email text | understand the request in the message, not only keywords |
-| Domain age and certificate transparency | catch freshly registered phishing domains |
-| Password-reuse warning | warn when you type a known password into an unknown site |
-| Campaign memory | link related messages, URLs and files |
-| Feedback buttons | let you mark a verdict right or wrong |
-| Frame checking | judge pages loaded inside other pages |
-| Live Gmail / Outlook run | everything there is tested against fakes only |
-| Signed installer, CI | trust and repeatability |
-| More file types | 7z, RAR, ISO, OCR of images |
+Ordered by what the measurements say matters most. Each phase is its own milestone with a written plan, approval, tests and a measurement before it counts as done. Sizes are relative (S, M, L, XL). Everything here is **Planned**, not built.
+
+### Next: finish page analysis (D1b)
+
+| Feature | What it adds | Size |
+|---|---|---|
+| Automatic page detonation (opt-in) | open unknown pages by themselves while you browse and for links in mail, with one-time-link protection (sign-in and reset links skipped) | M |
+| Visual brand matching | a local vision model, or image embeddings, reads the screenshot and names the brand a page imitates, even when it is only a picture | M |
+| Domain age and certificate transparency | a domain registered or first certified days ago is one of the strongest signs; needs certificate-transparency or newly-registered-domain data | M |
+| Anti-cloaking | a phone browser profile, a longer settle, bot-check pages recognised as "hidden", optionally a different exit address | M |
+| Frame checking | judge sign-in forms loaded inside frames from another site | S |
+
+### Better decisions
+
+| Feature | What it adds | Size |
+|---|---|---|
+| Learned scoring | a calibrated model trained on the real E1 and D1 data, with the rules kept as the explanation | M |
+| Feedback buttons | "this was right / wrong" in the console and on the warning page; every mistake becomes test data | S |
+| Campaign memory and retro-hunt | link related pages, messages and files; when a list learns a URL tomorrow, re-check what you saw yesterday and tell you | M |
+
+### Deeper email analysis
+
+| Feature | What it adds | Size |
+|---|---|---|
+| Own SPF, DKIM, DMARC and ARC checks | stop trusting the header a receiving server wrote | M |
+| Sender relationship history | "this sender has never written to you", a lookalike of a known contact, a hijacked reply chain | M |
+| Business-email-compromise intent | the local model reads the request itself (payment change, gift cards, urgency from "the CEO"); advice only | M |
+| Current attachment tricks | SVG with scripts, QR codes inside PDFs, OneNote, ISO/IMG/VHD, 7z and RAR, OCR of image-only lures, password-protected archives whose password is in the mail | L |
+| Live Gmail and Outlook | run against the real services (today tested against fakes only); the macro reviewer in the mailbox poller | S |
+| "Report phishing" | one click from the mailbox into the console | S |
+
+### Deeper file analysis
+
+| Feature | What it adds | Size |
+|---|---|---|
+| YARA rules | the industry-standard pattern language, with community rule feeds | S |
+| Program capabilities | describe what a Windows program can do (capa) | S |
+| AMSI provider | see the decoded script and macro calls Windows itself hands to antimalware at run time | M |
+| Dynamic detonation of documents | open documents in an instrumented virtual machine and watch what they do | L |
+| Real malware test set | measure on real samples kept inside an isolated VM, never on this computer | M |
+
+### Endpoint protection (EDR-lite, no kernel driver)
+
+| Feature | What it adds | Size |
+|---|---|---|
+| Agent as a Windows service | runs as SYSTEM, survives logoff, harder for malware to stop (changes ADR-016; needs your approval) | M |
+| Process, network and script telemetry | Sysmon and ETW: every process with its command line, network connections, DNS, file writes, registry, loaded modules | L |
+| Phishing kill-chain detection | the browser downloads a file, it runs, Office starts PowerShell, PowerShell goes to the internet: caught as one story | L |
+| Behaviour rules (Sigma) | readable detection rules mapped to MITRE ATT&CK | M |
+| Response on the endpoint | stop a process, isolate the computer from the network (Windows Filtering Platform), roll files back from shadow copies | L |
+| Password-reuse warning | warn when you type a password you use elsewhere into an unknown site | M |
+| Tamper resistance | a watchdog, a locked install folder, signed programs | M |
+
+### Full EDR (needs a company and Microsoft's programs)
+
+| Feature | Why it is separate | Size |
+|---|---|---|
+| Kernel file-system filter and kernel callbacks | block before a file is written or a process starts; needs a Microsoft-signed driver (EV certificate, attestation) | XL |
+| Protected process (ELAM / PPL) | malware cannot stop the agent; needs Microsoft Virus Initiative membership | XL |
+| Memory scanning | find code that only exists in memory | L |
+
+### Enterprise platform
+
+| Feature | What it adds | Size |
+|---|---|---|
+| Central management server | enroll many computers over mutual TLS, push policies, see every alert in one place | XL |
+| Single sign-on and roles | SAML/OIDC sign-in, analyst and admin roles, per-component credentials instead of one shared token | L |
+| SIEM connectors | Splunk, Microsoft Sentinel, syslog/CEF (today: JSON-lines export) | M |
+| Signed builds and auto-update | code signing, signed update packages, a software bill of materials, hash-locked dependencies everywhere | M |
+| CI that runs | every change built and tested on a clean machine | S |
+| Evidence encryption at rest | ADR-007, unsigned today | M |
+| Independent penetration test, SOC 2 / ISO 27001 processes | what buyers ask for | L |
+
+### Targets instead of "perfect"
+
+| Measure | Today | Target |
+|---|---|---|
+| Real phishing pages caught (live, alive pages) | 37.3% | 85% or more |
+| False alarms on legitimate pages | 3.8% (mostly the URL typosquat rule) | 0.1% or less |
+| False alarms on your own browsing | 0 of 87 | 0 |
+| Real malware caught (files) | not measured | measured on real samples |
