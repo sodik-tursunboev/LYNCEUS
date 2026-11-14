@@ -140,6 +140,14 @@ class Settings(BaseSettings):
     detonation: bool = False
     detonation_per_minute: int = 6
 
+    # The brain (AI1, docs/milestones/AI1.md): a local model reads opened pages, their screenshots,
+    # their scripts and mail, and only findings that code can check count. Off until enabled; it
+    # uses LYNCEUS_LLM_URL (this computer only). Keep it off while another job needs the same
+    # graphics card.
+    brain: bool = False
+    brain_model: str = "gemma3:4b"  # reads text and images
+    brain_timeout: float = 60.0  # seconds for one verdict's questions, waiting included
+
     console_dir: Path = Path(
         "console/dist"
     )  # the built console, served at /console/ if it exists (M6)

@@ -34,6 +34,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from core import hashlists
 from core.api.console import mount_console
 from core.api.sessions import CODE_SECONDS, SESSION_SECONDS, Caller, ConsoleSessions
+from core.brain.run import build_brain
 from core.config import Settings, legacy_env_names
 from core.contracts import EventSource, VerdictState
 from core.db import audit, hosts
@@ -285,6 +286,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     feed_store = FeedStore(settings.data_dir / "feeds")
     feed_names = sorted(settings.intel_enabled() & FEEDS.keys())  # the lists to keep downloaded
     advisor = build_advisor(settings)  # None unless the local model review is on (ADR-023)
+    brain = build_brain(settings)  # None unless LYNCEUS_BRAIN is on (AI1): checked findings only
 
     mailboxes: list[MailboxService] = []  # filled below, once the database exists
     quarantine: list[MailQuarantineRunner] = []  # M6b: at most one, carries out approved mail moves
@@ -312,6 +314,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await intel.aclose()
         if advisor is not None:
             await advisor.aclose()
+        if brain is not None:
+            await brain.aclose()
 
     app = FastAPI(
         title="Lynceus",
@@ -502,6 +506,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         start, outcome = await analyze_with_intel(request.url, intel)
         analysis: UrlAnalysis
         analysis, page = await run_in_threadpool(detonate_url, request.url, start)
+        if brain is not None:  # AI1 P2: checked findings only, never lower
+            analysis = await brain.page(start, page, analysis)
         await run_in_threadpool(
             write_audit, "url.detonate", "url",
             {"by": "user" if caller == "console" else "agent", "page": page.status},
@@ -565,6 +571,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             parser_slots.release()
         if advisor is not None:  # advice only, never raises; no parser slot is held while it reads
             analysis = await advisor.advise_message(analysis, raw)
+        if brain is not None:  # AI1 P5: checked findings only, never lower
+            analysis = await brain.mail(analysis, raw)
         persisted = False
         if db is not None:
             try:

@@ -80,3 +80,7 @@ negative = ["https://a-b.test/", "https://a.b.c.example.test/", "http://203.0.11
 ["url.parser_tricks"]
 positive = ["http://evil.test\\@good.test/", "https://example.test/a%252Fb/login", "http://exa%6Dple.test/", "https://exa\tmple.test/"]
 negative = ["https://example.test/", "https://example.test/?q=%25", "https://example.test/?q=%2525", "https://app.example.test/en/login?next=%252Fdashboard%253Ftab%253D1"]
+
+["url.learned_domain"]
+positive = ["https://kzxqwvbn-auth.test/", "https://secure-account-verify-update.test/"]
+negative = ["https://www.wikipedia.org/", "https://example.com/", "https://accounts.google.com/x"]

@@ -451,6 +451,23 @@ The landing address, when it is on another site, also goes through the 20 URL ru
 
 **Entry points:** `python -m core.cli detonate <url>`, `POST /v1/urls/detonate`, the console's "Open in sandbox" button. Not automatic (D1b).
 
+Since H1 the detonator (image `lynceus-detonator:1.1.0`) also reads forms inside the first ten frames (marked `frame`), retries once as a phone when the desktop visit was refused, blank or a bot check and there is time left in the 26-second watchdog, and returns a bounded excerpt of the page's own code (12,000 characters, inline and same-site scripts) for the script brain.
+
+## 9c. Learned judgment and the checked brain (AI1, ADR-027)
+
+**The learned domain model** (`core/learn`, `rules/url/learned.py`). Features of the **registered domain only**: character 3- to 5-grams of its label, the public suffix and bucketed structure (length, digits, hyphens, letter entropy, brand and keyword words), hashed into 262,144 buckets. Logistic regression, trained in pure Python by `python -m eval.learn_url` on E1's training domains (split by registered domain, threshold chosen on calibration domains). Shipped as `rules/learned/url_host.bin` (signed 16-bit weights) and `url_host.json` (bias, scale, threshold, the weights' SHA-256, checked at load). As the URL rule `url.learned_domain` (category `learned`, cap 0.5) it reports the domain parts that pushed the score; it skips official and popular domains; in mail its category `link.learned` is capped at 0.3. Scoring under 1 ms.
+
+**The brain** (`core/brain`, off unless `LYNCEUS_BRAIN=true`). A local model through `core/llm/ollama.py` (loopback only, schema-constrained answers, size caps, fixed error text) answers closed forms:
+
+| Question | Input | Finding (only if code confirms it) |
+|---|---|---|
+| Page text (P2) | address, domain, title, headings, visible text, form fields and where they post | `brain.page_impersonation` (a quoted brand on a domain it does not own, on a credential page); `brain.page_pressure` |
+| Page code (P4) | the page's own code | `brain.page_script_exfiltration` (typed data sent to another site or a chat bot; the passage is in the code, the endpoint was contacted) |
+| Screenshot (P3) | the screenshot re-encoded in the parser sandbox | `brain.page_visual_brand` (a listed brand, off its domain, credential page, confidence 70+) |
+| Mail (P5) | sender, subject, the sandbox's message excerpt | `brain.mail_intent` (a costly ask and a pressure tactic, both quoted); `brain.mail_impersonation` |
+
+Untrusted text is fenced between markers it cannot forge; answers are validated against a closed pydantic schema (anything else is no answer); quotes are matched after folding case, width, quotes and whitespace. Findings become signals in category `brain` (cap 0.7): alone SUSPICIOUS at most, with one independent rule category MALICIOUS, never lower than before. A finding that repeats a rule already fired on the same evidence is dropped. One question at a time, one time budget per verdict; a late question keeps the findings already checked. The API applies it after detonation and message analysis; the mailbox poller through `core/mailbox/wiring.py`, on a fresh event loop per message.
+
 ---
 
 ## 10. The Windows agent (`agent/`, ADR-016)

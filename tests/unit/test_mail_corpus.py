@@ -93,7 +93,8 @@ def test_the_parser_output_is_valid_for_every_message(entries: list[MailEntry]) 
 # its own, ADR-014), kept in the corpus so the miss is counted; a change here needs a reason.
 KNOWN_MISSES = {
     "m2b-018": "a PDF with an embedded file and nothing else (pdf_embedded_file is 0.4 alone)",
-    "m2b-025": "a QR code to a login-looking domain with no brand and no other signal",
+    # m2b-025 (a QR code to a login-looking domain with no brand) is caught since AI1: the learned
+    # domain model rates that domain as phishing-like
 }
 
 

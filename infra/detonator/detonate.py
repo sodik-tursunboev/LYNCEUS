@@ -126,6 +126,17 @@ def markers(inline: str, own_scripts: list[str], html_events: str) -> list[str]:
     return sorted(found)
 
 
+MAX_CODE = 12_000
+
+
+def page_code(inline: str, own_scripts: list[str]) -> str:
+    """The page's OWN code for the brain (AI1 P4): inline scripts, then scripts from its own site,
+    whitespace collapsed, cut at MAX_CODE. Third-party libraries are left out: they are someone
+    else's code and would crowd out the kit's."""
+    joined = "\n".join([inline, *own_scripts])
+    return re.sub(r"[ \t]+", " ", re.sub(r"\n\s*\n+", "\n", joined)).strip()[:MAX_CODE]
+
+
 def refs(texts: list[str]) -> list[str]:
     """host/first/two segments of every absolute URL written in the page's scripts."""
     out: list[str] = []
@@ -333,6 +344,7 @@ def _visit(browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_
                 (own if _host(r.url) == own_host else other).append(body)
             result.update(seen)
             result["markers"] = markers(inline, own, html_events)
+            result["code"] = page_code(inline, own)
             result["script_refs"] = refs([inline, *own, *other])
             result["script_hosts"] = sorted({_host(r.url) for r in responses} - {""})[:50]
         try:

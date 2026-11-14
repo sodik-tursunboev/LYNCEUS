@@ -68,6 +68,9 @@ class PageReport(_Closed):
         default_factory=list, max_length=100
     )
     markers: list[Marker] = Field(default_factory=list, max_length=7)
+    # the page's own code (inline and same-site scripts), for the script brain (AI1 P4); it is
+    # attacker text
+    code: Annotated[str, StringConstraints(max_length=12_000)] = ""
     downloads: list[Download] = Field(default_factory=list, max_length=10)
     popups: int = Field(default=0, ge=0, le=10_000)
     dialogs: int = Field(default=0, ge=0, le=10_000)

@@ -9,7 +9,7 @@
 # page lands is judged instead by running the URL rules on the landing address.
 
 [ruleset]
-version = "1.1.0"
+version = "1.2.0"
 
 [category_caps]
 "page.impersonation" = 0.85
@@ -17,6 +17,10 @@ version = "1.1.0"
 "page.hosting" = 0.45
 "page.evasion" = 0.55
 "page.delivery" = 0.7
+# AI1: checked findings of the local model, one category (owner's decision): alone it reaches
+# SUSPICIOUS at most (0.7 < the MALICIOUS line); with one independent strong rule category beside
+# it, MALICIOUS. Weights are provisional until measured on D1's dev half after the study run.
+brain = 0.7
 
 [weights]
 "page.brand_credential" = 0.8
@@ -28,4 +32,8 @@ version = "1.1.0"
 "page.geofence" = 0.3
 "page.smuggling" = 0.6
 "page.drive_by_download" = 0.5
+"brain.page_impersonation" = 0.6  # provisional (AI1 P2)
+"brain.page_pressure" = 0.3  # provisional (AI1 P2)
+"brain.page_script_exfiltration" = 0.5  # provisional (AI1 P4)
+"brain.page_visual_brand" = 0.45  # provisional (AI1 P3): a picture cannot be quoted
 "page.cloaked" = 0.0  # H1 C5: evidence only until measured on the dev half (see the rule)

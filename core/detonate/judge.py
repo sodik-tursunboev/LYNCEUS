@@ -73,7 +73,12 @@ def page_signals(start: UrlAnalysis, report: PageReport) -> tuple[list[Signal], 
     return signals, evidence
 
 
-def judge(start: UrlAnalysis, report: PageReport) -> UrlAnalysis:
+def judge(
+    start: UrlAnalysis,
+    report: PageReport,
+    extra: tuple[list[Signal], list[Evidence]] = ([], []),
+) -> UrlAnalysis:
+    """`extra`: checked brain findings (AI1), scored together with the page's own signals."""
     if start.url is None:
         return start
     if report.status in _WHY_NOT:
@@ -82,6 +87,7 @@ def judge(start: UrlAnalysis, report: PageReport) -> UrlAnalysis:
         evidence: list[Evidence] = []
     else:
         signals, evidence = page_signals(start, report)
+        signals, evidence = [*signals, *extra[0]], [*evidence, *extra[1]]
         how = " (it did not finish loading)" if report.status == "partial" else ""
         if report.http_status is not None and report.http_status >= 400:
             how = f" (it answered HTTP {report.http_status})"

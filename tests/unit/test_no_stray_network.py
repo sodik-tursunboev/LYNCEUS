@@ -79,13 +79,17 @@ def test_only_intelligence_code_uses_the_intelligence_http_module() -> None:
 
 
 def test_the_analysis_engines_do_not_import_the_local_model() -> None:
-    """The engines decide by rules. The model's advice is added around them (the API), never inside,
-    and never in the mailbox poller or the rules."""
+    """The engines decide by rules. A model is used only AROUND them: the macro advice (ADR-023) and
+    the checked brain (AI1, ADR-027), wired in by the API and, for the brain, the mailbox wiring;
+    never inside an engine, the poller's sync code or a rule."""
     for path in [*(ROOT / "rules").rglob("*.py"), *(ROOT / "core").rglob("*.py")]:
         rel = path.relative_to(ROOT).as_posix()
-        if rel.startswith("core/llm/") or rel == "core/api/app.py":
+        if rel.startswith(("core/llm/", "core/brain/")) or rel == "core/api/app.py":
             continue
-        assert not any(n.startswith("core.llm") for n in imports(path)), rel
+        names = imports(path)
+        assert not any(n.startswith("core.llm") for n in names), rel
+        if rel != "core/mailbox/wiring.py":  # the one place the poller's analysis gets the brain
+            assert not any(n.startswith("core.brain") for n in names), rel
 
 
 def test_the_analysis_engines_do_not_import_intelligence() -> None:

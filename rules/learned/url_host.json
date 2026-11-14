@@ -1,0 +1,9 @@
+{
+ "version": "domain-lr-1+lynceus-ai1-p1",
+ "bias": 2.1903,
+ "scale": 0.0002610278633991516,
+ "threshold": 0.9828,
+ "buckets": 262144,
+ "sha256": "6c2529078663a367c6322a2c3704789266c2595e86ffd54ec6f656078d9c1f3b",
+ "trained_on": "E1 train domains (PhiUSIIL, PhishTank and OpenPhish of 2026-11-10, Tranco)"
+}

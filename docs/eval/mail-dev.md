@@ -1,24 +1,24 @@
 # Eval report (mail)
 
-Split `dev`, n=119. Engine `email-1.1.0`, ruleset `1.1.0+9790be320fdd`. 2026-11-05 17:57Z.
+Split `dev`, n=119. Engine `email-1.2.0`, ruleset `1.5.0+83b6cbd37614`. 2026-11-14 20:22Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
 | TP | FP | FN | TN | abstain (malicious / benign) | error (malicious / benign) |
 |---|---|---|---|---|---|
-| 72 | 0 | 2 | 0 | 2 / 45 | 0 / 0 |
+| 73 | 0 | 1 | 0 | 1 / 45 | 0 / 0 |
 
 | Metric | Value | Wilson 95% interval |
 |---|---|---|
-| Precision | 1.000 | 0.949 to 1.000 |
-| Recall (abstentions are misses) | 0.973 | 0.907 to 0.993 |
+| Precision | 1.000 | 0.950 to 1.000 |
+| Recall (abstentions are misses) | 0.986 | 0.927 to 0.998 |
 | Recall (answered only) | 1.000 | |
-| F1 | 0.986 | |
+| F1 | 0.993 | |
 | Flag rate on benign (UNKNOWN is not flagged) | 0.000 | 0.000 to 0.079 |
-| Abstain rate | 0.395 | 0.312 to 0.485 |
+| Abstain rate | 0.387 | 0.304 to 0.476 |
 | Error rate | 0.000 | |
 
-Latency per message (includes starting the sandbox): p50 301.856 ms, p95 949.954 ms, max 1008.885 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per message (includes starting the sandbox): p50 614.581 ms, p95 989.224 ms, max 1161.061 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
@@ -26,6 +26,8 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 
 | Rule | Hits | Malicious | Benign | Precision | Wilson 95% interval |
 |---|---|---|---|---|---|
+| `content.office_macro` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |
+| `content.script_hidden_layers` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
 | `email.archive_attachment` | 17 | 13 | 4 | 0.765 | 0.527 to 0.904 |
 | `email.archive_bomb` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
 | `email.archive_contains_macro` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
@@ -36,7 +38,7 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 | `email.attachment_type_mismatch` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |
 | `email.auth_failure` | 9 | 9 | 0 | 1.000 | 0.701 to 1.000 |
 | `email.dangerous_attachment` | 11 | 11 | 0 | 1.000 | 0.741 to 1.000 |
-| `email.display_name_brand` | 33 | 33 | 0 | 1.000 | 0.896 to 1.000 |
+| `email.display_name_brand` | 31 | 31 | 0 | 1.000 | 0.890 to 1.000 |
 | `email.double_extension` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |
 | `email.hidden_link` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |
 | `email.html_attachment` | 7 | 7 | 0 | 1.000 | 0.646 to 1.000 |
@@ -64,9 +66,10 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 | `url.credential_bait` | 2 | 2 | 0 | 1.000 | 0.342 to 1.000 |
 | `url.dangerous_scheme` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
 | `url.ip_literal` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
+| `url.learned_domain` | 33 | 28 | 5 | 0.848 | 0.691 to 0.933 |
 | `url.login_path` | 14 | 14 | 0 | 1.000 | 0.785 to 1.000 |
 | `url.prefilled_identity` | 11 | 11 | 0 | 1.000 | 0.741 to 1.000 |
 
-Rules with no hits on this split: `email.archive_traversal`, `email.file_inspection_incomplete`, `email.image_bomb`, `email.link_flood`, `email.link_text_mismatch`, `email.meta_refresh`, `email.multiple_from`, `email.parser_limits`, `email.pdf_xfa`, `email.sender.homograph_brand`, `email.sender.mixed_script`, `email.sender.typosquat`, `url.encoded_target`, `url.excessive_length`, `url.homograph_brand`, `url.host_shape`, `url.ip_obfuscated`, `url.mixed_script`, `url.odd_port`, `url.open_redirect`, `url.parser_tricks`, `url.shortener`, `url.typosquat`, `url.userinfo_deception`.
+Rules with no hits on this split: `content.anti_analysis`, `content.credential_access`, `content.credential_prompt`, `content.defense_evasion`, `content.disguised_program`, `content.eicar`, `content.embedded_executable`, `content.equation_editor`, `content.lnk_disguised`, `content.lnk_runs_interpreter`, `content.macro_api_import`, `content.macro_autoexec_reaches_sink`, `content.macro_dynamic_dispatch`, `content.macro_file_drop`, `content.macro_hidden_behavior`, `content.macro_hidden_data_source`, `content.macro_obfuscated`, `content.office_dde`, `content.office_macro_autoexec`, `content.office_remote_template`, `content.ole_object`, `content.pe_injection_or_downloader`, `content.pe_packed`, `content.process_injection`, `content.script_downloader`, `content.script_encoded`, `content.script_evasive_launch`, `content.script_lolbin`, `content.script_persistence`, `content.vba_pcode_only`, `content.vba_stomped`, `content.xlm_hidden`, `content.xlm_macro`, `email.archive_traversal`, `email.file_inspection_incomplete`, `email.image_bomb`, `email.link_flood`, `email.link_text_mismatch`, `email.meta_refresh`, `email.multiple_from`, `email.parser_limits`, `email.pdf_xfa`, `email.sender.homograph_brand`, `email.sender.mixed_script`, `email.sender.typosquat`, `email.svg_active`, `intel.hash_known_bad`, `url.encoded_target`, `url.excessive_length`, `url.homograph_brand`, `url.host_shape`, `url.ip_obfuscated`, `url.mixed_script`, `url.odd_port`, `url.open_redirect`, `url.parser_tricks`, `url.shortener`, `url.typosquat`, `url.userinfo_deception`.
 
 FN counts abstentions and errors on malicious samples (ADR-005). `n/a` means undefined (zero denominator).

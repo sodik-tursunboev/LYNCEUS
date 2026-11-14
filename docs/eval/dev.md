@@ -1,24 +1,24 @@
 # Eval report (url)
 
-Split `dev`, n=150. Engine `1.0.0`, ruleset `1.1.0+33f432fb4220`. 2026-11-10 13:38Z.
+Split `dev`, n=150. Engine `1.0.0`, ruleset `1.2.0+dd2825455277`. 2026-11-14 20:21Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
 | TP | FP | FN | TN | abstain (malicious / benign) | error (malicious / benign) |
 |---|---|---|---|---|---|
-| 84 | 0 | 3 | 16 | 3 / 47 | 0 / 0 |
+| 84 | 1 | 3 | 16 | 3 / 46 | 0 / 0 |
 
 | Metric | Value | Wilson 95% interval |
 |---|---|---|
-| Precision | 1.000 | 0.956 to 1.000 |
+| Precision | 0.988 | 0.936 to 0.998 |
 | Recall (abstentions are misses) | 0.966 | 0.903 to 0.988 |
 | Recall (answered only) | 1.000 | |
-| F1 | 0.982 | |
-| Flag rate on benign (UNKNOWN is not flagged) | 0.000 | 0.000 to 0.057 |
-| Abstain rate | 0.333 | 0.263 to 0.412 |
+| F1 | 0.977 | |
+| Flag rate on benign (UNKNOWN is not flagged) | 0.016 | 0.003 to 0.085 |
+| Abstain rate | 0.327 | 0.257 to 0.405 |
 | Error rate | 0.000 | |
 
-Latency per URL: p50 0.779 ms, p95 1.427 ms, max 19.160 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per URL: p50 1.340 ms, p95 2.895 ms, max 36.664 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
@@ -36,6 +36,7 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 | `url.host_shape` | 2 | 1 | 1 | 0.500 | 0.095 to 0.905 |
 | `url.ip_literal` | 10 | 7 | 3 | 0.700 | 0.397 to 0.892 |
 | `url.ip_obfuscated` | 2 | 2 | 0 | 1.000 | 0.342 to 1.000 |
+| `url.learned_domain` | 29 | 28 | 1 | 0.966 | 0.828 to 0.994 |
 | `url.login_path` | 61 | 59 | 2 | 0.967 | 0.888 to 0.991 |
 | `url.mixed_script` | 9 | 9 | 0 | 1.000 | 0.701 to 1.000 |
 | `url.odd_port` | 3 | 3 | 0 | 1.000 | 0.439 to 1.000 |

@@ -423,3 +423,11 @@ Built after the owner chose "Email quarantine (M6b)" knowing it needs the wider 
 - **Feedback:** one label per verdict (`feedback`, migration 0005), audited, counted per rule; it never changes a weight by itself.
 - **Deeper parsing:** `<style>` hiding (simple selectors, no `@media`), active SVG (`email.svg_active`, a second independent category next to `email.html_attachment`), links in PDF page text.
 - **Detonator 1.1.0:** forms in frames; a phone visit when the desktop visit shows nothing and there is time; `page.cloaked` named with weight 0 until measured.
+
+## ADR-027: Judgment that is not hand-written: a learned domain model and a checked local brain (AI1, 2026-11-14)
+**Status:** Accepted by the owner (`docs/milestones/AI1.md`).
+
+- **A learned domain model** (logistic regression over hashed features of the registered domain only, pure Python, 16-bit weights shipped in `rules/learned/` with their SHA-256) becomes the URL rule `url.learned_domain` in its own category `learned` (cap 0.5): alone it warns, never MALICIOUS. It skips official and popular domains. In mail, `link.learned` is capped at 0.3. It reads no subdomain and no path: E1's legitimate URLs are bare domains, and the first version, which read subdomains, flagged 28% of the owner's browsing.
+- **A local brain** (Ollama on this computer, `gemma3:4b` for text and images) reads opened pages (text, own code, screenshot) and messages, and answers closed forms with quotes. Code checks every claim (the quote is in the source, the endpoint was seen, the brand does not own the domain, the page really asks for credentials); only checked findings become signals, in category `brain` (cap 0.7): alone SUSPICIOUS at most, with one independent rule category MALICIOUS (owner's decision). Never lowers; never repeats a rule that already fired on the same evidence; the model's free text is never stored.
+- **Off by default** (`LYNCEUS_BRAIN=false`) and measured only after the study's rewrite run, which shares the graphics card. The vision model gets only the sandbox's re-encoded screenshot.
+- **CLAUDE.md rule 1 still holds in spirit:** no unchecked model output decides anything; the learned model is validated by a measurement on unseen domains before it counts.

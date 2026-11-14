@@ -480,8 +480,12 @@ def test_every_signal_carries_evidence_and_a_valid_tag(rule_id: str) -> None:
 
 
 def test_every_rule_has_a_weight_and_every_weight_a_rule() -> None:
+    from core.brain.signals import ATTACK as BRAIN_FINDINGS
+
     weights = scoring()["weights"]
-    assert set(weights) == {r.id for r in RULES}
+    brain = {k for k in weights if k.startswith("brain.")}  # AI1: findings of the checked brain
+    assert set(weights) - brain == {r.id for r in RULES}
+    assert brain <= set(BRAIN_FINDINGS) and "brain" in scoring()["category_caps"]
     assert all(0 < w <= 1 for w in weights.values())
 
 

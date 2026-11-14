@@ -267,8 +267,8 @@ def test_every_reference_in_a_verdict_resolves() -> None:
     assert all(set(s.evidence_ids) <= ids for s in r.verdict.signals)
     assert r.verdict.engine_version == ENGINE_VERSION
     assert r.verdict.ruleset_version.startswith(
-        "1.4.0+"
-    )  # 1.4.0: active SVG images (H1 C2); 1.3.0 read macros as programs (ADR-023)
+        "1.5.0+"
+    )  # 1.5.0: the brain category (AI1); 1.4.0 active SVG (H1 C2); 1.3.0 macros (ADR-023)
 
 
 def test_what_storage_gets_is_hashes_and_hosts() -> None:

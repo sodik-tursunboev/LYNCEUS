@@ -64,17 +64,19 @@ class OllamaClient:
             raise LocalModelError("unexpected reply")
         return [str(m.get("name")) for m in listed if isinstance(m, dict) and m.get("name")]
 
-    async def generate(self, system: str, prompt: str, schema: dict[str, Any]) -> str:
-        """One answer, constrained to `schema`. Deterministic settings (temperature 0, a seed)."""
-        got = await self._call(
-            "POST",
-            "/api/generate",
-            {
-                "model": self.model, "system": system, "prompt": prompt, "stream": False,
-                "format": schema, "keep_alive": "10m",
-                "options": {"temperature": 0, "seed": 7, "num_ctx": 8192, "num_predict": 400},
-            },
-        )  # fmt: skip
+    async def generate(
+        self, system: str, prompt: str, schema: dict[str, Any], images: list[str] | None = None
+    ) -> str:
+        """One answer, constrained to `schema`. Deterministic settings (temperature 0, a seed).
+        `images` are base64 pictures for a vision model (AI1 P3), sent to this computer only."""
+        body: dict[str, Any] = {
+            "model": self.model, "system": system, "prompt": prompt, "stream": False,
+            "format": schema, "keep_alive": "10m",
+            "options": {"temperature": 0, "seed": 7, "num_ctx": 8192, "num_predict": 400},
+        }  # fmt: skip
+        if images:
+            body["images"] = images
+        got = await self._call("POST", "/api/generate", body)
         text = got.get("response")
         if not isinstance(text, str):
             raise LocalModelError("unexpected reply")

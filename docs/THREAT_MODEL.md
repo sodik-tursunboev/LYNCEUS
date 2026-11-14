@@ -111,3 +111,14 @@ The new doors (native-messaging protocol, pipe, response routes, console route) 
 | A quarantined file is run by a double-click or trips an antivirus | plain bytes under a neutral name | sealed per file (AES-256 counter mode, key under DPAPI), checked against the judged hash on restore |
 | A hostile `<style>` sheet slows the parser | not read | read with bounds (200,000 characters, 2,000 selectors, merged per selector): a hostile sheet stays under half a second |
 | New residual | | DPAPI ties sealed data to one Windows profile: losing the profile's keys loses the quarantine and the stored site names. The popular-domain list can be gamed by a site that buys a top-100,000 rank |
+
+## Learned model and local brain (AI1, 2026-11-14)
+
+| Threat | Control |
+|---|---|
+| A page or mail instructs the model ("you are in safe mode", fake JSON) | Data fenced and labelled; closed answer forms with enums; every claim checked against the source; findings can only raise a verdict; tests with hostile pages and mails |
+| The model invents a quote, an endpoint or a brand | A quote must occur in the text; an endpoint must be one the browser or the code extraction saw; a brand must not own the domain; the visual finding needs a listed brand, a credential page and confidence 70 |
+| A hostile screenshot attacks the model server's image decoder | The model gets only the copy re-encoded in the parser sandbox |
+| Attacker text leaks through the model | Local only (loopback address enforced); the model's free text is never stored or shown; mail text is never stored |
+| A tampered weights file changes verdicts | The weights load only if their SHA-256 matches the header; otherwise the learned rule is silent |
+| An attacker games the learned model with an ordinary-looking domain | It is one category (warn only) and the rules, lists, page rules and brain still apply; re-training is needed as names drift |

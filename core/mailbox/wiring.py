@@ -92,7 +92,7 @@ def build_mailbox(
     )
     source = TokenSource(http, settings.gmail_client_id, secret, tokens.load)
     links = link_analyzer(intel) if intel is not None else None
-    analyze: Callable[[bytes], EmailAnalysis] = partial(analyze_message, link_analyzer=links)
+    analyze = _with_brain(partial(analyze_message, link_analyzer=links), settings)
 
     def store(a: EmailAnalysis) -> None:
         if db is not None:
@@ -127,7 +127,7 @@ def build_outlook(
         store=tokens.save,
     )  # fmt: skip
     links = link_analyzer(intel) if intel is not None else None
-    analyze: Callable[[bytes], EmailAnalysis] = partial(analyze_message, link_analyzer=links)
+    analyze = _with_brain(partial(analyze_message, link_analyzer=links), settings)
 
     def store(a: EmailAnalysis) -> None:
         if db is not None:
@@ -139,6 +139,18 @@ def build_outlook(
         on_malicious=proposer("outlook", write_tokens, db), write_tokens=write_tokens,
         write_source=write_source(settings, "outlook", write_tokens),
     )  # fmt: skip
+
+
+def _with_brain(
+    analyze: Callable[[bytes], EmailAnalysis], settings: Settings
+) -> Callable[[bytes], EmailAnalysis]:
+    """The poller's analysis plus the brain's checked findings, when LYNCEUS_BRAIN is on (P5)."""
+    if not settings.brain:
+        return analyze
+    from core.brain.run import mail_in_thread
+
+    think = mail_in_thread(settings)
+    return lambda raw: think(analyze(raw), raw)
 
 
 def build_mailboxes(

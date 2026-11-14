@@ -40,4 +40,5 @@ def test_a_storage_failure_still_returns_the_verdict(tmp_path: Path) -> None:
         "/v1/urls/analyze", json={"url": "https://paypal-login.test/"}, headers=AUTH
     )
     assert r.status_code == 200
-    assert r.json()["persisted"] is False and r.json()["verdict"]["state"] == "SUSPICIOUS"
+    # MALICIOUS since AI1: combosquat plus the learned domain model are two independent categories
+    assert r.json()["persisted"] is False and r.json()["verdict"]["state"] == "MALICIOUS"

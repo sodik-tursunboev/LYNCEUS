@@ -19,7 +19,7 @@ jobs:
       # so CI never runs it and cannot use the Windows-pinned wheels. Unpinned on purpose; unverified.
       - run: pip install pikepdf pillow opencv-python-headless numpy
       - name: Secret scan (same task as the local pre-commit hook)
-        run: git ls-files | grep -Ev '^(docs/schemas|docs/eval|tests/data)/' | xargs python tasks.py secrets
+        run: python tasks.py scan-all  # every tracked file, the hook's own skip list
       - name: Lint and type check
         run: python tasks.py lint
       - name: Tests

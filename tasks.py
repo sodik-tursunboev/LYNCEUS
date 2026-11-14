@@ -86,6 +86,7 @@ _SCAN_SKIP = (  # generated; third-party test vectors; file hashes that look lik
     "corpus/mail/manifest.jsonl",  # the .eml files themselves stay scanned
     "corpus/mail/pins.txt",
     "pylock.toml",  # sha256 of every locked wheel (H1 A5)
+    "rules/learned/url_host.json",  # the sha256 of the shipped model weights (AI1 P1)
 )
 
 
@@ -120,9 +121,23 @@ def precommit() -> int:
     return run("secrets", files) if files else 0
 
 
+def scan_all() -> int:
+    """Secret-scan every tracked file, with the same skips as the hook (CI uses this)."""
+    tracked = subprocess.run(
+        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout.splitlines()
+    files = [f for f in tracked if not f.startswith(_SCAN_SKIP)]
+    rc = 0
+    for i in range(0, len(files), 200):  # Windows caps a command line at 32,767 characters
+        rc = rc or run("secrets", files[i : i + 200])
+    return rc
+
+
 def main(argv: list[str]) -> int:
     if argv[:1] == ["precommit"]:
         return precommit()
+    if argv[:1] == ["scan-all"]:
+        return scan_all()
     if not argv or argv[0] not in TASKS:
         print(f"usage: python tasks.py <{'|'.join(TASKS)}|precommit> [extra args]", file=sys.stderr)
         return 2

@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.4.0"
+version = "1.5.0"
 
 [thresholds]
 suspicious = 45
@@ -43,6 +43,15 @@ content = 0.3
 "link.scheme" = 0.8
 "link.structure" = 0.4
 "link.obfuscation" = 0.4
+"link.learned" = 0.3  # AI1 P1: the learned domain model on a link. Lower than in the browser:
+# a message carries dozens of links to mail-tracking domains (often digits next to "mail"), and at
+# 0.5 (and 0.35, by a hair) it flagged 5 of 45 synthetic newsletters with image-only links; at 0.3
+# it needs a second real sign. Provisional until H1 B2 measures
+# it on real mail.
+# AI1: checked findings of the local model, one category (owner's decision): alone it reaches
+# SUSPICIOUS at most (0.7 < the MALICIOUS line); with one independent strong rule category beside
+# it, MALICIOUS. Weights are provisional until measured (synthetic corpus now, your mail later).
+brain = 0.7
 
 [weights]
 "email.multiple_from" = 0.6
@@ -89,6 +98,8 @@ content = 0.3
 "email.image_bomb" = 0.3
 "email.html_smuggling" = 0.6
 "email.svg_active" = 0.6  # H1 C2: an SVG that runs script, holds a form or carries a page
+"brain.mail_intent" = 0.55  # provisional (AI1 P5)
+"brain.mail_impersonation" = 0.5  # provisional (AI1 P5)
 "email.file_inspection_incomplete" = 0.3
 # What is inside a file (rules/email/deep.py)
 "intel.hash_known_bad" = 0.99
