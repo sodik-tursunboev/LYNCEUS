@@ -370,3 +370,121 @@ def test_html_depth_is_capped() -> None:
 def test_unclosed_and_broken_markup_does_not_raise() -> None:
     html_scan('<a href="https://x.test/><b><<<>>> &#xZZ; <p <p <a href=')
     html_scan("<a href='https://x.test/'>no end tag")
+
+
+# ---- H1 C1: hiding through <style> blocks -------------------------------------------------------
+
+
+def flags_of(html: str) -> dict[str, list[str]]:
+    return {str(link["url"]): list(link["flags"]) for link in html_scan(html).links}
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        ".x { display: none }",
+        ".x{visibility:hidden}",
+        "a.x { font-size: 0 }",
+        "#x { opacity: 0 }",
+        ".x { position: absolute; left: -9999px }",
+        "div { display:none }",
+        "/* a comment */ .y, .x { display: none !important }",
+        "@import url(theme.css); .x { display: none }",
+    ],
+)
+def test_a_link_hidden_by_a_style_block_is_hidden(rule: str) -> None:
+    html = (f"<style>{rule}</style><div class='x' id='x'><a class='x' id='x' "
+            "href='https://evil.example/'>pay</a></div>"
+            "<a href='https://ok.example/'>ok</a>")  # fmt: skip
+    found = flags_of(html)
+    assert (
+        "hidden" in found["https://evil.example/"] and "hidden" not in found["https://ok.example/"]
+    )
+
+
+@pytest.mark.parametrize(
+    "css",
+    [
+        # a responsive mail: hidden on desktop, shown on phones by a media query
+        ".mobile { display:none } @media only screen and (max-width:600px) "
+        "{ .mobile { display:block !important } }",
+        # rules inside @media never apply
+        "@media print { .mobile { display:none } }",
+        # selectors this scanner does not evaluate are left alone, never guessed
+        "div > .mobile { display:none } .wrap .mobile { display:none } "
+        "[class=mobile] { display:none }",
+        # shown, not hidden
+        ".mobile { color: red; display: block }",
+    ],
+)
+def test_responsive_and_complex_css_is_not_called_hiding(css: str) -> None:
+    html = f"<style>{css}</style><a class='mobile' href='https://shop.example/'>menu</a>"
+    assert "hidden" not in flags_of(html)["https://shop.example/"]
+
+
+def test_inline_style_wins_over_the_style_block() -> None:
+    html = "<style>.x{display:none}</style><a class='x' style='display:block' href='https://a.example/'>a</a>"
+    assert "hidden" not in flags_of(html)["https://a.example/"]
+
+
+def test_an_id_rule_outranks_a_class_rule() -> None:
+    html = ("<style>#k{display:block} .x{display:none}</style>"
+            "<a class='x' id='k' href='https://a.example/'>a</a>")  # fmt: skip
+    assert "hidden" not in flags_of(html)["https://a.example/"]
+
+
+def test_hidden_text_from_a_style_block_stays_out_of_the_excerpt() -> None:
+    budget = html_scan(
+        "<style>.p{display:none}</style><p class='p'>SECRET urgent</p><p>visible</p>"
+    )
+    assert "visible" in " ".join(budget.excerpt) and "SECRET" not in " ".join(budget.excerpt)
+
+
+def test_a_huge_or_hostile_style_block_is_bounded_and_never_raises() -> None:
+    hostile = "{" * 50_000 + "}" * 10 + ".x{display:none}" * 10_000 + "@media{" * 1_000
+    budget = html_scan(f"<style>{hostile}</style><a class='x' href='https://a.example/'>a</a>")
+    assert budget.links  # parsed, bounded, no exception
+
+
+# ---- H1 C2: what an SVG image can do -----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("svg", "feature"),
+    [
+        ('<svg><script>fetch("x")</script></svg>', "script"),
+        ('<svg onload="go()"><rect/></svg>', "event_handler"),
+        ("<svg><rect onclick=steal()></rect></svg>", "event_handler"),
+        ("<svg><foreignObject><div>page</div></foreignObject></svg>", "foreign_object"),
+        (
+            '<svg><foreignObject><form action="https://x.test"><input name=p></form>'
+            "</foreignObject></svg>",
+            "embedded_form",
+        ),
+        ('<svg><a xlink:href="javascript:alert(1)">x</a></svg>', "javascript_link"),
+        ('<svg><a href="&#106;avascript:alert(1)">x</a></svg>', "javascript_link"),
+        ('<svg><a href="data:text/html;base64,PGgxPg==">x</a></svg>', "data_html_link"),
+    ],
+)
+def test_active_svg_content_is_named(svg: str, feature: str) -> None:
+    assert feature in htmlscan.svg_active(svg)
+
+
+@pytest.mark.parametrize(
+    "svg",
+    [
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24"><path d="M0 0h24v24H0z"/></svg>',
+        '<svg><a href="https://brand.example/">logo</a><text>onboarding = 1</text></svg>',
+        '<svg><style>.a{fill:red}</style><image href="data:image/png;base64,iVBOR"/></svg>',
+    ],
+)
+def test_a_plain_picture_is_not_active(svg: str) -> None:
+    assert htmlscan.svg_active(svg) == []
+
+
+def test_an_svg_attachment_reports_what_it_can_do() -> None:
+    raw = eml(
+        attachments=[("a.svg", b"<svg onload='x()'><script>y()</script></svg>", "image/svg+xml")]
+    )
+    part = next(p for p in parsed(raw).parts if p.magic == "svg")
+    assert set(part.active) == {"script", "event_handler"}

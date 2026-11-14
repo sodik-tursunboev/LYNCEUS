@@ -22,7 +22,7 @@ TASKS: dict[str, list[list[str]]] = {
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
     "sandbox": [[PY, "-m", "core.sandbox.build"]],  # build .sandbox/ (Windows)
     # the page detonator's image (D1); needs Docker and the pinned Playwright base image
-    "detonator": [["docker", "build", "-t", "lynceus-detonator:1.0.0", "infra/detonator"]],
+    "detonator": [["docker", "build", "-t", "lynceus-detonator:1.1.0", "infra/detonator"]],
     "serve": [
         [
             PY,
@@ -48,8 +48,10 @@ TASKS: dict[str, list[list[str]]] = {
             "sys.exit(main(['--baseline', '.secrets.baseline', *sys.argv[1:]]))",
         ]
     ],
-    "deps": [  # a fresh clone: dev tools, then the parser libraries (checked against hashes)
-        [PY, "-m", "pip", "install", "-r", "requirements-dev.txt"],
+    # a fresh clone: everything from the hash-locked pylock.toml (H1 A5: the same bytes on every
+    # machine), then the parser libraries (also checked against hashes)
+    "deps": [
+        [PY, "-m", "pip", "install", "--only-binary=:all:", "-r", "pylock.toml"],
         [
             PY,
             "-m",
@@ -61,6 +63,20 @@ TASKS: dict[str, list[list[str]]] = {
             "requirements-sandbox.txt",
         ],
     ],  # fmt: skip
+    # after changing requirements*.txt: re-resolve and re-hash, then review the diff of pylock.toml
+    "lock": [
+        [
+            PY,
+            "-m",
+            "pip",
+            "lock",
+            "-r",
+            "requirements-dev.txt",
+            "--only-binary=:all:",
+            "-o",
+            "pylock.toml",
+        ],
+    ],  # fmt: skip
     "hooks": [["git", "config", "core.hooksPath", ".githooks"]],  # once per clone
 }
 _SCAN_SKIP = (  # generated; third-party test vectors; file hashes that look like high-entropy keys
@@ -69,6 +85,7 @@ _SCAN_SKIP = (  # generated; third-party test vectors; file hashes that look lik
     "tests/data/",
     "corpus/mail/manifest.jsonl",  # the .eml files themselves stay scanned
     "corpus/mail/pins.txt",
+    "pylock.toml",  # sha256 of every locked wheel (H1 A5)
 )
 
 

@@ -146,13 +146,62 @@ def _error_code(e: Exception) -> str:
     return "timeout" if "Timeout" in type(e).__name__ or "Timeout" in str(e)[:200] else "navigation"
 
 
+DESKTOP: dict[str, Any] = {"viewport": VIEWPORT}
+PHONE: dict[str, Any] = {
+    "viewport": {"width": 390, "height": 844}, "is_mobile": True, "has_touch": True,
+    "device_scale_factor": 3,
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 "
+                  "(KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+}  # fmt: skip
+PHONE_NAV_MS = 8_000
+PHONE_SETTLE_MS = 3_000
+RETRY_BEFORE_S = 9  # a phone visit only if the first ended this early: both fit the watchdog
+_GATE_TITLES = ("just a moment", "attention required", "verify you are human", "checking your browser")
+
+# Forms inside frames (H1 C5), read in each frame's own document, the same way as the page's.
+FRAME_FORMS = r"""() => {
+  const cap = (s, n) => String(s || "").slice(0, n);
+  const abs = (u) => { try { return new URL(u, document.baseURI).href; } catch (e) { return ""; } };
+  const field = (e) => ({
+    type: cap((e.type || e.tagName || "").toLowerCase(), 20),
+    hint: cap([e.name, e.id, e.placeholder, e.autocomplete, e.getAttribute && e.getAttribute("aria-label")]
+      .filter(Boolean).join(" ").toLowerCase(), 120),
+  });
+  return [...document.forms].slice(0, 5).map((f) => ({
+    action: cap(abs(f.getAttribute("action") || document.URL), 2048),
+    method: cap((f.getAttribute("method") || "get").toLowerCase(), 10),
+    fields: [...f.elements].slice(0, 50).filter((e) => e.tagName === "INPUT" || e.tagName === "SELECT"
+      || e.tagName === "TEXTAREA").map(field),
+  }));
+}"""
+
+
+def showed_nothing(r: dict[str, Any]) -> bool:
+    """The desktop visit got a refusal, a blank page or a bot check: nothing to judge."""
+    if r["status"] in ("dead", "error") or (r.get("http_status") or 0) in (401, 403, 429, 503):
+        return True
+    if str(r.get("title", "")).strip().lower().startswith(_GATE_TITLES):
+        return True
+    return not str(r.get("text", "")).strip() and not r.get("forms")
+
+
+def shows_something(r: dict[str, Any]) -> bool:
+    return (
+        r["status"] in ("ok", "partial") and (r.get("http_status") or 0) < 400
+        and bool(str(r.get("text", "")).strip() or r.get("forms"))
+        and not str(r.get("title", "")).strip().lower().startswith(_GATE_TITLES)
+    )  # fmt: skip
+
+
+def _status_of(r: dict[str, Any]) -> str:
+    return f"http_{r['http_status']}" if r.get("http_status") else str(r["status"])
+
+
 def run(url: str, proxy: str | None) -> dict[str, Any]:
-    """`proxy` is the egress proxy; None only in the offline tests, whose container has no network."""
+    """`proxy` is the egress proxy; None only in the offline tests, whose container has no network.
+    One desktop visit; if it showed nothing and there is time, one more as a phone (H1 C5): some
+    kits show scanners and desktops a refusal and phones the page."""
     started = time.monotonic()
-    result: dict[str, Any] = {"status": "ok", "error": None, "chain": [], "hosts": [],
-                              "downloads": [], "popups": 0, "dialogs": 0}  # fmt: skip
-    responses: list[Response] = []
-    last_main: list[Response] = []
     with sync_playwright() as p:
         args = [
             "--disable-quic",
@@ -166,127 +215,146 @@ def run(url: str, proxy: str | None) -> dict[str, Any]:
             proxy={"server": proxy} if proxy else None,
             args=args,
         )
-        major = browser.version.split(".")[0]
-        context = browser.new_context(
-            viewport=VIEWPORT,
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                f"Chrome/{major}.0.0.0 Safari/537.36"
-            ),  # the headless marker in the default one makes phishing kits show a blank page
-            locale="en-US",
-            accept_downloads=False,
-            service_workers="block",
-            permissions=[],
-            java_script_enabled=True,
-        )
-        page = context.new_page()
-        hosts: list[str] = result["hosts"]
-
-        def on_request(req: Any) -> None:
-            h = _host(req.url)
-            if h and h not in hosts and len(hosts) < MAX_HOSTS:
-                hosts.append(h)
-
-        def on_response(r: Response) -> None:
-            if r.request.resource_type == "script" and len(responses) < MAX_SCRIPTS:
-                responses.append(r)
-            if r.request.is_navigation_request() and r.frame == page.main_frame:
-                last_main[:] = [r]
-
-        def on_nav(frame: Any) -> None:
-            if frame == page.main_frame and len(result["chain"]) < MAX_CHAIN:
-                result["chain"].append(frame.url[:2048])
-
-        def on_download(d: Any) -> None:
-            name = (d.suggested_filename or "")[-100:]
-            ext = name.rsplit(".", 1)[-1].lower()[:10] if "." in name else ""
-            scheme = (urlsplit(d.url).scheme or "")[:10]
-            if len(result["downloads"]) < 10:
-                result["downloads"].append({"ext": ext, "scheme": scheme})
-            try:
-                d.cancel()
-            except PlaywrightError:
-                pass
-
-        def on_popup(other: Any) -> None:
-            result["popups"] += 1
-            try:
-                other.close()
-            except PlaywrightError:
-                pass
-
-        def on_dialog(dialog: Any) -> None:
-            result["dialogs"] += 1
-            try:
-                dialog.dismiss()
-            except PlaywrightError:
-                pass
-
-        context.on("request", on_request)
-        page.on("response", on_response)
-        page.on("framenavigated", on_nav)
-        page.on("download", on_download)
-        page.on("popup", on_popup)
-        page.on("dialog", on_dialog)
-
-        first = None
-        try:
-            first = page.goto(url, wait_until="load", timeout=NAV_TIMEOUT_MS)
-        except PlaywrightError as e:
-            result["error"] = _error_code(e)
-            result["status"] = "partial" if result["error"] == "timeout" else "dead"
-        if result["status"] != "dead":
-            try:
-                page.wait_for_load_state("networkidle", timeout=SETTLE_MS)
-            except PlaywrightError:
-                pass  # busy pages never go idle; what has loaded is enough
-        main = last_main[0] if last_main else first
-        result["http_status"] = main.status if main is not None else None
-        result["final_url"] = page.url[:2048]
-        if result["status"] != "dead" or page.url.startswith(("http://", "https://")):
-            try:
-                seen = page.evaluate(COLLECT)
-            except PlaywrightError:
-                seen = None
-            if seen:
-                inline = seen.pop("inline", "")
-                html_events = seen.pop("html_events", "")
-                own_host = _host(page.url)
-                own, other = [], []
-                for r in responses:
-                    try:
-                        body = r.body()[:MAX_SCRIPT_BYTES].decode("utf-8", "replace")
-                    except PlaywrightError:
-                        continue
-                    (own if _host(r.url) == own_host else other).append(body)
-                result.update(seen)
-                result["markers"] = markers(inline, own, html_events)
-                result["script_refs"] = refs([inline, *own, *other])
-                result["script_hosts"] = sorted({_host(r.url) for r in responses} - {""})[:50]
-            try:
-                details = main.security_details() if main is not None else None
-            except PlaywrightError:
-                details = None
-            if details:
-                result["tls"] = {
-                    "valid_from": int(details.get("validFrom") or 0),
-                    "valid_to": int(details.get("validTo") or 0),
-                    "issuer": str(details.get("issuer") or "")[:200],
-                }
-            try:
-                shot = page.screenshot(type="jpeg", quality=55, timeout=5000)
-                if len(shot) > MAX_SCREENSHOT:
-                    shot = page.screenshot(type="jpeg", quality=30, timeout=5000)
-                if len(shot) <= MAX_SCREENSHOT:
-                    result["screenshot"] = base64.b64encode(shot).decode("ascii")
-            except PlaywrightError:
-                pass
+        result = _visit(browser, url, DESKTOP, NAV_TIMEOUT_MS, SETTLE_MS)
+        if showed_nothing(result) and time.monotonic() - started < RETRY_BEFORE_S:
+            phone = _visit(browser, url, PHONE, PHONE_NAV_MS, PHONE_SETTLE_MS)
+            if shows_something(phone):
+                phone.update(phone_view=True, desktop_status=_status_of(result))
+                result = phone
         result["browser"] = browser.version[:40]
-        context.close()
         browser.close()
     result["elapsed_ms"] = int((time.monotonic() - started) * 1000)
     return result
 
+
+def _visit(browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_ms: int) -> dict[str, Any]:
+    """One visit in a fresh context: what the page showed, read without typing or clicking."""
+    result: dict[str, Any] = {"status": "ok", "error": None, "chain": [], "hosts": [],
+                              "downloads": [], "popups": 0, "dialogs": 0}  # fmt: skip
+    responses: list[Response] = []
+    last_main: list[Response] = []
+    major = browser.version.split(".")[0]
+    options: dict[str, Any] = {
+        # the headless marker in the default user agent makes phishing kits show a blank page
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      f"(KHTML, like Gecko) Chrome/{major}.0.0.0 Safari/537.36",
+        "locale": "en-US", "accept_downloads": False, "service_workers": "block",
+        "permissions": [], "java_script_enabled": True,
+    }  # fmt: skip
+    context = browser.new_context(**{**options, **profile})  # a phone replaces viewport and agent
+    page = context.new_page()
+    hosts: list[str] = result["hosts"]
+
+    def on_request(req: Any) -> None:
+        h = _host(req.url)
+        if h and h not in hosts and len(hosts) < MAX_HOSTS:
+            hosts.append(h)
+
+    def on_response(r: Response) -> None:
+        if r.request.resource_type == "script" and len(responses) < MAX_SCRIPTS:
+            responses.append(r)
+        if r.request.is_navigation_request() and r.frame == page.main_frame:
+            last_main[:] = [r]
+
+    def on_nav(frame: Any) -> None:
+        if frame == page.main_frame and len(result["chain"]) < MAX_CHAIN:
+            result["chain"].append(frame.url[:2048])
+
+    def on_download(d: Any) -> None:
+        name = (d.suggested_filename or "")[-100:]
+        ext = name.rsplit(".", 1)[-1].lower()[:10] if "." in name else ""
+        scheme = (urlsplit(d.url).scheme or "")[:10]
+        if len(result["downloads"]) < 10:
+            result["downloads"].append({"ext": ext, "scheme": scheme})
+        try:
+            d.cancel()
+        except PlaywrightError:
+            pass
+
+    def on_popup(other: Any) -> None:
+        result["popups"] += 1
+        try:
+            other.close()
+        except PlaywrightError:
+            pass
+
+    def on_dialog(dialog: Any) -> None:
+        result["dialogs"] += 1
+        try:
+            dialog.dismiss()
+        except PlaywrightError:
+            pass
+
+    context.on("request", on_request)
+    page.on("response", on_response)
+    page.on("framenavigated", on_nav)
+    page.on("download", on_download)
+    page.on("popup", on_popup)
+    page.on("dialog", on_dialog)
+
+    first = None
+    try:
+        first = page.goto(url, wait_until="load", timeout=nav_ms)
+    except PlaywrightError as e:
+        result["error"] = _error_code(e)
+        result["status"] = "partial" if result["error"] == "timeout" else "dead"
+    if result["status"] != "dead":
+        try:
+            page.wait_for_load_state("networkidle", timeout=settle_ms)
+        except PlaywrightError:
+            pass  # busy pages never go idle; what has loaded is enough
+    main = last_main[0] if last_main else first
+    result["http_status"] = main.status if main is not None else None
+    result["final_url"] = page.url[:2048]
+    if result["status"] != "dead" or page.url.startswith(("http://", "https://")):
+        try:
+            seen = page.evaluate(COLLECT)
+        except PlaywrightError:
+            seen = None
+        if seen:
+            inline = seen.pop("inline", "")
+            html_events = seen.pop("html_events", "")
+            for frame in page.frames[1:11]:  # forms inside frames, from any site (H1 C5)
+                if len(seen["forms"]) >= 20:
+                    break
+                try:
+                    framed = frame.evaluate(FRAME_FORMS)
+                except PlaywrightError:
+                    continue  # a frame that went away or never loaded
+                for f in framed[: 20 - len(seen["forms"])]:
+                    seen["forms"].append({**f, "frame": True})
+            own_host = _host(page.url)
+            own, other = [], []
+            for r in responses:
+                try:
+                    body = r.body()[:MAX_SCRIPT_BYTES].decode("utf-8", "replace")
+                except PlaywrightError:
+                    continue
+                (own if _host(r.url) == own_host else other).append(body)
+            result.update(seen)
+            result["markers"] = markers(inline, own, html_events)
+            result["script_refs"] = refs([inline, *own, *other])
+            result["script_hosts"] = sorted({_host(r.url) for r in responses} - {""})[:50]
+        try:
+            details = main.security_details() if main is not None else None
+        except PlaywrightError:
+            details = None
+        if details:
+            result["tls"] = {
+                "valid_from": int(details.get("validFrom") or 0),
+                "valid_to": int(details.get("validTo") or 0),
+                "issuer": str(details.get("issuer") or "")[:200],
+            }
+        try:
+            shot = page.screenshot(type="jpeg", quality=55, timeout=5000)
+            if len(shot) > MAX_SCREENSHOT:
+                shot = page.screenshot(type="jpeg", quality=30, timeout=5000)
+            if len(shot) <= MAX_SCREENSHOT:
+                result["screenshot"] = base64.b64encode(shot).decode("ascii")
+        except PlaywrightError:
+            pass
+    context.close()
+    return result
 
 def main() -> int:
     timer = threading.Timer(WATCHDOG_SECONDS, _watchdog)

@@ -215,10 +215,12 @@ def scan(raw: bytes) -> dict[str, Any]:
             data = b""
         magic = detect_magic(data)
 
+        active: list[str] = []
         if ctype in _HTML_TYPES or magic in ("html", "svg"):
-            htmlscan.scan_html(
-                _text(data, node.get_content_charset())[:MAX_HTML_CHARS], path, budget
-            )
+            page = _text(data, node.get_content_charset())[:MAX_HTML_CHARS]
+            htmlscan.scan_html(page, path, budget)
+            if magic == "svg" or ctype == "image/svg+xml":
+                active = htmlscan.svg_active(page)  # H1 C2
         elif ctype == "text/plain":
             text = _text(data, node.get_content_charset())
             urls, cut = textscan.find_urls(text, 200, MAX_LINK_URL)
@@ -240,6 +242,7 @@ def scan(raw: bytes) -> dict[str, Any]:
                 "magic": magic,
                 "attachment": attachment,
                 "flags": flags,
+                "active": active,
             }
         )
     headers = _message_headers(msg, hit)  # before limits_hit: it can add "headers" to it

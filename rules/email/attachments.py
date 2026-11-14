@@ -134,6 +134,23 @@ def html_attachment(ctx: Ctx) -> str | None:
     )
 
 
+_ACTIVE_WORDS = {
+    "script": "runs script", "event_handler": "reacts to events with script",
+    "foreign_object": "carries a web page inside", "embedded_form": "holds a form",
+    "javascript_link": "links to script", "data_html_link": "links to a page carried inside it",
+}  # fmt: skip
+
+
+@rule("email.svg_active", "active_content", HTML_SMUGGLING)
+def svg_active(ctx: Ctx) -> str | None:
+    """An SVG image that can act when opened (H1 C2): a picture needs no script, events or forms."""
+    hits = [p for p in ctx.scan.parts if p.active]  # attached or inline: both open in a browser
+    if not hits:
+        return None
+    what = sorted({_ACTIVE_WORDS[a] for p in hits for a in p.active})
+    return f"{len(hits)} SVG image(s) that {', '.join(what)}: it acts like a web page when opened"
+
+
 @rule("email.archive_attachment", "attachment", ATTACHMENT)
 def archive_attachment(ctx: Ctx) -> str | None:
     archives = ext_list("archive_extensions")

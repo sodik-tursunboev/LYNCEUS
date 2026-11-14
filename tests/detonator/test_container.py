@@ -108,3 +108,22 @@ def test_a_public_page_opens_through_the_proxy() -> None:
     assert r.status == "ok", r.error
     assert "Example Domain" in r.title
     assert r.tls is not None and r.tls.valid_to > r.tls.valid_from
+
+
+def test_a_password_form_inside_a_frame_is_read_and_judged() -> None:
+    """H1 C5: a frame's own form is collected (marked as framed) and the rules see it."""
+    r, err = offline("framed_login.html")
+    assert r.status == "ok", err[-800:]
+    framed = [f for f in r.forms if f.frame]
+    assert framed and framed[0].action == "http://203.0.113.9/collect.php"
+    assert any(f.type == "password" for f in framed[0].fields)
+    assert {"page.brand_credential", "page.form_offsite"} <= _rules(
+        "https://secure-check.example/", "framed_login.html"
+    )
+
+
+def test_a_page_refused_to_a_desktop_is_opened_as_a_phone() -> None:
+    """H1 C5: a 403 to the desktop visit, the page to a phone: the phone's view is judged."""
+    r, err = offline("cloak.html")
+    assert r.phone_view and r.desktop_status == "http_403", err[-800:]
+    assert r.title == "Sign in to your Microsoft account" and r.forms

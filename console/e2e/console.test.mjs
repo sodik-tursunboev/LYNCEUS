@@ -115,10 +115,16 @@ describe("a malicious file waits for your decision, is quarantined on approval, 
     expect((await actions("PENDING")).length).toBe(1);
   });
 
-  it("opens signed in, removes the token from the address and shows the waiting file", async () => {
-    await world.page.goto(`http://127.0.0.1:${world.corePort}/console/#token=${TOKEN}`);
+  it("opens signed in with a one-time code, removes it from the address and shows the waiting file", async () => {
+    const { code } = await (await core("/v1/console/code", { method: "POST" })).json();
+    await world.page.goto(`http://127.0.0.1:${world.corePort}/console/#code=${code}`);
     await world.page.waitForSelector("nav");
     expect(world.page.url()).toBe(`http://127.0.0.1:${world.corePort}/console/`);
+    const session = await world.page.evaluate(() => window.sessionStorage.getItem("lynceus.token"));
+    expect(session).toBeTruthy();
+    expect(session).not.toBe(TOKEN); // the console holds its own session, never the API token
+    const again = await fetch(`http://127.0.0.1:${world.corePort}/v1/console/session`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }) });
+    expect(again.status).toBe(401); // the code in the history is already spent
     await go("#/actions");
     await waitText("Waiting for your decision (1)");
     expect(await bodyText()).toContain("MALICIOUS");
@@ -133,8 +139,14 @@ describe("a malicious file waits for your decision, is quarantined on approval, 
     await until(() => !existsSync(join(world.watched, "bad1.pdf")), "the original to leave the folder");
     const quarantined = readdirSync(join(world.home, "quarantine"));
     expect(quarantined).toHaveLength(1);
-    expect(readdirSync(join(world.home, "quarantine", quarantined[0])).sort()).toEqual(["payload.quar", "record.json"]);
-    expect(readFileSync(join(world.home, "quarantine", quarantined[0], "payload.quar")).equals(readFileSync(join(world.samples, "bad1.pdf")))).toBe(true);
+    // sealed (H1 A7): the copy in quarantine is not the file's bytes; the restore below proves it comes back exact
+    await until(() => readdirSync(join(world.home, "quarantine", quarantined[0])).includes("payload.sealed"), "the copy to be sealed");
+    expect(readdirSync(join(world.home, "quarantine", quarantined[0])).sort()).toEqual(["payload.sealed", "record.json"]);
+    const sealedCopy = readFileSync(join(world.home, "quarantine", quarantined[0], "payload.sealed"));
+    const original = readFileSync(join(world.samples, "bad1.pdf"));
+    expect(sealedCopy.length).toBe(original.length);
+    expect(sealedCopy.equals(original)).toBe(false);
+    expect(sealedCopy.includes(original.subarray(0, 8))).toBe(false); // not even the file's header shows
     await go("#/audit");
     await waitText("action.applied");
     const text = await bodyText();
@@ -223,9 +235,9 @@ describe("failures are stated and nothing is lost", () => {
 });
 
 describe("signing in and out", () => {
-  it("a wrong token returns to the sign-in screen and sign out forgets it", async () => {
+  it("a wrong code returns to the sign-in screen and sign out forgets the session", async () => {
     const page = await world.browser.newPage();
-    await page.goto(`http://127.0.0.1:${world.corePort}/console/#token=${"x".repeat(32)}`);
+    await page.goto(`http://127.0.0.1:${world.corePort}/console/#code=${"x".repeat(32)}`);
     await page.waitForFunction(() => document.body.innerText.includes("Enter the API token"), { timeout: 30_000 });
     await page.close();
     await world.page.evaluate(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Sign out")?.click());

@@ -44,7 +44,7 @@ chrome.tabs.onRemoved.addListener((tabId) => guard?.forgetTab(tabId));
  */
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || typeof message !== "object" || message === null) return false;
-  const m = message as { type?: unknown; url?: unknown };
+  const m = message as { type?: unknown; url?: unknown; mistake?: unknown };
   if (m.type === "status") {
     void guard?.status().then(sendResponse);
     return true;
@@ -55,7 +55,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     sender.frameId === 0 &&
     typeof sender.tab?.id === "number";
   if (m.type === "override" && fromWarningPage && typeof m.url === "string") {
-    void guard?.override(m.url).then(sendResponse);
+    void guard?.override(m.url, m.mistake === true).then(sendResponse);
     return true;
   }
   return false;

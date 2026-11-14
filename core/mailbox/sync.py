@@ -52,6 +52,7 @@ class Stats:
     vanished: int = 0
     too_large: int = 0
     gave_up: int = 0
+    unfinished: int = 0  # stored UNKNOWN or ERROR because the parser could not finish (H1 A6)
     recoveries: int = 0
     backlog: bool = False  # the last poll stopped at its limit with mail still to read
     polls: int = 0
@@ -244,6 +245,15 @@ class Mailbox:
             self._sleep(self.fetch_gap)
         return taken
 
+    def _not_analysed(self, reason: str) -> None:
+        """A message the parser could not finish is never silent (H1 A6): it joins the flagged list
+        as NOT_ANALYSED with its reason code, so the agent and the console say so. Not safe."""
+        self.stats.unfinished += 1
+        self.stats.flagged.append(
+            {"at": self._clock(), "state": "NOT_ANALYSED", "score": None, "rules": [reason]}
+        )
+        del self.stats.flagged[:-50]
+
     def _one(self, mid: str, key: str) -> None:
         try:
             raw = self.client.get_raw(mid)
@@ -262,6 +272,7 @@ class Mailbox:
                 self.store(analysis)
                 self.state.mark(key)
                 self.state.save()
+                self._not_analysed("too_large")
                 return
             raise
         analysis = self.analyze(raw)
@@ -278,6 +289,9 @@ class Mailbox:
         self.state.mark(key)
         self.state.save()
         self.stats.analysed += 1
+        reason = analysis.report.reason
+        if verdict.state is VerdictState.ERROR or (reason or "").startswith("parser_"):
+            self._not_analysed(reason or "error")
         if verdict.state in (VerdictState.MALICIOUS, VerdictState.SUSPICIOUS):
             self.stats.flagged.append(
                 {

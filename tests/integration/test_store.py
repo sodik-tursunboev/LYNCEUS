@@ -7,6 +7,7 @@ from mailhelp import analyze, eml
 from sqlalchemy import Engine, func, select
 
 from core.contracts import EventSource, ProviderResult, ProviderStatus, VerdictState
+from core.db import hosts
 from core.db import models as db
 from core.db.audit import record
 from core.db.models import Base
@@ -36,7 +37,10 @@ def test_saves_the_whole_analysis(migrated: Engine) -> None:
     with migrated.connect() as c:
         art = c.execute(select(db.Artifact)).one()
         ver = c.execute(select(db.Verdict)).one()
-    assert art.host == "secure-check.test"
+    assert hosts.reveal(art.host) == "secure-check.test" and art.host_tag == hosts.tag(
+        "secure-check.test"
+    )
+    assert "secure-check.test" not in art.host  # sealed at rest (ADR-007, H1 A8)
     assert a.url and art.sha256 == a.url.url_sha256 and art.ref == f"sha256:{art.sha256}"
     assert ver.state == a.verdict.state.value and ver.risk_score == a.verdict.risk_score
     assert ver.ruleset_version == a.verdict.ruleset_version
@@ -114,7 +118,8 @@ def test_a_message_is_stored_by_hash_and_host_never_by_text(migrated: Engine) ->
         urls = c.execute(select(db.ExtractedUrl)).all()
         stored = [repr(row) for t in Base.metadata.sorted_tables for row in c.execute(select(t))]
     assert (art.kind, art.sha256, art.host) == ("EMAIL", a.input_sha256, None)
-    assert "paypal-login.test" in domains and len(urls) == len(a.urls)
+    assert hosts.tag("paypal-login.test") in domains and len(urls) == len(a.urls)
+    assert not any("paypal-login" in d for d in domains)  # only keyed hashes, never the name
     assert all(u.url is None and len(u.url_sha256) == 64 for u in urls)
     dump = "\n".join(stored)
     for marker in ("SUBJMARK", "BODYMARK", "PATHMARK", "QUERYMARK", "FILEMARK", "help@", "Support"):
@@ -127,7 +132,9 @@ def test_two_messages_to_one_host_share_one_domain_row(migrated: Engine) -> None
         save_email_analysis(migrated, analyze(eml(html=link.format(i))), EventSource.API)
     assert count(migrated, db.Artifact) == 2 and count(migrated, db.ExtractedUrl) == 2
     with migrated.connect() as c:
-        assert list(c.scalars(select(db.Domain.name))) == ["shared-host.test"]
+        assert list(c.scalars(select(db.Domain.name))) == [hosts.tag("shared-host.test")]
+        sealed = list(c.scalars(select(db.Domain.sealed_name)))
+        assert [hosts.reveal(s) for s in sealed] == ["shared-host.test"]
 
 
 def test_an_unscored_message_verdict_is_stored_without_a_score(migrated: Engine) -> None:

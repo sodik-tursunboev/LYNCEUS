@@ -57,17 +57,20 @@ async function main(): Promise<void> {
     if (history.length > 1) history.back();
     else window.close();
   });
-  document.getElementById("continue")?.addEventListener("click", (event) => {
+  const proceed = (mistake: boolean) => (event: Event) => {
     if (!event.isTrusted) return; // only a real click counts
-    text("status", "Recording your decision…");
-    chrome.runtime.sendMessage({ type: "override", url: params.url }).then(
+    text("status", mistake ? "Recording your report and your decision..." : "Recording your decision...");
+    chrome.runtime.sendMessage({ type: "override", url: params.url, ...(mistake ? { mistake: true } : {}) }).then(
       (answer: { ok?: boolean } | undefined) => {
         if (answer?.ok) location.replace(params.url);
         else text("status", "The decision could not be recorded, so the page stays blocked. Is the Lynceus agent running?");
       },
       () => text("status", "The decision could not be recorded, so the page stays blocked."),
     );
-  });
+  };
+  document.getElementById("continue")?.addEventListener("click", proceed(false));
+  // H1 B3: the same recorded continue, plus "this warning was wrong" for the rules that fired
+  document.getElementById("report")?.addEventListener("click", proceed(true));
 }
 
 if (typeof document !== "undefined" && document.getElementById("title")) void main();

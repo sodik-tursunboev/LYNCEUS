@@ -1,4 +1,4 @@
-# The page detonator (D1, ADR-025). Built by `python tasks.py detonator` as lynceus-detonator:1.0.0.
+# The page detonator (D1, ADR-025). Built by `python tasks.py detonator` as lynceus-detonator:1.1.0.
 # Base: Microsoft's Playwright image, pinned by digest (pulled 2026-11-11). It ships the browsers;
 # the Python package is installed here from hash-pinned wheels.
 FROM mcr.microsoft.com/playwright/python:v1.64.1-noble@sha256:330d401ae23c905896a0c26c66c36fc971b621519e7b11b435a8328d7bf6e031

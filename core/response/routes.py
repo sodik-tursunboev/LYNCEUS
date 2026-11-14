@@ -70,6 +70,20 @@ class EventDetail(EventOut):
     signals: list[dict[str, Any]]
     evidence: list[dict[str, Any]]
     providers: list[dict[str, Any]]
+    feedback: str | None = None  # what you said about this verdict (H1 B3)
+
+
+class FeedbackBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: Literal["false_alarm", "missed", "correct"]
+
+
+class RuleFeedback(BaseModel):
+    rule_id: str
+    false_alarm: int
+    correct: int
+    missed: int
 
 
 class AllowBody(BaseModel):
@@ -96,14 +110,24 @@ class AuditOut(BaseModel):
     detail: dict[str, Any] | None
 
 
-def _actor(header: str | None) -> str:
-    return header if header in ("user", "policy") else "user"
-
-
 def build_router(
-    db: Engine | None, require_token: Callable[..., None], limiter: Callable[..., None]
+    db: Engine | None, require_token: Callable[..., str], limiter: Callable[..., None]
 ) -> APIRouter:
     router = APIRouter(dependencies=[Depends(require_token), Depends(limiter)])
+
+    def actor(
+        caller: Annotated[str, Depends(require_token)],
+        x_lynceus_actor: Annotated[str | None, Header()] = None,
+    ) -> str:
+        """Who decided. A console session is always the person at the console (H1 A1); only the
+        agent's own credential may say `policy` (auto mode)."""
+        if caller != "agent":
+            return "user"
+        return x_lynceus_actor if x_lynceus_actor in ("user", "policy") else "user"
+
+    def agent_only(caller: Annotated[str, Depends(require_token)]) -> None:
+        if caller != "agent":
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "only the agent reports what it did")
 
     def need_db() -> Engine:
         if db is None:
@@ -137,6 +161,22 @@ def build_router(
             raise HTTPException(status.HTTP_404_NOT_FOUND, "no such event")
         return EventDetail(**found)
 
+    @router.post("/v1/events/{verdict_id}/feedback")
+    def feedback(
+        verdict_id: uuid.UUID, body: FeedbackBody, who: Annotated[str, Depends(actor)]
+    ) -> dict[str, str]:
+        """Your answer about a verdict: a false alarm, a missed phishing, or right (H1 B3)."""
+        if who != "user":
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "only a person gives feedback")
+        if not service.give_feedback(need_db(), verdict_id, body.label):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "no such event")
+        return {"label": body.label}
+
+    @router.get("/v1/feedback/rules")
+    def feedback_rules() -> list[RuleFeedback]:
+        """Per rule, how often you called its verdicts false alarms: the noisy rules here."""
+        return [RuleFeedback(**r) for r in service.rule_feedback(need_db())]
+
     @router.get("/v1/actions")
     def actions(
         state: Annotated[str | None, Query(pattern=r"^[A-Z_,]{1,120}$")] = None,
@@ -154,30 +194,23 @@ def build_router(
         return ActionOut(**found)
 
     @router.post("/v1/actions/{action_id}/approve")
-    def approve(
-        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
-    ) -> ActionResult:
-        actor = _actor(x_lynceus_actor)
-        if actor == "policy" and service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
+    def approve(action_id: uuid.UUID, who: Annotated[str, Depends(actor)]) -> ActionResult:
+        if who == "policy" and service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
             # a wrong message move costs more than a wrong file move: always your own click
             raise HTTPException(
                 status.HTTP_409_CONFLICT, "an email is moved only when you approve it yourself"
             )
-        return apply(action_id, Event.APPROVE, actor)
+        return apply(action_id, Event.APPROVE, who)
 
     @router.post("/v1/actions/{action_id}/dismiss")
-    def dismiss(
-        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
-    ) -> ActionResult:
-        return apply(action_id, Event.DISMISS, _actor(x_lynceus_actor))
+    def dismiss(action_id: uuid.UUID, who: Annotated[str, Depends(actor)]) -> ActionResult:
+        return apply(action_id, Event.DISMISS, who)
 
     @router.post("/v1/actions/{action_id}/restore")
-    def restore(
-        action_id: uuid.UUID, x_lynceus_actor: Annotated[str | None, Header()] = None
-    ) -> ActionResult:
-        return apply(action_id, Event.RESTORE, _actor(x_lynceus_actor))
+    def restore(action_id: uuid.UUID, who: Annotated[str, Depends(actor)]) -> ActionResult:
+        return apply(action_id, Event.RESTORE, who)
 
-    @router.post("/v1/actions/{action_id}/result")
+    @router.post("/v1/actions/{action_id}/result", dependencies=[Depends(agent_only)])
     def result(action_id: uuid.UUID, body: ResultBody) -> ActionResult:
         """What the agent did. Only the agent reports this; the console cannot claim a result."""
         if service.action_kind(need_db(), action_id) == "MAIL_QUARANTINE":
@@ -196,21 +229,16 @@ def build_router(
         return [AllowOut(**a) for a in service.allow_list(need_db())]
 
     @router.post("/v1/allowlist")
-    def allow_add(
-        body: AllowBody, x_lynceus_actor: Annotated[str | None, Header()] = None
-    ) -> AllowOut:
-        actor = _actor(x_lynceus_actor)
-        service.allow_add(need_db(), body.sha256, actor, body.days)
+    def allow_add(body: AllowBody, who: Annotated[str, Depends(actor)]) -> AllowOut:
+        service.allow_add(need_db(), body.sha256, who, body.days)
         entry = next(a for a in service.allow_list(need_db()) if a["sha256"] == body.sha256)
         return AllowOut(**entry)
 
     @router.delete("/v1/allowlist/{sha256}")
-    def allow_remove(
-        sha256: str, x_lynceus_actor: Annotated[str | None, Header()] = None
-    ) -> dict[str, bool]:
+    def allow_remove(sha256: str, who: Annotated[str, Depends(actor)]) -> dict[str, bool]:
         if not _SHA.match(sha256):
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "not a SHA-256")
-        return {"removed": service.allow_remove(need_db(), sha256, _actor(x_lynceus_actor))}
+        return {"removed": service.allow_remove(need_db(), sha256, who)}
 
     @router.get("/v1/audit")
     def audit(limit: Annotated[int, Query(ge=1, le=500)] = 100) -> list[AuditOut]:

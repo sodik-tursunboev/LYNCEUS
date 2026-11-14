@@ -120,6 +120,7 @@ class MailboxService:
             "vanished": s.vanished,
             "too_large": s.too_large,
             "gave_up": s.gave_up,
+            "unfinished": s.unfinished,
             "recoveries": s.recoveries,
             "backlog": s.backlog,
             "flagged": s.flagged[-20:],

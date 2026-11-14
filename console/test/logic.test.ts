@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApi } from "../src/api";
-import { clearToken, getToken, setToken, takeTokenFromFragment, type Env } from "../src/auth";
+import { clearToken, getToken, openSession, setToken, signOut, takeCodeFromFragment, type Env } from "../src/auth";
 import { compact, score, shortHash, when } from "../src/format";
 import { consequence, group, GROUPS, LABEL, MAIL_LABEL, reasonText, verbsFor } from "../src/policy";
 import type { ActionRow, ActionState } from "../src/types";
@@ -19,17 +19,17 @@ function env(hash: string): Env & { store: Map<string, string>; replaced: string
 }
 
 describe("signing in", () => {
-  it("takes a token from the address once, keeps it for this tab and removes it from the address", () => {
-    const e = env(`#token=${TOKEN}`);
-    takeTokenFromFragment(e);
-    expect(getToken(e)).toBe(TOKEN);
+  it("takes a one-time code from the address once and removes it from the address", () => {
+    const e = env(`#code=${TOKEN}`);
+    expect(takeCodeFromFragment(e)).toBe(TOKEN);
+    expect(getToken(e)).toBeNull(); // a code is not a session
     expect(e.replaced).toEqual(["/console/"]);
   });
 
-  it.each(["#token=short", "#token=has space in it 1234567890", "#token=<script>alert(1)</script>xxxxxxxx", `#token=${"a".repeat(600)}`])(
+  it.each(["#code=short", "#code=has space in it 1234567890", "#code=<script>alert(1)</script>xxxxxxxx", `#code=${"a".repeat(600)}`, `#token=${TOKEN}`])(
     "refuses %j but still removes it from the address", (hash) => {
       const e = env(hash);
-      takeTokenFromFragment(e);
+      expect(takeCodeFromFragment(e)).toBeNull();
       expect(getToken(e)).toBeNull();
       expect(e.replaced).toHaveLength(1);
     },
@@ -37,9 +37,50 @@ describe("signing in", () => {
 
   it("leaves any other address alone", () => {
     const e = env("#/events");
-    takeTokenFromFragment(e);
+    expect(takeCodeFromFragment(e)).toBeNull();
     expect(e.replaced).toEqual([]);
+  });
+
+  it("trades a code for a session and sends the code, not a token", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ token: "s".repeat(43), expires_in: 43200 }), { status: 200 }));
+    expect(await openSession(fetchImpl as unknown as typeof fetch, { code: TOKEN })).toBe("s".repeat(43));
+    const [path, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(path).toBe("/v1/console/session");
+    expect(JSON.parse(String(init.body))).toEqual({ code: TOKEN });
+    expect(new Headers(init.headers).get("Authorization")).toBeNull();
+  });
+
+  it("trades a typed API token for a session in the header only", async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ token: "s".repeat(43) }), { status: 200 }));
+    await openSession(fetchImpl as unknown as typeof fetch, { apiToken: ` ${TOKEN} ` });
+    const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(new Headers(init.headers).get("Authorization")).toBe(`Bearer ${TOKEN}`);
+    expect(String(init.body)).not.toContain(TOKEN);
+  });
+
+  it.each([
+    [401, { detail: "no" }],
+    [200, { token: "<script>alert(1)</script>xxxxxxxx" }],
+    [200, { token: 12345 }],
+    [200, {}],
+  ])("gets no session from a %i answer %j", async (code, body) => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(body), { status: code }));
+    expect(await openSession(fetchImpl as unknown as typeof fetch, { code: TOKEN })).toBeNull();
+  });
+
+  it("gets no session when the core is down", async () => {
+    const fetchImpl = vi.fn(async () => { throw new TypeError("down"); });
+    expect(await openSession(fetchImpl as unknown as typeof fetch, { code: TOKEN })).toBeNull();
+  });
+
+  it("signing out forgets the session here and ends it on the core", async () => {
+    const e = env("");
+    setToken(e, TOKEN);
+    const fetchImpl = vi.fn(async () => new Response("{}", { status: 200 }));
+    await signOut(fetchImpl as unknown as typeof fetch, e);
     expect(getToken(e)).toBeNull();
+    const [path, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect([path, init.method]).toEqual(["/v1/console/session", "DELETE"]);
   });
 
   it("stores a typed token trimmed, and signing out forgets it", () => {

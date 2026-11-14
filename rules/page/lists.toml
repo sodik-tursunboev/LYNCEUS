@@ -63,3 +63,13 @@ dangerous_downloads = [
   "exe", "scr", "msi", "msix", "appx", "bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf", "hta",
   "lnk", "iso", "img", "vhd", "vhdx", "one", "jar", "dll", "cpl", "zip", "rar", "7z", "svg", "html",
 ]
+
+# H1 C5: a bot check shown instead of the page (what a scanner gets from a cloaked kit, and also what
+# many real sites behind a bot-protection service show a headless browser). Titles, lower case, as
+# the start of the page title; hosts that serve the challenge itself.
+bot_check_titles = [
+  "just a moment", "attention required! | cloudflare", "verify you are human", "checking your browser",
+  "ddos protection by", "please complete the security check", "are you a robot", "one more step",
+  "security check", "please wait while we verify", "human verification",
+]
+bot_check_hosts = ["challenges.cloudflare.com", "hcaptcha.com", "js.hcaptcha.com", "www.recaptcha.net"]

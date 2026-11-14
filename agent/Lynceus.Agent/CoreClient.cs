@@ -182,6 +182,30 @@ public sealed class CoreClient(HttpClient http, Func<string?> token, bool verify
         return (await SendRawAsync(request, ct).ConfigureAwait(false)).Status;
     }
 
+    /// <summary>A one-time code the console trades for its own session (H1 A1): the API token never leaves the agent.</summary>
+    public async Task<(CoreStatus Status, string? Code)> ConsoleCodeAsync(CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/console/code");
+        var (status, body, _) = await SendRawAsync(request, ct).ConfigureAwait(false);
+        if (status != CoreStatus.Ok)
+        {
+            return (status, null);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(body!);
+            var code = Text(document.RootElement, "code", 128);
+            return code is not null && code.Length >= 16 && code.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_')
+                ? (CoreStatus.Ok, code)
+                : (CoreStatus.Rejected, null);
+        }
+        catch (JsonException)
+        {
+            return (CoreStatus.Rejected, null);
+        }
+    }
+
     /// <summary>Tell the core what the agent did: applied, failed, restored or restore_failed (+ a reason code).</summary>
     public async Task<CoreStatus> ReportAsync(Guid actionId, string outcome, string? reason, CancellationToken ct)
     {
@@ -246,9 +270,15 @@ public sealed class CoreClient(HttpClient http, Func<string?> token, bool verify
     }
 
     /// <summary>The user chose to continue to a warned page; the core writes the audit record.</summary>
-    public async Task<OverrideResult> OverrideAsync(string url, string? state, int minutes, CancellationToken ct)
+    public async Task<OverrideResult> OverrideAsync(string url, string? state, int minutes, CancellationToken ct, bool mistake = false)
     {
-        using var request = JsonRequest("/v1/overrides", new Dictionary<string, object?> { ["url"] = url, ["minutes"] = minutes, ["state"] = state });
+        var fields = new Dictionary<string, object?> { ["url"] = url, ["minutes"] = minutes, ["state"] = state };
+        if (mistake)
+        {
+            fields["mistake"] = true; // H1 B3: the core records the verdict on this URL as a false alarm
+        }
+
+        using var request = JsonRequest("/v1/overrides", fields);
         if (request is null)
         {
             return new OverrideResult(CoreStatus.Rejected, Detail: "the URL cannot be encoded");

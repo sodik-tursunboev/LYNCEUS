@@ -1,5 +1,5 @@
 import type {
-  ActionRow, AllowRow, Analysis, AuditRow, EmailAnalysis, EventDetail, EventRow, FileAnalysis, IntelHealth, MailboxStatus, UrlAnalysis,
+  ActionRow, AllowRow, Analysis, AuditRow, EmailAnalysis, EventDetail, EventRow, FeedbackLabel, FileAnalysis, IntelHealth, MailboxStatus, RuleFeedback, UrlAnalysis,
 } from "./types";
 
 export class ApiError extends Error {
@@ -58,6 +58,8 @@ export function createApi(fetchImpl: Fetch, getToken: () => string | null, onAut
     mailbox: () => call<MailboxStatus>("GET", "/v1/mailbox/status"),
     events: (state?: string, limit = 50) => call<EventRow[]>("GET", `/v1/events${q({ state, limit })}`),
     event: (id: string) => call<EventDetail>("GET", `/v1/events/${encodeURIComponent(id)}`),
+    feedback: (id: string, label: FeedbackLabel) => call<{ label: string }>("POST", `/v1/events/${encodeURIComponent(id)}/feedback`, { label }),
+    feedbackRules: () => call<RuleFeedback[]>("GET", "/v1/feedback/rules"),
     actions: (state?: string, limit = 100) => call<ActionRow[]>("GET", `/v1/actions${q({ state, limit })}`),
     approve: (id: string) => call<{ state: string; changed: boolean }>("POST", `/v1/actions/${encodeURIComponent(id)}/approve`),
     dismiss: (id: string) => call<{ state: string; changed: boolean }>("POST", `/v1/actions/${encodeURIComponent(id)}/dismiss`),

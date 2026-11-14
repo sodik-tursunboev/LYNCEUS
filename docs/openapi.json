@@ -565,6 +565,17 @@
             "title": "Explanation",
             "type": "string"
           },
+          "feedback": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedback"
+          },
           "host": {
             "anyOf": [
               {
@@ -848,6 +859,25 @@
           "stale"
         ],
         "title": "FeedHealth",
+        "type": "object"
+      },
+      "FeedbackBody": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "enum": [
+              "false_alarm",
+              "missed",
+              "correct"
+            ],
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "FeedbackBody",
         "type": "object"
       },
       "FileCheck": {
@@ -1255,6 +1285,11 @@
             "title": "Minutes",
             "type": "integer"
           },
+          "mistake": {
+            "default": false,
+            "title": "Mistake",
+            "type": "boolean"
+          },
           "state": {
             "anyOf": [
               {
@@ -1289,6 +1324,11 @@
           },
           "recorded": {
             "title": "Recorded",
+            "type": "boolean"
+          },
+          "reported_false_alarm": {
+            "default": false,
+            "title": "Reported False Alarm",
             "type": "boolean"
           },
           "stored_in": {
@@ -1558,6 +1598,56 @@
           "outcome"
         ],
         "title": "ResultBody",
+        "type": "object"
+      },
+      "RuleFeedback": {
+        "properties": {
+          "correct": {
+            "title": "Correct",
+            "type": "integer"
+          },
+          "false_alarm": {
+            "title": "False Alarm",
+            "type": "integer"
+          },
+          "missed": {
+            "title": "Missed",
+            "type": "integer"
+          },
+          "rule_id": {
+            "title": "Rule Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id",
+          "false_alarm",
+          "correct",
+          "missed"
+        ],
+        "title": "RuleFeedback",
+        "type": "object"
+      },
+      "SessionBody": {
+        "additionalProperties": false,
+        "description": "Console sign-in: a one-time code, or nothing when the API token is in the header.",
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 16,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          }
+        },
+        "title": "SessionBody",
         "type": "object"
       },
       "Signal": {
@@ -2563,6 +2653,103 @@
         "summary": "Audit"
       }
     },
+    "/v1/console/code": {
+      "post": {
+        "description": "A one-time code for `Lynceus.Agent --open-console`: one console session, for 60 s.",
+        "operationId": "console_code_v1_console_code_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Console Code V1 Console Code Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Console Code"
+      }
+    },
+    "/v1/console/session": {
+      "delete": {
+        "operationId": "console_sign_out_v1_console_session_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Console Sign Out V1 Console Session Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Console Sign Out"
+      },
+      "post": {
+        "description": "Trade a one-time code, or the API token typed at the sign-in screen, for a session.",
+        "operationId": "console_session_v1_console_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Console Session V1 Console Session Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Console Session"
+      }
+    },
     "/v1/emails/analyze": {
       "post": {
         "operationId": "analyze_email_v1_emails_analyze_post",
@@ -2708,6 +2895,110 @@
           }
         ],
         "summary": "Event"
+      }
+    },
+    "/v1/events/{verdict_id}/feedback": {
+      "post": {
+        "description": "Your answer about a verdict: a false alarm, a missed phishing, or right (H1 B3).",
+        "operationId": "feedback_v1_events__verdict_id__feedback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "verdict_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Verdict Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-lynceus-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Lynceus-Actor"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Feedback V1 Events  Verdict Id  Feedback Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Feedback"
+      }
+    },
+    "/v1/feedback/rules": {
+      "get": {
+        "description": "Per rule, how often you called its verdicts false alarms: the noisy rules here.",
+        "operationId": "feedback_rules_v1_feedback_rules_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RuleFeedback"
+                  },
+                  "title": "Response Feedback Rules V1 Feedback Rules Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Feedback Rules"
       }
     },
     "/v1/files/analyze": {
@@ -2942,7 +3233,7 @@
     },
     "/v1/urls/detonate": {
       "post": {
-        "description": "D1: the URL verdict, then the page opened in the sandboxed browser container, then one\nverdict over both. Off unless LYNCEUS_DETONATION is set: it visits the page from this\ncomputer's internet connection.",
+        "description": "D1: the URL verdict, then the page opened in the sandboxed browser container, then one\nverdict over both. Off unless LYNCEUS_DETONATION is set: it visits the page from this\ncomputer's internet connection, so every visit is audited (who asked, how it went; no\nURL).",
         "operationId": "detonate_v1_urls_detonate_post",
         "requestBody": {
           "content": {

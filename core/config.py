@@ -7,6 +7,7 @@ start-up log names which old variables are still in use (names only, never value
 
 import os
 from pathlib import Path
+from typing import Any
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import (
@@ -34,6 +35,20 @@ def legacy_env_names(env_file: str | os.PathLike[str] | None = ".env") -> list[s
     return sorted(found)
 
 
+class DpapiSource(PydanticBaseSettingsSource):
+    """Secrets stored with `python -m core.secrets set` (DPAPI, H1 A4). Only secret fields."""
+
+    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        return None, field_name, False  # unused: __call__ answers for every field at once
+
+    def __call__(self) -> dict[str, Any]:
+        if os.name != "nt":
+            return {}
+        from core import secrets
+
+        return {k: v for k, v in secrets.load().items() if k in SECRET_FIELDS}
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LYNCEUS_", env_file=".env", extra="ignore")
 
@@ -58,7 +73,14 @@ class Settings(BaseSettings):
                     env_prefix=LEGACY_PREFIX,
                 )
             )
-        return (init_settings, env_settings, dotenv_settings, *legacy, file_secret_settings)
+        # the environment first, then the DPAPI store (H1 A4), then the plain .env file
+        dpapi = (
+            [DpapiSource(settings_cls)]
+            if isinstance(dotenv_settings, DotEnvSettingsSource)
+            and (dotenv_settings.env_file is not None)
+            else []
+        )  # fmt: skip  (`_env_file=None`, as in tests, reads no file of any kind)
+        return (init_settings, env_settings, *dpapi, dotenv_settings, *legacy, file_secret_settings)
 
     log_level: str = "INFO"
 
@@ -140,3 +162,26 @@ class Settings(BaseSettings):
 
     def intel_enabled(self) -> frozenset[str]:
         return frozenset(n.strip().lower() for n in self.intel_providers.split(",") if n.strip())
+
+
+# every setting that holds a secret (typed SecretStr): what the DPAPI store may hold
+SECRET_FIELDS = frozenset(
+    name for name, f in Settings.model_fields.items() if "SecretStr" in str(f.annotation)
+)
+
+
+def plaintext_secrets(env_file: str | os.PathLike[str] | None = ".env") -> list[str]:
+    """Secret settings still written with a value in plain text in .env (names only, H1 A4)."""
+    if not env_file:
+        return []
+    try:
+        lines = Path(env_file).read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return []
+    found = set()
+    for line in lines:
+        name, sep, value = line.strip().partition("=")
+        bare = name.strip().upper().removeprefix("LYNCEUS_").removeprefix(LEGACY_PREFIX).lower()
+        if sep and value.strip() and not name.strip().startswith("#") and bare in SECRET_FIELDS:
+            found.add(bare)
+    return sorted(found)

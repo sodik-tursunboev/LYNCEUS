@@ -170,6 +170,16 @@ describe("continuing anyway", () => {
     expect(t.browser.tabs.length).toBe(before + 1); // a different URL is still judged
   });
 
+  it("sends 'this warning was wrong' only when the user reported it (H1 B3)", async () => {
+    const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: until(900_000) } : ok("MALICIOUS")));
+    await t.guard.onNavigation(nav(BAD));
+    expect(await t.guard.override(BAD, true)).toEqual({ ok: true });
+    expect(t.link.calls.at(-1)).toMatchObject({ type: "override", url: BAD, state: "MALICIOUS", mistake: true });
+    await t.guard.onNavigation(nav(BAD + "&y=2"));
+    await t.guard.override(BAD + "&y=2");
+    expect(t.link.calls.at(-1)).not.toHaveProperty("mistake");
+  });
+
   it("blocks again once the time is up", async () => {
     const t = setup((r) => (r.type === "override" ? { type: "override_ok", id: "1", expires_at: until(900_000) } : ok("MALICIOUS")));
     await t.guard.onNavigation(nav(BAD));

@@ -9,7 +9,7 @@
 # page lands is judged instead by running the URL rules on the landing address.
 
 [ruleset]
-version = "1.0.0"
+version = "1.1.0"
 
 [category_caps]
 "page.impersonation" = 0.85
@@ -28,3 +28,4 @@ version = "1.0.0"
 "page.geofence" = 0.3
 "page.smuggling" = 0.6
 "page.drive_by_download" = 0.5
+"page.cloaked" = 0.0  # H1 C5: evidence only until measured on the dev half (see the rule)

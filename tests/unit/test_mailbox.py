@@ -23,6 +23,7 @@ from mailhelp import PHISH_LINK, analyze, eml
 from sqlalchemy import create_engine, select
 
 from core.contracts import EventSource, VerdictState
+from core.db import hosts
 from core.db import models as db
 from core.db.store import save_email_analysis
 from core.email.engine import EmailAnalysis, unscored
@@ -424,7 +425,9 @@ def test_no_address_subject_body_token_or_message_id_is_kept(
     ):
         assert marker not in dumped, marker
     assert message_key("IDMARK1234567890") in state
-    assert (sources, kinds) == ({"EMAIL"}, {"EMAIL"}) and "paypal-login.test" in rows
+    assert (sources, kinds) == ({"EMAIL"}, {"EMAIL"})
+    assert "paypal-login.test" not in rows  # the link's host is stored only sealed (ADR-007, H1 A8)
+    assert hosts.tag("paypal-login.test") in rows  # ... and found by its keyed hash
 
 
 def test_a_damaged_state_file_means_start_again_not_a_crash(tmp_path: Path) -> None:
@@ -758,3 +761,28 @@ def test_a_vanished_message_is_remembered_so_it_is_not_asked_for_again(rig: Rig)
     rig.fake.messages.pop("gone")
     rig.box.poll()
     assert rig.box.state.has(message_key("gone"))
+
+
+def test_a_message_the_parser_could_not_finish_is_announced_not_silent(tmp_path: Path) -> None:
+    """H1 A6: a parser timeout is stored UNKNOWN (never safe) and also listed as NOT_ANALYSED with
+    its reason, so the agent's notification and the console say so."""
+
+    def timing_out(raw: bytes) -> EmailAnalysis:
+        return unscored(
+            uuid4(), "0" * 64, VerdictState.UNKNOWN, "Parsing timed out.", "parser_timeout"
+        )
+
+    rig = Rig(tmp_path, analyze=timing_out)
+    rig.fake.add("m1", OK_MAIL)
+    rig.box.poll()
+    assert rig.box.stats.unfinished == 1
+    assert [a.report.verdict.state for a in rig.stored] == [VerdictState.UNKNOWN]
+    flagged = rig.box.stats.flagged
+    assert [(f["state"], f["rules"]) for f in flagged] == [("NOT_ANALYSED", ["parser_timeout"])]
+
+
+def test_an_ordinary_unknown_message_is_not_announced(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    rig.fake.add("m1", OK_MAIL)
+    rig.box.poll()
+    assert rig.box.stats.unfinished == 0 and rig.box.stats.flagged == []

@@ -410,3 +410,16 @@ Built after the owner chose "Email quarantine (M6b)" knowing it needs the wider 
 - **When it runs:** only on request: `python -m core.cli detonate <url>`, `POST /v1/urls/detonate` (off until `LYNCEUS_DETONATION=true`, 6 a minute) and the console's "Open in sandbox" button. **Not** automatically while browsing or for email links: a second visit can use up a one-time link, and opening an emailed link tells its sender the address is read (D1b, opt-in, later).
 - **Accepted risks:** pages are opened from the user's internet connection (the site sees the IP address); a container escape would land in Docker Desktop's Linux VM, which also runs the PostgreSQL container (a dedicated VM is the fix, deferred); phishing kits that show scanners something else (cloaking) are only partly countered (a normal Chrome user agent, a 4-second settle).
 - **Measured** (`docs/eval/detonate.md`, 1,100 live pages, test half): live phishing caught 16.9% by the URL rules alone and **37.3%** with the page; legitimate pages flagged 3.8%, of which the page added 1 of 186.
+
+## ADR-026: Hardening, fewer false alarms and deeper analysis (H1, 2026-11-12)
+**Status:** Accepted by the owner (plan approved as written, `docs/milestones/H1.md`).
+
+- **Credentials:** the agent keeps the API token; the console gets a session of its own, traded once for a one-time code (60 s) or for the typed token. The actor is taken from the credential: a console session is always `user`. In-memory sessions, so a core restart signs the console out.
+- **Audit:** `audit_logs` is append-only in the database (trigger, migration 0004).
+- **Outbound safety:** the RDAP provider connects to the address it checked; the address check moved to `core/urls/addresses.py`, so `safe_fetch` stays unwired (ADR-011).
+- **Secrets at rest:** DPAPI store `secrets.dpapi.json`, read after the environment and before `.env`; no new dependency (ctypes).
+- **Dependencies:** `pylock.toml` from pip's own `pip lock`, installed with hashes; no sdists.
+- **False alarms:** a popular-domain list (Tranco top 100,000, downloaded on request) silences the three look-alike rules that judge the registered name; nothing else. Measured in `docs/eval/popular.md`.
+- **Feedback:** one label per verdict (`feedback`, migration 0005), audited, counted per rule; it never changes a weight by itself.
+- **Deeper parsing:** `<style>` hiding (simple selectors, no `@media`), active SVG (`email.svg_active`, a second independent category next to `email.html_attachment`), links in PDF page text.
+- **Detonator 1.1.0:** forms in frames; a phone visit when the desktop visit shows nothing and there is time; `page.cloaked` named with weight 0 until measured.

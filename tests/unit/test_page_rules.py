@@ -297,3 +297,51 @@ def test_page_evidence_never_carries_url_text() -> None:
     for s in v.signals:
         if s.rule_id.startswith("page."):
             assert "victim" not in s.description and "o365" not in s.description
+
+
+# ---- H1 C5: frames, the phone view and bot checks ---------------------------------------------
+
+
+def test_a_password_form_inside_a_frame_is_seen_like_one_on_the_page() -> None:
+    framed = {**form("https://collect.example.net/p.php", EMAIL, PW), "frame": True}
+    r = page(
+        "https://secure-check.example/login",
+        title="Sign in to your Microsoft account",
+        forms=[framed],
+    )
+    assert {"page.brand_credential", "page.form_offsite"} <= hits(r)
+
+
+def test_a_frame_that_signs_in_through_an_identity_provider_is_not_offsite() -> None:
+    framed = {**form("https://login.microsoftonline.com/common/login", EMAIL, PW), "frame": True}
+    assert "page.form_offsite" not in hits(page("https://intranet.example.org/", forms=[framed]))
+
+
+@pytest.mark.parametrize(
+    "kw",
+    [
+        {"title": "Just a moment..."},
+        {"title": "Attention Required! | Cloudflare"},
+        {"title": "", "text": "Please verify", "hosts": ["challenges.cloudflare.com"]},
+    ],
+)
+def test_a_bot_check_is_named_but_adds_no_weight(kw: dict[str, Any]) -> None:
+    r = page("https://unknown-site.example/", **kw)
+    assert "page.cloaked" in hits(r)
+    base = analyze_url("https://unknown-site.example/")
+    assert judge(base, r).verdict.risk_score == base.verdict.risk_score  # evidence only, for now
+
+
+def test_a_page_that_only_uses_a_captcha_on_its_form_is_not_a_bot_check() -> None:
+    r = page("https://shop.example/", title="Shop", text="x" * 2000, hosts=["www.recaptcha.net"])
+    assert "page.cloaked" not in hits(r)
+
+
+def test_the_phone_view_is_said_in_the_evidence() -> None:
+    r = page(
+        "https://unknown-site.example/",
+        title="Just a moment...",
+        phone_view=True,
+        desktop_status="http_403",
+    )
+    assert any("phone" in why for rule, why in evaluate(r) if rule.id == "page.cloaked")

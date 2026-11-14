@@ -15,6 +15,7 @@ from sqlalchemy import create_engine, select
 
 from core.api.app import create_app
 from core.config import Settings
+from core.db import hosts
 from core.db import models as db
 from core.files import engine as file_engine
 
@@ -171,7 +172,11 @@ def test_a_file_is_stored_by_hash_and_origin_host_only(tmp_path: Path) -> None:
             repr(row) for t in db.Base.metadata.sorted_tables for row in conn.execute(select(t))
         )
         sources = {e.source for e in conn.execute(select(db.Event))}
-    assert (art.kind, art.host) == ("FILE", "origin-site.test") and len(art.sha256) == 64
+    assert art.kind == "FILE" and len(art.sha256) == 64
+    assert (
+        art.host.startswith(hosts.PREFIX) and hosts.reveal(art.host) == "origin-site.test"
+    )  # sealed (A8)
+    assert art.host_tag == hosts.tag("origin-site.test")
     assert sources == {"AGENT"}
     for private in ("FILEMARK", "PATHMARK", "QUERYMARK", "statement.pdf"):
         assert private not in dump, private
@@ -196,7 +201,11 @@ def test_an_override_is_recorded_with_host_and_hash_never_the_url(tmp_path: Path
     with create_engine(url).connect() as conn:
         row = conn.execute(select(db.AuditLog)).one()
     assert (row.actor, row.action, row.target_type) == ("user", "override.grant", "url")
-    assert row.detail["host"] == "paypal-login.test" and len(row.detail["url_sha256"]) == 64
+    assert (
+        row.detail["host_tag"] == hosts.tag("paypal-login.test")
+        and len(row.detail["url_sha256"]) == 64
+    )
+    assert "paypal-login.test" not in str(row.detail)  # H1 A8: the audit row names no site
     assert row.detail["overridden_state"] == "MALICIOUS" and row.detail["minutes"] == 15
     assert "PATHMARK" not in json.dumps(row.detail) and "QUERYMARK" not in json.dumps(row.detail)
 
@@ -207,7 +216,9 @@ def test_without_a_database_the_override_goes_to_an_audit_file(tmp_path: Path) -
     assert r.json()["stored_in"] == "file"
     lines = (tmp_path / "data" / "audit.jsonl").read_text(encoding="utf-8").splitlines()
     record = json.loads(lines[0])
-    assert record["action"] == "override.grant" and record["detail"]["host"] == "paypal-login.test"
+    assert record["action"] == "override.grant" and record["detail"]["host_tag"] == hosts.tag(
+        "paypal-login.test"
+    )
     assert "PATHMARK" not in lines[0] and "QUERYMARK" not in lines[0]
 
 
@@ -261,3 +272,20 @@ def test_the_browser_header_marks_the_stored_event_source(tmp_path: Path) -> Non
     with create_engine(url).connect() as conn:
         sources = sorted(e.source for e in conn.execute(select(db.Event)))
     assert sources == ["API", "BROWSER"]
+
+
+def test_a_downloaded_svg_that_runs_script_is_malicious_and_a_plain_one_is_not(
+    tmp_path: Path,
+) -> None:
+    """H1 C2 on the download path: the agent sends the file itself, not a message."""
+    c = client(tmp_path)
+    bad = send(
+        c,
+        "invoice.svg",
+        b"<svg xmlns='http://www.w3.org/2000/svg' onload='go()'><script>x()</script></svg>",
+    )
+    rules = {s["rule_id"] for s in bad.json()["verdict"]["signals"]}
+    assert bad.status_code == 200 and "email.svg_active" in rules
+    assert bad.json()["verdict"]["state"] == "MALICIOUS"
+    plain = send(c, "logo.svg", b"<svg xmlns='http://www.w3.org/2000/svg'><circle r='4'/></svg>")
+    assert "email.svg_active" not in {s["rule_id"] for s in plain.json()["verdict"]["signals"]}

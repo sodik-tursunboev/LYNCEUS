@@ -5,8 +5,10 @@ provider URL is fixed, and a redirect is a surprise); and a failure carries a cl
 fixed reason, never the URL or the exception text, because some providers put an API key in the URL.
 """
 
+import asyncio
 import logging
 import re
+import socket
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -53,10 +55,11 @@ async def fetch(
     headers: Mapping[str, str] | None = None,
     params: Mapping[str, Any] | None = None,
     json_body: Any = None,
+    extensions: Mapping[str, Any] | None = None,
 ) -> Fetched:
     try:
         async with client.stream(
-            method, url, headers=headers, params=params, json=json_body
+            method, url, headers=headers, params=params, json=json_body, extensions=extensions
         ) as response:
             declared = response.headers.get("content-length", "")
             if declared.isdigit() and int(declared) > max_bytes:
@@ -74,6 +77,13 @@ async def fetch(
         raise TimeoutError from None  # a stated TIMEOUT, with nothing of the request in it
     except httpx.HTTPError as e:
         raise FetchError(type(e).__name__) from None
+
+
+async def resolve_host(host: str) -> list[str]:
+    """Every address a provider's server name has, so the caller can check them all (H1 A3)."""
+    loop = asyncio.get_running_loop()
+    answers = await loop.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+    return [str(a[4][0]) for a in answers]
 
 
 def check_status(f: Fetched, *, ok: tuple[int, ...] = (200,)) -> None:

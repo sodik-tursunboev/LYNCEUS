@@ -290,6 +290,28 @@ def geofence(ctx: PageCtx) -> str | None:
     return None
 
 
+def bot_check(r: PageReport) -> bool:
+    """The page is a bot check, not content: a known challenge title, or a challenge service loaded
+    on a page with almost nothing else (no sign-in form)."""
+    title = r.title.strip().lower()
+    if any(title.startswith(t) for t in lists()["bot_check_titles"]):
+        return True
+    challenge = any(_host_matches(h, lists()["bot_check_hosts"]) for h in r.hosts)
+    return challenge and len(r.text) < 800 and not asks_credentials(r)
+
+
+@rule("page.cloaked", "page.evasion", EVASION)
+def cloaked(ctx: PageCtx) -> str | None:
+    """Evidence, not weight (H1 C5): next to url.login_path any weight would flag ordinary logins
+    behind a bot-protection service. It tells the analyst the page rules saw a gate, not the
+    page."""
+    r = ctx.report
+    if bot_check(r):
+        seen = " (a phone was shown the same)" if r.phone_view else ""
+        return f"the page showed a bot check instead of its content{seen}: the page was not seen"
+    return None
+
+
 @rule("page.smuggling", "page.delivery", SMUGGLING)
 def smuggling(ctx: PageCtx) -> str | None:
     built = [d for d in ctx.report.downloads if d.scheme in ("blob", "data")]

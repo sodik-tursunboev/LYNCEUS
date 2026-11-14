@@ -23,6 +23,7 @@ class PageForm(_Closed):
     action: Url
     method: Annotated[str, StringConstraints(max_length=10)]
     fields: list[PageField] = Field(default_factory=list, max_length=50)
+    frame: bool = False  # inside a frame of the page, possibly from another site (H1 C5)
 
 
 class Download(_Closed):
@@ -74,6 +75,10 @@ class PageReport(_Closed):
     screenshot: Annotated[str, StringConstraints(max_length=400_000)] | None = None  # base64 JPEG
     browser: Annotated[str, StringConstraints(max_length=40)] = ""
     elapsed_ms: int = Field(default=0, ge=0)
+    # H1 C5: the desktop visit showed nothing (refused, blank or a bot check), so the page was
+    # opened once more as a phone, and this report is what the phone was shown
+    phone_view: bool = False
+    desktop_status: Annotated[str, StringConstraints(max_length=20)] | None = None
 
     @property
     def alive(self) -> bool:

@@ -33,9 +33,10 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from core import hashlists
 from core.api.console import mount_console
+from core.api.sessions import CODE_SECONDS, SESSION_SECONDS, Caller, ConsoleSessions
 from core.config import Settings, legacy_env_names
 from core.contracts import EventSource, VerdictState
-from core.db import audit
+from core.db import audit, hosts
 from core.db.store import save_analysis, save_email_analysis, save_file_analysis
 from core.detection.engine import ENGINE_VERSION, UrlAnalysis, UrlReport
 from core.detonate import PageReport, detonate_url, safe_screenshot
@@ -53,6 +54,7 @@ from core.mailbox.service import MailboxService, combined_status
 from core.mailbox.wiring import build_mailboxes, build_quarantine
 from core.response import service as response_service
 from core.response.routes import build_router as response_router
+from core.urls import popular
 from core.urls.parse import ParsedUrl, parse_url
 
 log = logging.getLogger(__name__)
@@ -202,12 +204,24 @@ class OverrideRequest(BaseModel):
     url: Annotated[str, Field(min_length=1, max_length=8192)]
     minutes: Annotated[int, Field(ge=1, le=60)] = 15
     state: str | None = Field(default=None, max_length=16)  # the verdict that was overridden
+    mistake: bool = False  # "this warning was wrong": recorded as a false alarm (H1 B3)
+
+
+class SessionBody(BaseModel):
+    """Console sign-in: a one-time code, or nothing when the API token is in the header."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    code: (
+        Annotated[str, Field(min_length=16, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")] | None
+    ) = None
 
 
 class OverrideResponse(BaseModel):
     recorded: bool
     expires_at: datetime
     stored_in: str
+    reported_false_alarm: bool = False  # H1 B3: the verdict on this URL is now a false alarm
 
 
 class BodyLimit:
@@ -329,6 +343,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if runner is not None:
         quarantine.append(runner)
     hashlists.configure(settings.data_dir / "hashes")  # known-bad file hashes (offline lookup)
+    popular.configure(settings.data_dir / "popular")  # popular domains for look-alike rules (H1 B1)
+    hosts.configure(settings.data_dir)  # the keyed-hash key for sealed hosts (ADR-007, H1 A8)
+    if db is not None:
+        try:
+            if sealed := hosts.seal_existing(db):  # values stored in plain text before the upgrade
+                log.info("sealed %d stored value(s) that named sites (ADR-007)", sealed)
+        except Exception:  # noqa: BLE001  (an old schema: `python tasks.py migrate`, then it runs)
+            log.warning("could not seal the stored hosts yet; run the database migration")
     if intel is not None and db is not None:
         for p in intel.providers:
             try:
@@ -346,23 +368,90 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     url_limiter = RateLimit(settings.url_rate_limit_per_minute)
     parser_slots = asyncio.Semaphore(settings.max_concurrent_parsers)
 
+    sessions = ConsoleSessions()
+
+    def is_api_token(credentials: HTTPAuthorizationCredentials | None) -> bool:
+        given = credentials.credentials.encode() if credentials else b""
+        return token is not None and secrets.compare_digest(given, token)
+
     def require_token(
         credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
-    ) -> None:
+    ) -> Caller:
+        """Who is calling: the agent (the API token) or a console session (H1 A1)."""
         if token is None:
             raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "API token not configured")
-        given = credentials.credentials.encode() if credentials else b""
-        if not secrets.compare_digest(given, token):
-            raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED,
-                "invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if is_api_token(credentials):
+            return "agent"
+        if credentials and sessions.valid(credentials.credentials):
+            return "console"
+        audit_failed_sign_in()
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    def require_agent(caller: Annotated[Caller, Depends(require_token)]) -> None:
+        if caller != "agent":
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "only the agent may do this")
+
+    failed = {"minute": 0, "count": 0}
+
+    def audit_failed_sign_in() -> None:
+        """Failed sign-ins, counted per minute: one audit row per minute with any, no token text."""
+        minute = int(time.time() // 60)
+        if failed["minute"] != minute and failed["count"]:
+            write_audit("api.auth_failed", "api", {"count": failed["count"],
+                                                    "minute": failed["minute"] * 60})  # fmt: skip
+            failed["count"] = 0
+        failed["minute"] = minute
+        failed["count"] += 1
+
+    def write_audit(action: str, target_type: str, detail: dict[str, object]) -> None:
+        try:
+            audit.record_anywhere(db, settings.data_dir, "core", action, target_type, detail)
+        except Exception:  # noqa: BLE001  (an audit failure must not turn into a sign-in failure)
+            log.warning("could not write the %s audit record", action)
 
     mount_console(app, settings.console_dir)  # only if the console has been built
     app.include_router(
         response_router(db, require_token, RateLimit(settings.rate_limit_per_minute * 5))
     )
+
+    @app.post("/v1/console/code", dependencies=[Depends(require_agent), Depends(limiter)])
+    def console_code() -> dict[str, object]:
+        """A one-time code for `Lynceus.Agent --open-console`: one console session, for 60 s."""
+        code = sessions.new_code()
+        if code is None:
+            raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "too many codes outstanding")
+        return {"code": code, "expires_in": CODE_SECONDS}
+
+    @app.post("/v1/console/session", dependencies=[Depends(limiter)])
+    def console_session(
+        body: SessionBody,
+        credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    ) -> dict[str, object]:
+        """Trade a one-time code, or the API token typed at the sign-in screen, for a session."""
+        if token is None:
+            raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "API token not configured")
+        how = "code" if body.code else "token"
+        session = (
+            sessions.redeem(body.code) if body.code
+            else sessions.open() if is_api_token(credentials) else None
+        )  # fmt: skip
+        if session is None:
+            audit_failed_sign_in()
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "the code was wrong, used or expired")
+        write_audit("console.sign_in", "console", {"with": how})
+        return {"token": session, "expires_in": SESSION_SECONDS}
+
+    @app.delete("/v1/console/session")
+    def console_sign_out(
+        credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    ) -> dict[str, bool]:
+        if credentials:
+            sessions.close(credentials.credentials)
+        return {"signed_out": True}
 
     @app.get("/health")
     def health(
@@ -400,16 +489,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     detonate_limiter = RateLimit(settings.detonation_per_minute)
 
-    @app.post("/v1/urls/detonate", dependencies=[Depends(require_token), Depends(detonate_limiter)])
-    async def detonate(request: AnalyzeRequest) -> DetonateResponse:
+    @app.post("/v1/urls/detonate", dependencies=[Depends(detonate_limiter)])
+    async def detonate(
+        request: AnalyzeRequest, caller: Annotated[Caller, Depends(require_token)]
+    ) -> DetonateResponse:
         """D1: the URL verdict, then the page opened in the sandboxed browser container, then one
         verdict over both. Off unless LYNCEUS_DETONATION is set: it visits the page from this
-        computer's internet connection."""
+        computer's internet connection, so every visit is audited (who asked, how it went; no
+        URL)."""
         if not settings.detonation:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "page detonation is off")
         start, outcome = await analyze_with_intel(request.url, intel)
         analysis: UrlAnalysis
         analysis, page = await run_in_threadpool(detonate_url, request.url, start)
+        await run_in_threadpool(
+            write_audit, "url.detonate", "url",
+            {"by": "user" if caller == "console" else "agent", "page": page.status},
+        )  # fmt: skip
         persisted = False
         if db is not None:
             try:
@@ -581,7 +677,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
         expires = datetime.now(UTC) + timedelta(minutes=body.minutes)
         detail = {
-            "host": parsed.host, "url_sha256": parsed.url_sha256, "minutes": body.minutes,
+            "host_tag": hosts.tag(parsed.host), "url_sha256": parsed.url_sha256,
+            "minutes": body.minutes,
             "overridden_state": body.state, "expires_at": expires.isoformat(),
         }  # fmt: skip
         try:
@@ -599,7 +696,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE, "the override could not be recorded"
             ) from None
-        return OverrideResponse(recorded=True, expires_at=expires, stored_in=where)
+        reported = False
+        if body.mistake and db is not None:
+            try:
+                found = await run_in_threadpool(
+                    response_service.latest_verdict_for_url, db, parsed.url_sha256
+                )
+                reported = found is not None and await run_in_threadpool(
+                    response_service.give_feedback, db, found, "false_alarm"
+                )
+            except Exception:  # noqa: BLE001  (the override itself is recorded; this is extra)
+                log.warning("could not record the false-alarm report")
+        return OverrideResponse(
+            recorded=True, expires_at=expires, stored_in=where, reported_false_alarm=reported
+        )
 
     return app
 

@@ -83,7 +83,15 @@ def rdap_server(reply: Any = None, status: int = 200) -> Server:
     return Server(routes)
 
 
+REGISTRY_IP = "93.184.215.14"  # a public address the fake resolver gives every registry name
+
+
+async def public_resolver(host: str) -> list[str]:
+    return [REGISTRY_IP]
+
+
 def ask_rdap(server: Server, name: str = "newshop.com", **kw: Any) -> Any:
+    kw.setdefault("resolve", public_resolver)
     rdap = Rdap(server.client(), now=lambda: NOW, **kw)
     return run(rdap.lookup(Query(name=name)))
 
@@ -174,16 +182,18 @@ def test_an_oversize_reply_is_refused() -> None:
 def test_the_query_is_one_domain_name_with_no_credentials_and_no_query_string() -> None:
     server = rdap_server()
     ask_rdap(server, "newshop.com")
-    assert server.urls == [BOOTSTRAP_URL, f"{REGISTRY}domain/newshop.com"]
+    assert server.urls == [BOOTSTRAP_URL, f"https://{REGISTRY_IP}/v1/domain/newshop.com"]
     query = server.requests[1]
     assert query.headers["accept"] == "application/rdap+json"
+    assert query.headers["host"] == "rdap.registry.example.com"  # the name, for Host and TLS only
+    assert query.extensions["sni_hostname"] == "rdap.registry.example.com"
     assert "x-apikey" not in query.headers and "authorization" not in query.headers
 
 
 def test_the_bootstrap_is_fetched_once_and_again_after_it_expires() -> None:
     server = rdap_server()
     now = [1000.0]
-    rdap = Rdap(server.client(), now=lambda: NOW, clock=lambda: now[0])
+    rdap = Rdap(server.client(), now=lambda: NOW, clock=lambda: now[0], resolve=public_resolver)
 
     async def go() -> tuple[int, int]:
         for _ in range(3):
@@ -199,10 +209,11 @@ def test_the_bootstrap_is_fetched_once_and_again_after_it_expires() -> None:
 def test_the_longest_matching_suffix_picks_the_server() -> None:
     server = rdap_server()
     ask_rdap(server, "shop.co.uk")
-    assert server.urls[-1] == "https://rdap.couk.example.org/domain/shop.co.uk"
+    assert server.urls[-1].endswith("/domain/shop.co.uk")
+    assert server.requests[-1].headers["host"] == "rdap.couk.example.org"
     server = rdap_server()
     ask_rdap(server, "shop.uk")
-    assert server.urls[-1] == "https://rdap.uk.example.org/domain/shop.uk"
+    assert server.requests[-1].headers["host"] == "rdap.uk.example.org"
 
 
 def test_a_top_level_domain_with_no_server_is_unavailable_not_clean() -> None:
@@ -385,7 +396,11 @@ def test_extra_fields_in_the_reply_are_ignored() -> None:
 def both(server: Server) -> Intel:
     client = server.client()
     return Intel(
-        [Rdap(client, now=lambda: NOW), VirusTotal(client, KEY, now=lambda: NOW)], email_links=False
+        [
+            Rdap(client, now=lambda: NOW, resolve=public_resolver),
+            VirusTotal(client, KEY, now=lambda: NOW),
+        ],
+        email_links=False,
     )
 
 
@@ -393,7 +408,7 @@ def world(request: httpx.Request) -> httpx.Response:
     url = str(request.url)
     if url == BOOTSTRAP_URL:
         return httpx.Response(200, json=BOOTSTRAP)
-    if url.startswith(REGISTRY):
+    if request.headers["host"] == "rdap.registry.example.com":
         return httpx.Response(200, json=rdap_reply(2))
     return httpx.Response(200, json=vt_reply(6))
 
@@ -451,7 +466,7 @@ def test_message_links_send_nothing_unless_the_operator_allows_it() -> None:
     link_analyzer(both(server))("https://www.example.com/page")
     assert server.requests == []
     client = server.client()
-    allowed = Intel([Rdap(client, now=lambda: NOW)], email_links=True)
+    allowed = Intel([Rdap(client, now=lambda: NOW, resolve=public_resolver)], email_links=True)
     link_analyzer(allowed)("https://www.example.com/page")
     assert len(server.requests) == 2
 
@@ -470,3 +485,38 @@ def test_a_dead_internet_still_returns_the_local_verdict() -> None:
     assert live.verdict.state is VerdictState.UNKNOWN
     assert all(r.result.state is None for r in outcome.results)
     assert KEY not in repr(outcome) and KEY not in live.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    "addresses",
+    [
+        ["127.0.0.1"],
+        ["10.0.0.5"],
+        ["169.254.169.254"],  # cloud metadata
+        ["::1"],
+        ["::ffff:192.168.1.1"],  # private IPv4 inside IPv6
+        [REGISTRY_IP, "192.168.0.10"],  # one private answer among public ones is enough to refuse
+        [],
+    ],
+)
+def test_a_registry_name_that_resolves_to_a_private_address_is_never_reached(
+    addresses: list[str],
+) -> None:
+    """H1 A3: the bootstrap file is untrusted; its server name is resolved, every address must be
+    public, and the request goes to that checked address (no second resolution to race)."""
+
+    async def resolve(host: str) -> list[str]:
+        return addresses
+
+    server = rdap_server()
+    with pytest.raises(ProviderError):
+        ask_rdap(server, resolve=resolve)
+    assert server.urls == [BOOTSTRAP_URL]  # only the fixed IANA file was fetched
+
+
+def test_a_registry_name_that_does_not_resolve_is_unavailable() -> None:
+    async def resolve(host: str) -> list[str]:
+        raise OSError("no such host")
+
+    with pytest.raises(ProviderUnavailable):
+        ask_rdap(rdap_server(), resolve=resolve)

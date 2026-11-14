@@ -324,3 +324,44 @@ def test_ordinary_script_and_links_are_not_counted() -> None:
 def test_script_text_examined_is_capped() -> None:
     s = stats("<script>" + "new Blob(x);" * 100_000 + "</script>")
     assert s["blob_apis"] <= limits.MAX_SCRIPT_CHARS // len("new Blob(x);")
+
+
+# ---- H1 C4: links written in the page text -----------------------------------------------------
+
+
+def text_pdf(*lines: bytes, pages: int = 1) -> bytes:
+    import pikepdf
+
+    doc = pikepdf.new()
+    font = doc.make_indirect(pikepdf.Dictionary(Type=pikepdf.Name.Font, Subtype=pikepdf.Name.Type1,
+                                                BaseFont=pikepdf.Name.Helvetica))  # fmt: skip
+    for _ in range(pages):
+        ops = b"BT /F1 12 Tf 72 712 Td " + b" ".join(lines) + b" ET"
+        page = doc.add_blank_page()
+        page.obj.Resources = pikepdf.Dictionary(Font=pikepdf.Dictionary(F1=font))
+        page.obj.Contents = doc.make_stream(ops)
+    out = io.BytesIO()
+    doc.save(out)
+    return out.getvalue()
+
+
+def test_a_link_written_in_the_page_text_is_found() -> None:
+    data = text_pdf(b"(Your invoice is ready: https://pay-portal.test/inv/42 please sign in) Tj")
+    assert "https://pay-portal.test/inv/42" in pdf(data).uris
+
+
+def test_a_link_split_across_kerned_pieces_is_joined() -> None:
+    data = text_pdf(b"[(https://sec) -20 (ure-docs.test/view)] TJ")
+    assert "https://secure-docs.test/view" in pdf(data).uris
+
+
+def test_text_without_links_adds_nothing_and_annotations_still_count() -> None:
+    assert pdf(text_pdf(b"(Minutes of the meeting on Tuesday) Tj")).uris == []
+    annotated = fh.make_pdf("", ["<< /S /URI /URI (https://annot.test/a) >>"])
+    assert pdf(annotated).uris == ["https://annot.test/a"]
+
+
+def test_page_text_links_are_capped_and_never_raise() -> None:
+    many = b" ".join(b"(https://site%d.test/x) Tj" % i for i in range(400))
+    scan = pdf(text_pdf(many, pages=2))
+    assert len(scan.uris) <= limits.MAX_PDF_URIS and "uris" in scan.limits

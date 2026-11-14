@@ -116,13 +116,14 @@ def _scan(
     digest: str,
     magic: str | None,
     html: dict[str, int] | None,
+    active: list[str] | None = None,
 ) -> MessageScan:
     """An otherwise empty message holding this one file as its attachment."""
     shown = min(size, 64 * 1024 * 1024)
     part = Part.model_validate(
         {"path": "1", "ctype": "application/octet-stream", "charset": None,
          "disposition": "attachment", "filename": name, "size": shown, "sha256": digest,
-         "magic": magic, "attachment": True, "flags": flags}
+         "magic": magic, "attachment": True, "flags": flags, "active": active or []}
     )  # fmt: skip
     return MessageScan.model_validate(
         {
@@ -206,12 +207,13 @@ def analyze_file(
     magic: str | None = claimed_magic if claimed_magic in MAGICS else None
     info: FileInfo | None = None
     html: dict[str, int] | None = None
+    active: list[str] = []
     inspected = False
 
     def decide() -> FileAnalysis:
         try:
             files = (info,) if info else ()
-            scan = _scan(clean, flags, size, digest, magic, html)
+            scan = _scan(clean, flags, size, digest, magic, html, active)
             links, _ = mail.resolve_links(scan, 100, mail.file_links(files), analyze_url)
             inside = [h for h in mail.known_bad(scan, files) if h.where == "archive entry"]
             hits = tuple(dict.fromkeys([*known, *inside]))
@@ -253,6 +255,7 @@ def analyze_file(
         if reply.file.kind != "none":
             info = FileInfo("1", magic, reply.file, None)
         html = reply.html.model_dump() if reply.html else None
+        active = list(reply.active)
     elif magic in INSPECTABLE and magic not in ("html", "svg"):
         info = FileInfo("1", magic, None, "skipped")  # known to be openable, but not opened
     return decide()

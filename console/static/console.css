@@ -375,6 +375,7 @@ td.detail { max-width: 46ch; overflow-wrap: anywhere; color: var(--text-2); }
 .field { display: grid; gap: 6px; }
 .field > span { display: inline-flex; align-items: center; gap: 8px; font-size: .84rem; font-weight: 700; color: var(--text-2); }
 .field input { width: 100%; padding: 12px 14px; }
+.login-error { color: var(--bad) !important; background: var(--bad-bg); border-radius: 8px; padding: 8px 12px; }
 .login-fine { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-3) !important; }
 
 /* ---- small screens ---- */

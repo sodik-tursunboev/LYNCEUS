@@ -53,13 +53,23 @@ switch (args.FirstOrDefault())
         Console.WriteLine($"at logon: {s.AtLogon}; Edge bridge: {s.Edge}; Chrome bridge: {s.Chrome}; host manifest: {s.Manifest}");
         return 0;
     case "--open-console":
-        var link = ConsoleLink.Build(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir));
+    case "--console-link":
+        // the link carries a one-time code from the core, never the token (H1 A1)
+        var (link, problem) = await ConsoleLink.FetchAsync(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir), CancellationToken.None);
+        if (link is null)
+        {
+            Console.Error.WriteLine(problem);
+            return 1;
+        }
+
+        if (args[0] == "--console-link")
+        {
+            Console.WriteLine(link); // for the native console window: nothing opened
+            return 0;
+        }
+
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(link) { UseShellExecute = true });
         Console.WriteLine("Opened the console in your browser.");
-        return 0;
-    case "--console-link":
-        // for the native console window: the signed-in address on standard output, nothing opened
-        Console.WriteLine(ConsoleLink.Build(config.CoreUrl, TokenStore.Resolve(config.ResolvedDataDir)));
         return 0;
     case "--set-token":
         var token = (Console.In.ReadLine() ?? string.Empty).Trim();

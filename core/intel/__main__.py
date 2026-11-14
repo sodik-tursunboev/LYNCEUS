@@ -4,8 +4,10 @@
     python -m core.intel status                              what is enabled, downloaded, stale
     python -m core.intel lookup <url>                        match a URL against downloaded lists
     python -m core.intel hashes status|import|check|sync     known-bad file hashes (offline lookup)
+    python -m core.intel popular sync|status                 the popular-domain list (H1 B1)
 
-`sync` and `hashes sync` are the only commands that touch the network, and only to download lists
+`sync`, `hashes sync` and `popular sync` are the only commands that touch the network, and only
+to download lists
 the operator asked for (the feeds in LYNCEUS_INTEL_PROVIDERS; MalwareBazaar's hashes with the
 operator's own abuse.ch key). `lookup` and the other `hashes` commands are offline.
 """
@@ -19,11 +21,13 @@ from pathlib import Path
 from core import hashlists
 from core.config import Settings
 from core.intel import hashfeed
+from core.intel import popular as popular_sync
 from core.intel.base import Subject
 from core.intel.feeds import FEEDS, FeedStore, ListFeed, sync
 from core.intel.http import make_client
 from core.intel.orchestrator import Intel
 from core.intel.refresh import feed_keys
+from core.urls import popular
 from core.urls.parse import ParsedUrl, parse_url
 
 
@@ -127,6 +131,26 @@ def _hashes(settings: Settings, args: argparse.Namespace) -> int:
     return asyncio.run(run())
 
 
+def _popular(settings: Settings, action: str) -> int:
+    directory = settings.data_dir / "popular"
+    if action == "status":
+        popular.configure(directory)
+        print(f"{len(popular.domains())} popular domains in {directory / popular.FILE}")
+        return 0
+
+    async def run() -> int:
+        async with make_client(timeout=60.0) as client:
+            try:
+                kept, detail = await popular_sync.sync(directory, client)
+            except Exception as e:  # noqa: BLE001  (a stated failure; the old list stays in place)
+                print(f"popular   error    {type(e).__name__}: {e}", file=sys.stderr)
+                return 1
+        print(f"popular   ok       {kept:>9} domains  {detail}")
+        return 0
+
+    return asyncio.run(run())
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m core.intel")
     commands = ap.add_subparsers(dest="command", required=True)
@@ -148,10 +172,14 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("status", help="show what is enabled and how old each list is")
     lk = commands.add_parser("lookup", help="match one URL against the downloaded lists (offline)")
     lk.add_argument("url")
+    pop = commands.add_parser("popular", help="the popular-domain list used by look-alike rules")
+    pop.add_argument("action", choices=["sync", "status"])
     args = ap.parse_args(argv)
     settings = Settings()
     if args.command == "hashes":
         return _hashes(settings, args)
+    if args.command == "popular":
+        return _popular(settings, args.action)
     if args.command == "sync":
         return asyncio.run(_sync(settings, args.feed, args.force))
     if args.command == "status":

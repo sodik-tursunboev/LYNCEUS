@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Annotated
 
 from sqlalchemy import (
+    DDL,
     JSON,
     CheckConstraint,
     DateTime,
@@ -21,6 +22,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Text,
+    event,
     func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -71,7 +73,8 @@ class Artifact(Base):
     kind: Mapped[str] = mapped_column(String(16))
     sha256: Mapped[str] = mapped_column(String(64), index=True)
     ref: Mapped[str] = mapped_column(Text)  # "sha256:<hash>" in M1: no URL text before ADR-007
-    host: Mapped[str | None] = mapped_column(String(253), index=True)
+    host: Mapped[str | None] = mapped_column(Text)  # sealed with DPAPI (ADR-007, core/db/hosts.py)
+    host_tag: Mapped[str | None] = mapped_column(String(64), index=True)  # keyed hash, for lookups
     created_at: Mapped[CreatedAt]
 
 
@@ -79,8 +82,11 @@ class Domain(Base):
     __tablename__ = "domains"
 
     id: Mapped[UuidPk]
-    name: Mapped[str] = mapped_column(String(253), unique=True)
-    registered_domain: Mapped[str | None] = mapped_column(String(253), index=True)
+    name: Mapped[str] = mapped_column(
+        String(253), unique=True
+    )  # the keyed hash of the host (H1 A8)
+    registered_domain: Mapped[str | None] = mapped_column(String(253), index=True)  # keyed hash too
+    sealed_name: Mapped[str | None] = mapped_column(Text)  # the host itself, sealed with DPAPI
     first_seen_at: Mapped[datetime] = mapped_column(server_default=func.now())
     last_seen_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
@@ -220,7 +226,8 @@ class DetectionEvidence(Base):
 
 
 class AuditLog(Base):
-    """Append-only by convention; DB-level enforcement is a known gap (see limitations)."""
+    """Append-only, enforced by the database: a trigger refuses UPDATE, DELETE and TRUNCATE
+    (migration 0004, and APPEND_ONLY below for tables made by `create_all`)."""
 
     __tablename__ = "audit_logs"
 
@@ -231,6 +238,32 @@ class AuditLog(Base):
     target_type: Mapped[str] = mapped_column(String(32))
     target_id: Mapped[uuid.UUID | None] = mapped_column(index=True)
     detail: Mapped[dict[str, object] | None] = mapped_column(JSON)  # redacted before storing
+
+
+# H1 A2: the same triggers as migration 0004, so a table made by `create_all` is append-only too
+APPEND_ONLY = {
+    "postgresql": [
+        "CREATE OR REPLACE FUNCTION audit_logs_append_only() RETURNS trigger LANGUAGE plpgsql AS "
+        "$$ BEGIN RAISE EXCEPTION 'audit_logs is append-only'; END $$",
+        "CREATE TRIGGER audit_logs_no_change BEFORE UPDATE OR DELETE ON audit_logs "
+        "FOR EACH ROW EXECUTE FUNCTION audit_logs_append_only()",
+        "CREATE TRIGGER audit_logs_no_truncate BEFORE TRUNCATE ON audit_logs "
+        "FOR EACH STATEMENT EXECUTE FUNCTION audit_logs_append_only()",
+    ],
+    "sqlite": [
+        "CREATE TRIGGER audit_logs_no_update BEFORE UPDATE ON audit_logs "
+        "BEGIN SELECT RAISE(ABORT, 'audit_logs is append-only'); END",
+        "CREATE TRIGGER audit_logs_no_delete BEFORE DELETE ON audit_logs "
+        "BEGIN SELECT RAISE(ABORT, 'audit_logs is append-only'); END",
+    ],
+}
+for _dialect, _statements in APPEND_ONLY.items():
+    for _statement in _statements:
+        event.listen(
+            AuditLog.__table__,
+            "after_create",
+            DDL(_statement).execute_if(dialect=_dialect),  # type: ignore[no-untyped-call]
+        )
 
 
 ACTION_KINDS = ("FILE_QUARANTINE", "MAIL_QUARANTINE")
@@ -284,6 +317,28 @@ class Action(Base):
     mail_ref: Mapped[str | None] = mapped_column(
         String(512)
     )  # the provider's message id (email only)
+
+
+FEEDBACK_LABELS = ("false_alarm", "missed", "correct")
+
+
+class Feedback(Base):
+    """What the person said about one verdict (H1 B3): a false alarm, a missed phishing, or right.
+    One row per verdict, the latest answer; every answer is also in the audit log. With the rules
+    that fired (`detections`), it says which rules are noisy on this machine."""
+
+    __tablename__ = "feedback"
+    __table_args__ = (
+        CheckConstraint(f"label IN ({_quoted(FEEDBACK_LABELS)})", name="label_valid"),
+        CheckConstraint("given_by IN ('user')", name="given_by_valid"),
+    )
+
+    verdict_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("verdicts.id", ondelete="CASCADE"), primary_key=True
+    )
+    label: Mapped[str] = mapped_column(String(16), index=True)
+    given_by: Mapped[str] = mapped_column(String(16))
+    given_at: Mapped[CreatedAt]
 
 
 class Allow(Base):

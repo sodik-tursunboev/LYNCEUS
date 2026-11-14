@@ -35,7 +35,7 @@ export type Reply = VerdictReply | ErrorReply | OverrideOk | StatusReply;
 
 export type Request =
   | { type: "check_url"; url: string }
-  | { type: "override"; url: string; state?: State; minutes?: number }
+  | { type: "override"; url: string; state?: State; minutes?: number; mistake?: boolean }
   | { type: "status" };
 
 export const AGENT_DOWN = "agent_unavailable";

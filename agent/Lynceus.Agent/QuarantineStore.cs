@@ -155,7 +155,10 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
 {
     private const string Payload = "payload.quar";
     private const string Part = "payload.quar.part";
+    private const string Sealed = "payload.sealed";
+    private const string SealedPart = "payload.sealed.part";
     private const string RecordFile = "record.json";
+    private static readonly byte[] KeyEntropy = "lynceus-quarantine-v1"u8.ToArray();
 
     private static readonly JsonSerializerOptions Json = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
     private readonly RealFileSystem fs = fileSystem ?? new RealFileSystem();
@@ -174,7 +177,7 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
 
         var dir = Folder(actionId);
         var record = Load(dir);
-        if (record is { State: "quarantined" or "restored" } && fs.Exists(Path.Combine(dir, Payload)))
+        if (record is { State: "quarantined" or "restored" } && HasPayload(dir, record))
         {
             return new QuarantineResult(true, "already");
         }
@@ -369,7 +372,7 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
             return Fail("no_record");
         }
 
-        if (record.State is not ("quarantined" or "restored") || !fs.Exists(payload))
+        if (record.State is not ("quarantined" or "restored") || !HasPayload(dir, record))
         {
             return Fail("payload_missing");
         }
@@ -381,7 +384,8 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
 
         try
         {
-            if (HashOf(payload) != record.Sha256)
+            var useSealed = record.KeyB64 is not null && fs.Exists(Path.Combine(dir, Sealed));
+            if (!useSealed && HashOf(payload) != record.Sha256)
             {
                 return Fail("payload_changed");
             }
@@ -405,8 +409,25 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
                 CleanTemp(temp);
             }
 
-            using (var from = fs.OpenRead(payload))
+            if (useSealed)
             {
+                // sealed (H1 A7): unsealed straight into the temp file, checked against the hash judged
+                string unsealedHash;
+                using (var from = fs.OpenRead(Path.Combine(dir, Sealed)))
+                using (var plain = new CtrStream(from, UnwrapKey(record.KeyB64!)))
+                {
+                    (unsealedHash, _) = CopyAndHash(plain, temp);
+                }
+
+                if (unsealedHash != record.Sha256)
+                {
+                    CleanTemp(temp);
+                    return Fail("payload_changed");
+                }
+            }
+            else
+            {
+                using var from = fs.OpenRead(payload);
                 CopyAndHash(from, temp);
             }
 
@@ -452,10 +473,135 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
             var reason = target == original ? "ok" : "renamed";
             return new QuarantineResult(true, marked ? reason : reason + "_unmarked", target, record.Size, record.ModifiedTicks);
         }
+        catch (CryptographicException)
+        {
+            return Fail("key_unavailable"); // sealed by another Windows user, or the profile's keys are gone
+        }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return Fail(Classify(e));
         }
+    }
+
+    // ---- seal (H1 A7) -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Seals a quarantined copy: AES-256 in counter mode under a fresh key, the key protected by DPAPI for this
+    /// Windows user. A double-click cannot run it, an antivirus sees noise, and only this user can restore it.
+    /// Order (each step resumable): the sealed copy is written and checked by unsealing it against the judged
+    /// hash; the record gets the key; the sealed copy takes its name; only then is the plain copy removed, through
+    /// the same verified-delete handle as everywhere else. A failure leaves the plain copy quarantined as before.
+    /// </summary>
+    public QuarantineResult Seal(string actionId)
+    {
+        if (!Guid.TryParseExact(actionId, "D", out _))
+        {
+            return Fail("bad_id");
+        }
+
+        var dir = Folder(actionId);
+        var record = Load(dir);
+        if (record is not { State: "quarantined" or "restored" })
+        {
+            return Fail("not_quarantined");
+        }
+
+        var payload = Path.Combine(dir, Payload);
+        var sealedPath = Path.Combine(dir, Sealed);
+        var part = Path.Combine(dir, SealedPart);
+        try
+        {
+            if (record.KeyB64 is { } wrapped && (fs.Exists(sealedPath) || fs.Exists(part)))
+            {
+                var finished = false;
+                if (!fs.Exists(sealedPath))
+                {
+                    fs.Move(part, sealedPath); // an interrupted seal: the part was already checked
+                    finished = true;
+                }
+
+                if (fs.Exists(payload) && UnsealedHash(sealedPath, UnwrapKey(wrapped)) == record.Sha256)
+                {
+                    finished |= fs.DeleteIfSame(payload, record.Sha256, () => { });
+                }
+
+                return new QuarantineResult(true, finished ? "ok" : "already");
+            }
+
+            if (!fs.Exists(payload) || HashOf(payload) != record.Sha256)
+            {
+                return Fail("payload_changed");
+            }
+
+            CleanTemp(part);
+            var key = RandomNumberGenerator.GetBytes(32);
+            using (var from = fs.OpenRead(payload))
+            using (var sealing = new CtrStream(from, key))
+            {
+                CopyAndHash(sealing, part);
+            }
+
+            if (UnsealedHash(part, key) != record.Sha256)
+            {
+                CleanTemp(part);
+                return Fail("seal_failed");
+            }
+
+            record.KeyB64 = Convert.ToBase64String(ProtectedData.Protect(key, KeyEntropy, DataProtectionScope.CurrentUser));
+            Save(dir, record);
+            fs.Move(part, sealedPath);
+            fs.DeleteIfSame(payload, record.Sha256, () => { });
+            return new QuarantineResult(true, "ok");
+        }
+        catch (CryptographicException)
+        {
+            CleanTemp(part);
+            return Fail("key_unavailable");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            CleanTemp(part);
+            return Fail(Classify(e));
+        }
+    }
+
+    /// <summary>Seals every quarantined copy still in plain form (older ones, or one whose seal was interrupted).</summary>
+    public int SealAll()
+    {
+        if (!Directory.Exists(root))
+        {
+            return 0;
+        }
+
+        var sealedNow = 0;
+        foreach (var dir in Directory.GetDirectories(root))
+        {
+            var id = Path.GetFileName(dir);
+            if (Guid.TryParseExact(id, "D", out _) && (fs.Exists(Path.Combine(dir, Payload)) || fs.Exists(Path.Combine(dir, SealedPart)))
+                && Seal(id) is { Ok: true, Reason: "ok" })
+            {
+                sealedNow++;
+            }
+        }
+
+        return sealedNow;
+    }
+
+    /// <summary>Whether the copy is sealed (for the console and tests). No path or key leaves the agent.</summary>
+    public bool IsSealed(string actionId) =>
+        Guid.TryParseExact(actionId, "D", out _) && Load(Folder(actionId)) is { KeyB64: not null } && fs.Exists(Path.Combine(Folder(actionId), Sealed));
+
+    private bool HasPayload(string dir, Record record) =>
+        fs.Exists(Path.Combine(dir, Payload)) || (record.KeyB64 is not null && fs.Exists(Path.Combine(dir, Sealed)));
+
+    private static byte[] UnwrapKey(string wrapped) =>
+        ProtectedData.Unprotect(Convert.FromBase64String(wrapped), KeyEntropy, DataProtectionScope.CurrentUser);
+
+    private string UnsealedHash(string sealedPath, byte[] key)
+    {
+        using var from = fs.OpenRead(sealedPath);
+        using var plain = new CtrStream(from, key);
+        return Hash(plain);
     }
 
     /// <summary>What a quarantined action holds, for the console and for tests. No path leaves the agent.</summary>
@@ -577,7 +723,7 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
     {
         try
         {
-            if (fs.Exists(path) && (path.EndsWith(Part, StringComparison.Ordinal) || path.EndsWith(".lynceus-restore", StringComparison.Ordinal)))
+            if (fs.Exists(path) && (path.EndsWith(Part, StringComparison.Ordinal) || path.EndsWith(SealedPart, StringComparison.Ordinal) || path.EndsWith(".lynceus-restore", StringComparison.Ordinal)))
             {
                 fs.Delete(path);
             }
@@ -661,6 +807,85 @@ public sealed class QuarantineStore(string root, RealFileSystem? fileSystem = nu
 
         [JsonPropertyName("restored")]
         public string? RestoredB64 { get; set; }
+
+        /// <summary>The sealed copy's AES key, protected by DPAPI for this Windows user (H1 A7).</summary>
+        [JsonPropertyName("key")]
+        public string? KeyB64 { get; set; }
+    }
+}
+
+/// <summary>
+/// AES-256 in counter mode over a stream, read-only: the same transform seals and unseals. Each file gets a
+/// fresh random key, so the counter starts at zero without ever repeating under one key. No integrity of its
+/// own: every unsealing is checked against the SHA-256 recorded when the file was judged.
+/// </summary>
+internal sealed class CtrStream(Stream inner, byte[] key) : Stream
+{
+    private readonly Aes aes = Make(key);
+    private long produced;
+
+    private static Aes Make(byte[] key)
+    {
+        var aes = Aes.Create();
+        aes.Key = key;
+        return aes;
+    }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        var n = inner.Read(buffer, offset, count);
+        if (n <= 0)
+        {
+            return n;
+        }
+
+        var first = produced / 16;
+        var skip = (int)(produced % 16);
+        var blocks = (skip + n + 15) / 16;
+        var counters = new byte[blocks * 16];
+        for (var i = 0; i < blocks; i++)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(counters.AsSpan((i * 16) + 8), first + i);
+        }
+
+        var stream = aes.EncryptEcb(counters, PaddingMode.None);
+        for (var i = 0; i < n; i++)
+        {
+            buffer[offset + i] ^= stream[skip + i];
+        }
+
+        produced += n;
+        return n;
+    }
+
+    public override bool CanRead => true;
+
+    public override bool CanSeek => false;
+
+    public override bool CanWrite => false;
+
+    public override long Length => throw new NotSupportedException();
+
+    public override long Position { get => produced; set => throw new NotSupportedException(); }
+
+    public override void Flush()
+    {
+    }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            aes.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
 

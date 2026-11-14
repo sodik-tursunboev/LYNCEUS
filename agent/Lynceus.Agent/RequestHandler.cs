@@ -95,7 +95,7 @@ public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats, A
     {
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
         limit.CancelAfter(CoreDeadline);
-        var result = await core.OverrideAsync(request.Url!, request.State, request.Minutes, limit.Token).ConfigureAwait(false);
+        var result = await core.OverrideAsync(request.Url!, request.State, request.Minutes, limit.Token, request.Mistake).ConfigureAwait(false);
         if (result.Status != CoreStatus.Ok || result.ExpiresAt is not { } expires)
         {
             // the audit record is part of the override: no record, no continue

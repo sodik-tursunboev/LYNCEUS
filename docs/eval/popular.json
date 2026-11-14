@@ -1,0 +1,712 @@
+{
+ "generated_at": "2026-11-13 22:59Z",
+ "list_size": 100000,
+ "d1": {
+  "dev brand_home legit": {
+   "n": 38,
+   "on_popular_domains": {
+    "k": 38,
+    "n": 38,
+    "rate": 1.0,
+    "ci": [
+     0.9082,
+     1.0
+    ]
+   },
+   "flagged_before": {
+    "k": 0,
+    "n": 38,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0918
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 38,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0918
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "dev openphish phish": {
+   "n": 87,
+   "on_popular_domains": {
+    "k": 4,
+    "n": 87,
+    "rate": 0.046,
+    "ci": [
+     0.018,
+     0.1123
+    ]
+   },
+   "flagged_before": {
+    "k": 30,
+    "n": 87,
+    "rate": 0.3448,
+    "ci": [
+     0.2534,
+     0.4494
+    ]
+   },
+   "flagged_after": {
+    "k": 30,
+    "n": 87,
+    "rate": 0.3448,
+    "ci": [
+     0.2534,
+     0.4494
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "dev phishtank phish": {
+   "n": 20,
+   "on_popular_domains": {
+    "k": 2,
+    "n": 20,
+    "rate": 0.1,
+    "ci": [
+     0.0279,
+     0.301
+    ]
+   },
+   "flagged_before": {
+    "k": 6,
+    "n": 20,
+    "rate": 0.3,
+    "ci": [
+     0.1455,
+     0.519
+    ]
+   },
+   "flagged_after": {
+    "k": 6,
+    "n": 20,
+    "rate": 0.3,
+    "ci": [
+     0.1455,
+     0.519
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "dev tranco legit (from Tranco: circular)": {
+   "n": 108,
+   "on_popular_domains": {
+    "k": 106,
+    "n": 108,
+    "rate": 0.9815,
+    "ci": [
+     0.935,
+     0.9949
+    ]
+   },
+   "flagged_before": {
+    "k": 3,
+    "n": 108,
+    "rate": 0.0278,
+    "ci": [
+     0.0095,
+     0.0785
+    ]
+   },
+   "flagged_after": {
+    "k": 2,
+    "n": 108,
+    "rate": 0.0185,
+    "ci": [
+     0.0051,
+     0.065
+    ]
+   },
+   "cleared_by_the_list": 1,
+   "newly_flagged": 0
+  },
+  "dev tranco_login legit (from Tranco: circular)": {
+   "n": 40,
+   "on_popular_domains": {
+    "k": 39,
+    "n": 40,
+    "rate": 0.975,
+    "ci": [
+     0.8712,
+     0.9956
+    ]
+   },
+   "flagged_before": {
+    "k": 2,
+    "n": 40,
+    "rate": 0.05,
+    "ci": [
+     0.0138,
+     0.165
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 40,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0876
+    ]
+   },
+   "cleared_by_the_list": 2,
+   "newly_flagged": 0
+  },
+  "test brand_home legit": {
+   "n": 51,
+   "on_popular_domains": {
+    "k": 49,
+    "n": 51,
+    "rate": 0.9608,
+    "ci": [
+     0.8678,
+     0.9892
+    ]
+   },
+   "flagged_before": {
+    "k": 0,
+    "n": 51,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.07
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 51,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.07
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "test openphish phish": {
+   "n": 89,
+   "on_popular_domains": {
+    "k": 7,
+    "n": 89,
+    "rate": 0.0787,
+    "ci": [
+     0.0386,
+     0.1536
+    ]
+   },
+   "flagged_before": {
+    "k": 38,
+    "n": 89,
+    "rate": 0.427,
+    "ci": [
+     0.3293,
+     0.5306
+    ]
+   },
+   "flagged_after": {
+    "k": 37,
+    "n": 89,
+    "rate": 0.4157,
+    "ci": [
+     0.3189,
+     0.5195
+    ]
+   },
+   "cleared_by_the_list": 1,
+   "newly_flagged": 0
+  },
+  "test phishtank phish": {
+   "n": 29,
+   "on_popular_domains": {
+    "k": 1,
+    "n": 29,
+    "rate": 0.0345,
+    "ci": [
+     0.0061,
+     0.1718
+    ]
+   },
+   "flagged_before": {
+    "k": 6,
+    "n": 29,
+    "rate": 0.2069,
+    "ci": [
+     0.0985,
+     0.3839
+    ]
+   },
+   "flagged_after": {
+    "k": 6,
+    "n": 29,
+    "rate": 0.2069,
+    "ci": [
+     0.0985,
+     0.3839
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "test tranco legit (from Tranco: circular)": {
+   "n": 93,
+   "on_popular_domains": {
+    "k": 93,
+    "n": 93,
+    "rate": 1.0,
+    "ci": [
+     0.9603,
+     1.0
+    ]
+   },
+   "flagged_before": {
+    "k": 5,
+    "n": 93,
+    "rate": 0.0538,
+    "ci": [
+     0.0232,
+     0.1197
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 93,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0397
+    ]
+   },
+   "cleared_by_the_list": 5,
+   "newly_flagged": 0
+  },
+  "test tranco_login legit (from Tranco: circular)": {
+   "n": 41,
+   "on_popular_domains": {
+    "k": 40,
+    "n": 41,
+    "rate": 0.9756,
+    "ci": [
+     0.874,
+     0.9957
+    ]
+   },
+   "flagged_before": {
+    "k": 2,
+    "n": 41,
+    "rate": 0.0488,
+    "ci": [
+     0.0135,
+     0.1614
+    ]
+   },
+   "flagged_after": {
+    "k": 1,
+    "n": 41,
+    "rate": 0.0244,
+    "ci": [
+     0.0043,
+     0.126
+    ]
+   },
+   "cleared_by_the_list": 1,
+   "newly_flagged": 0
+  }
+ },
+ "e1": {
+  "test edge_history legit": {
+   "n": 33,
+   "on_popular_domains": {
+    "k": 26,
+    "n": 33,
+    "rate": 0.7879,
+    "ci": [
+     0.6225,
+     0.8932
+    ]
+   },
+   "flagged_before": {
+    "k": 0,
+    "n": 33,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.1043
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 33,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.1043
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "test openphish phish": {
+   "n": 92,
+   "on_popular_domains": {
+    "k": 7,
+    "n": 92,
+    "rate": 0.0761,
+    "ci": [
+     0.0373,
+     0.1488
+    ]
+   },
+   "flagged_before": {
+    "k": 21,
+    "n": 92,
+    "rate": 0.2283,
+    "ci": [
+     0.1544,
+     0.3239
+    ]
+   },
+   "flagged_after": {
+    "k": 21,
+    "n": 92,
+    "rate": 0.2283,
+    "ci": [
+     0.1544,
+     0.3239
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "test phishtank phish": {
+   "n": 14075,
+   "on_popular_domains": {
+    "k": 7390,
+    "n": 14075,
+    "rate": 0.525,
+    "ci": [
+     0.5168,
+     0.5333
+    ]
+   },
+   "flagged_before": {
+    "k": 447,
+    "n": 14075,
+    "rate": 0.0318,
+    "ci": [
+     0.029,
+     0.0348
+    ]
+   },
+   "flagged_after": {
+    "k": 445,
+    "n": 14075,
+    "rate": 0.0316,
+    "ci": [
+     0.0289,
+     0.0346
+    ]
+   },
+   "cleared_by_the_list": 2,
+   "newly_flagged": 0
+  },
+  "test phiusiil legit": {
+   "n": 40685,
+   "on_popular_domains": {
+    "k": 4073,
+    "n": 40685,
+    "rate": 0.1001,
+    "ci": [
+     0.0972,
+     0.1031
+    ]
+   },
+   "flagged_before": {
+    "k": 27,
+    "n": 40685,
+    "rate": 0.0007,
+    "ci": [
+     0.0005,
+     0.001
+    ]
+   },
+   "flagged_after": {
+    "k": 20,
+    "n": 40685,
+    "rate": 0.0005,
+    "ci": [
+     0.0003,
+     0.0008
+    ]
+   },
+   "cleared_by_the_list": 7,
+   "newly_flagged": 0
+  },
+  "test phiusiil phish": {
+   "n": 30090,
+   "on_popular_domains": {
+    "k": 4312,
+    "n": 30090,
+    "rate": 0.1433,
+    "ci": [
+     0.1394,
+     0.1473
+    ]
+   },
+   "flagged_before": {
+    "k": 658,
+    "n": 30090,
+    "rate": 0.0219,
+    "ci": [
+     0.0203,
+     0.0236
+    ]
+   },
+   "flagged_after": {
+    "k": 657,
+    "n": 30090,
+    "rate": 0.0218,
+    "ci": [
+     0.0202,
+     0.0235
+    ]
+   },
+   "cleared_by_the_list": 1,
+   "newly_flagged": 0
+  },
+  "test tranco legit (from Tranco: circular)": {
+   "n": 14911,
+   "on_popular_domains": {
+    "k": 14813,
+    "n": 14911,
+    "rate": 0.9934,
+    "ci": [
+     0.992,
+     0.9946
+    ]
+   },
+   "flagged_before": {
+    "k": 146,
+    "n": 14911,
+    "rate": 0.0098,
+    "ci": [
+     0.0083,
+     0.0115
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 14911,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0003
+    ]
+   },
+   "cleared_by_the_list": 146,
+   "newly_flagged": 0
+  },
+  "train edge_history legit": {
+   "n": 53,
+   "on_popular_domains": {
+    "k": 36,
+    "n": 53,
+    "rate": 0.6792,
+    "ci": [
+     0.5452,
+     0.7891
+    ]
+   },
+   "flagged_before": {
+    "k": 0,
+    "n": 53,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0676
+    ]
+   },
+   "flagged_after": {
+    "k": 0,
+    "n": 53,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0676
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "train openphish phish": {
+   "n": 174,
+   "on_popular_domains": {
+    "k": 10,
+    "n": 174,
+    "rate": 0.0575,
+    "ci": [
+     0.0315,
+     0.1025
+    ]
+   },
+   "flagged_before": {
+    "k": 40,
+    "n": 174,
+    "rate": 0.2299,
+    "ci": [
+     0.1736,
+     0.2978
+    ]
+   },
+   "flagged_after": {
+    "k": 40,
+    "n": 174,
+    "rate": 0.2299,
+    "ci": [
+     0.1736,
+     0.2978
+    ]
+   },
+   "cleared_by_the_list": 0,
+   "newly_flagged": 0
+  },
+  "train phishtank phish": {
+   "n": 28380,
+   "on_popular_domains": {
+    "k": 14706,
+    "n": 28380,
+    "rate": 0.5182,
+    "ci": [
+     0.5124,
+     0.524
+    ]
+   },
+   "flagged_before": {
+    "k": 867,
+    "n": 28380,
+    "rate": 0.0305,
+    "ci": [
+     0.0286,
+     0.0326
+    ]
+   },
+   "flagged_after": {
+    "k": 857,
+    "n": 28380,
+    "rate": 0.0302,
+    "ci": [
+     0.0283,
+     0.0323
+    ]
+   },
+   "cleared_by_the_list": 10,
+   "newly_flagged": 0
+  },
+  "train phiusiil legit": {
+   "n": 80573,
+   "on_popular_domains": {
+    "k": 8177,
+    "n": 80573,
+    "rate": 0.1015,
+    "ci": [
+     0.0994,
+     0.1036
+    ]
+   },
+   "flagged_before": {
+    "k": 61,
+    "n": 80573,
+    "rate": 0.0008,
+    "ci": [
+     0.0006,
+     0.001
+    ]
+   },
+   "flagged_after": {
+    "k": 45,
+    "n": 80573,
+    "rate": 0.0006,
+    "ci": [
+     0.0004,
+     0.0007
+    ]
+   },
+   "cleared_by_the_list": 16,
+   "newly_flagged": 0
+  },
+  "train phiusiil phish": {
+   "n": 60384,
+   "on_popular_domains": {
+    "k": 8884,
+    "n": 60384,
+    "rate": 0.1471,
+    "ci": [
+     0.1443,
+     0.15
+    ]
+   },
+   "flagged_before": {
+    "k": 1317,
+    "n": 60384,
+    "rate": 0.0218,
+    "ci": [
+     0.0207,
+     0.023
+    ]
+   },
+   "flagged_after": {
+    "k": 1312,
+    "n": 60384,
+    "rate": 0.0217,
+    "ci": [
+     0.0206,
+     0.0229
+    ]
+   },
+   "cleared_by_the_list": 5,
+   "newly_flagged": 0
+  },
+  "train tranco legit (from Tranco: circular)": {
+   "n": 30009,
+   "on_popular_domains": {
+    "k": 29803,
+    "n": 30009,
+    "rate": 0.9931,
+    "ci": [
+     0.9921,
+     0.994
+    ]
+   },
+   "flagged_before": {
+    "k": 271,
+    "n": 30009,
+    "rate": 0.009,
+    "ci": [
+     0.008,
+     0.0102
+    ]
+   },
+   "flagged_after": {
+    "k": 1,
+    "n": 30009,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.0002
+    ]
+   },
+   "cleared_by_the_list": 270,
+   "newly_flagged": 0
+  }
+ }
+}

@@ -1,8 +1,12 @@
 """HTML link and form scanner. Standard library only; runs inside the sandbox.
 
-Only inline `style` and attributes are evaluated: there is no CSS cascade, so a class that hides an
-element in a <style> block is not seen. Relative links are returned as written; the host resolves
-them with the WHATWG parser, because that is what a browser would do.
+Hiding is read from inline `style`, the `hidden` attribute and (H1 C1) top-level rules in <style>
+blocks with simple selectors (`tag`, `.class`, `#id`, `tag.class`, `tag#id`), cascaded by
+specificity, with the element's inline style winning. Rules inside `@media` and other at-rules are
+ignored, and so is any selector an at-rule mentions: a responsive mail hides its desktop or mobile
+half on one screen size only, which is not hiding from the reader. A <style> block applies to the
+elements after it (one pass). Relative links are returned as written; the host resolves them with
+the WHATWG parser, because that is what a browser would do.
 """
 
 import re
@@ -92,6 +96,101 @@ def style_hides(style: str) -> bool:
     return "rect(0" in clip.replace(" ", "") or "inset(100%" in clip.replace(" ", "")
 
 
+_SIMPLE = re.compile(r"^([a-z][a-z0-9-]*)?(?:([.#])(-?[a-z_][a-z0-9_-]*))?$")
+_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+_HIDING_PROPS = frozenset(
+    {
+        "display", "visibility", "opacity", "font-size", "width", "height", "max-width",
+        "max-height", "left", "top", "right", "bottom", "text-indent", "position", "clip",
+        "clip-path",
+    }
+)  # fmt: skip
+MAX_CSS = 200_000  # characters of <style> read per HTML part
+MAX_RULES = 2_000
+
+
+def _blocks(css: str) -> tuple[list[tuple[str, str]], set[str]]:
+    """Top-level (selector list, declarations) pairs, and every selector named inside an at-rule."""
+    top: list[tuple[str, str]] = []
+    in_at: set[str] = set()
+    depth, head_start, body_start, at, head = 0, 0, 0, False, ""
+    for i, ch in enumerate(css):
+        if ch == "{":
+            if depth == 0:
+                head = css[head_start:i].rsplit(";", 1)[-1].strip()  # after any `@import ...;`
+                at, body_start = head.startswith("@"), i + 1
+            elif at:  # a rule nested in @media: remember its selectors, never apply it
+                inner = css[head_start:i].rsplit(";", 1)[-1].rsplit("{", 1)[-1]
+                in_at.update(s.strip() for s in inner.split(","))
+            depth += 1
+            head_start = i + 1
+        elif ch == "}":
+            if depth == 0:
+                head_start = i + 1
+                continue
+            depth -= 1
+            if depth == 0 and not at:
+                top.append((head, css[body_start:i]))
+            head_start = i + 1
+    return top, in_at
+
+
+class StyleSheet:
+    """Simple-selector rules from <style> blocks. Rules with the same selector are merged into one
+    property map in source order (same specificity, so the later one wins, as in CSS), and only the
+    properties that can hide an element are kept: each element costs a few lookups however many
+    rules a hostile sheet repeats."""
+
+    def __init__(self) -> None:
+        # selector key -> tag qualifier (None: any tag) -> [specificity, first seen, properties]
+        self.by_key: dict[str, dict[str | None, list[Any]]] = {}
+        self.count = 0
+        self.css_len = 0
+
+    def add(self, css: str) -> None:
+        css = _COMMENT.sub("", css[: max(0, MAX_CSS - self.css_len)].lower())
+        self.css_len += len(css)
+        top, in_at = _blocks(css)
+        for head, body in top:
+            props = {
+                name.strip(): value.strip()
+                for name, _, value in (d.partition(":") for d in body.split(";"))
+                if name.strip() in _HIDING_PROPS
+            }
+            if not props:
+                continue  # only rules that can hide or show an element matter here
+            for selector in (s.strip() for s in head.split(",")[:50]):
+                m = _SIMPLE.match(selector)
+                if not selector or not m or selector in in_at:
+                    continue
+                tag, kind, name = m.groups()
+                key = f"{kind}{name}" if kind else f"<{tag}"
+                entries = self.by_key.setdefault(key, {})
+                qualifier = tag if kind else None
+                if qualifier not in entries:
+                    if self.count >= MAX_RULES:
+                        continue
+                    spec = (100 if kind == "#" else 10 if kind == "." else 0) + (1 if tag else 0)
+                    entries[qualifier] = [spec, self.count, {}]
+                    self.count += 1
+                entries[qualifier][2].update(props)
+
+    def declarations(self, tag: str, attrs: dict[str, str]) -> list[str]:
+        if not self.by_key:
+            return []
+        keys = [f"<{tag}", *(f".{c}" for c in attrs.get("class", "").lower().split()[:50])]
+        if attrs.get("id"):
+            keys.append(f"#{attrs['id'].lower()}")
+        found = [
+            (spec, order, props)
+            for k in keys
+            for qualifier, (spec, order, props) in self.by_key.get(k, {}).items()
+            if qualifier in (None, tag)
+        ]
+        found.sort(key=lambda r: (r[0], r[1]))
+        return [";".join(f"{k}:{v}" for k, v in props.items()) for *_, props in found]
+
+
 class Budget:
     """Shared across all HTML parts of one message."""
 
@@ -128,18 +227,23 @@ class Budget:
 
 
 class Scanner(HTMLParser):
-    def __init__(self, part: str, budget: Budget, depth: int = 0) -> None:
+    def __init__(
+        self, part: str, budget: Budget, depth: int = 0, sheet: StyleSheet | None = None
+    ) -> None:
         super().__init__(convert_charrefs=True)
         self.part, self.b, self.depth = (
             part,
             budget,
             depth,
         )  # depth > 0: inside a conditional comment
+        self.sheet = sheet if sheet is not None else StyleSheet()  # one per HTML part
         self.stack: list[tuple[str, bool, dict[str, Any] | None]] = []
         self.anchors: list[dict[str, Any]] = []
         self.tags = 0
         self.skip = 0
         self.in_script = 0
+        self.in_style = 0
+        self.css: list[str] = []
         self.script: list[str] = []
         self.script_len = 0
         self.stopped = False
@@ -163,7 +267,7 @@ class Scanner(HTMLParser):
         if end < 0:
             return
         inner = re.sub(r"<!\[endif\]\s*$", "", body[end + 2 :], flags=re.I)
-        nested = Scanner(self.part, self.b, self.depth + 1)
+        nested = Scanner(self.part, self.b, self.depth + 1, self.sheet)
         try:
             nested.feed(inner)
             nested.close()
@@ -189,7 +293,11 @@ class Scanner(HTMLParser):
             v,
         ) in attrs:  # the first of a repeated attribute wins, as in browsers and mail clients
             a.setdefault(k.lower(), v or "")
-        hidden = self.hidden or "hidden" in a or style_hides(a.get("style", ""))
+        cascade = [
+            *self.sheet.declarations(tag, a),
+            a.get("style", ""),
+        ]  # inline style last: it wins
+        hidden = self.hidden or "hidden" in a or style_hides(";".join(cascade))
         anchor: dict[str, Any] | None = None
         href = a.get("href") or a.get("xlink:href", "")
         if tag in ("button", "input") and a.get("formaction"):
@@ -241,6 +349,8 @@ class Scanner(HTMLParser):
             self.skip += 1
         if tag == "script":
             self.in_script += 1
+        if tag == "style":
+            self.in_style += 1
         if tag not in _VOID:
             if len(self.stack) < MAX_HTML_DEPTH:
                 self.stack.append((tag, hidden, anchor))
@@ -261,8 +371,20 @@ class Scanner(HTMLParser):
             self.skip -= 1
         if tag == "script" and self.in_script:
             self.in_script -= 1
+        if tag == "style" and self.in_style:
+            self.in_style -= 1
+            if not self.in_style and self.css:
+                self.sheet.add("".join(self.css))
+                self.css = []
 
     def handle_data(self, data: str) -> None:
+        if (
+            self.in_style
+            and not self.in_script
+            and not self.stopped
+            and sum(map(len, self.css)) < MAX_CSS
+        ):
+            self.css.append(data)
         if self.in_script and not self.stopped and self.script_len < MAX_SCRIPT_CHARS:
             room = data[: MAX_SCRIPT_CHARS - self.script_len]
             self.script.append(room)
@@ -299,6 +421,27 @@ class Scanner(HTMLParser):
                 ("decoders", _DECODER), ("auto_saves", _SAVE),
             ):  # fmt: skip
                 stats[key] = min(stats[key] + len(pattern.findall(text)), _COUNT_CAP)
+
+
+_SVG_ACTIVE = (
+    ("script", re.compile(r"<script\b", re.I)),
+    ("event_handler", re.compile(r"<[^>]*\son[a-z]{3,30}\s*=", re.I)),
+    ("foreign_object", re.compile(r"<foreignobject\b", re.I)),
+    ("embedded_form", re.compile(r"<(?:form|input|iframe|embed|object|textarea)\b", re.I)),
+    ("javascript_link", re.compile(r"(?:href|src|action)\s*=\s*['\"]?\s*javascript:", re.I)),
+    ("data_html_link", re.compile(
+        r"(?:href|src)\s*=\s*['\"]?\s*data:\s*(?:text/html|application/xhtml|image/svg)", re.I)),
+)  # fmt: skip
+
+
+def svg_active(text: str) -> list[str]:
+    """What an SVG image can DO when opened in a browser (H1 C2): run script, react to events, hold
+    an HTML form, or link to script or to an HTML page carried inside it. A picture needs none of
+    these. Entities are decoded first, so `&#106;avascript:` is still seen."""
+    import html as entities
+
+    text = entities.unescape(text[: MAX_SCRIPT_CHARS * 2])
+    return [name for name, pattern in _SVG_ACTIVE if pattern.search(text)]
 
 
 def scan_html(html: str, part: str, budget: Budget) -> None:

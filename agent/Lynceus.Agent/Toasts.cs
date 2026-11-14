@@ -18,6 +18,13 @@ public static class ToastText
     public static (string Title, string Body)? ForFile(FileOutcome o)
     {
         var state = o.Verdict.State;
+        if (o.Verdict.Reason is { } unfinished && unfinished.StartsWith("parser_", StringComparison.Ordinal) && !o.Verdict.AllowListed)
+        {
+            // H1 A6: the inspection could not finish (timeout, crash, memory); say so, never imply "safe"
+            var why = Friendly(unfinished).Replace("parser ", string.Empty, StringComparison.Ordinal);
+            return ("Lynceus could not check a file", Cut(Clean(o.Event.Name), 80) + $"\nIt could not be analysed ({why}). It is not marked safe: open it only if you trust where it came from.");
+        }
+
         if (state is not ("MALICIOUS" or "SUSPICIOUS") || o.Verdict.AllowListed)
         {
             return null; // and a file you told Lynceus to stop flagging stays quiet
@@ -32,6 +39,12 @@ public static class ToastText
     /// <summary>A flagged email: when, how bad, and the names of the signs. No sender, subject or address is ever known here.</summary>
     public static (string Title, string Body)? ForMail(FlaggedMail mail)
     {
+        if (mail.State == "NOT_ANALYSED")
+        {
+            var why = mail.Rules.Count == 0 ? "an error" : Friendly(mail.Rules[0]).Replace("parser ", string.Empty, StringComparison.Ordinal);
+            return ("Lynceus could not check an email", $"A new email could not be analysed ({why}). It is not marked safe: open it with care.");
+        }
+
         if (mail.State is not ("MALICIOUS" or "SUSPICIOUS"))
         {
             return null;

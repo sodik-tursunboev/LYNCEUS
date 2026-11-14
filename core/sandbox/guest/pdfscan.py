@@ -81,6 +81,56 @@ def _object(obj: Any, out: dict[str, Any], uris: dict[str, None], pikepdf: Any) 
         out["rich_media"] += 1
 
 
+_TEXT_PAGES = 30  # pages whose text is read for written-out links
+_TEXT_STREAM = 2 * 1024 * 1024  # a page's stored content stream larger than this is skipped
+_TEXT_CHARS = 200_000  # characters of page text read in all
+_SHOW_TEXT = "Tj TJ ' \""  # the operators that put text on a page
+
+
+def _text_links(pdf: Any, uris: dict[str, None], out: dict[str, Any], pikepdf: Any) -> None:
+    """Links written out in the page text (H1 C4): readers turn `https://...` text into a link, so
+    a lure needs no link annotation. Only text in simple encodings is readable this way; a font with
+    its own encoding gives no text here, which is a miss, never a false link. Pages that cannot be
+    read are counted as broken, like objects."""
+    import textscan
+
+    chars = 0
+    text: list[str] = []
+    for page in itertools.islice(pdf.pages, _TEXT_PAGES):
+        try:
+            stored = page.obj.get("/Contents")
+            items = stored if isinstance(stored, pikepdf.Array) else [stored]
+            if sum(int(s.get("/Length", 0)) for s in items if s is not None) > _TEXT_STREAM:
+                continue
+            for operands, _op in pikepdf.parse_content_stream(page, _SHOW_TEXT):
+                for value in operands:
+                    parts = value if isinstance(value, pikepdf.Array) else [value]
+                    for item in parts:
+                        if isinstance(item, pikepdf.String):
+                            piece = bytes(item).decode("latin-1")
+                            text.append(piece)
+                            chars += len(piece)
+                text.append(" ")
+                if chars > _TEXT_CHARS:
+                    break
+        except (MemoryError, RecursionError):
+            raise
+        except Exception:  # noqa: BLE001  (one unreadable page does not end the scan)
+            out["limits"].add("broken_objects")
+        if chars > _TEXT_CHARS:
+            break
+    found, cut = textscan.find_urls("".join(text)[:_TEXT_CHARS], MAX_PDF_URIS, MAX_URI_CHARS)
+    if cut:
+        out["limits"].add("uris")
+    for url in found:
+        if url in uris:
+            continue
+        if len(uris) >= MAX_PDF_URIS:
+            out["limits"].add("uris")
+            break
+        uris[url] = None
+
+
 def scan_pdf(data: bytes) -> dict[str, Any]:
     import pikepdf
 
@@ -119,6 +169,7 @@ def scan_pdf(data: bytes) -> dict[str, Any]:
             out["pages"] = min(len(pdf.pages), 10_000_000)
         except Exception:  # noqa: BLE001
             out["limits"].add("page_tree")
+        _text_links(pdf, uris, out, pikepdf)
     out["uris"] = list(uris)
     out["limits"] = sorted(out["limits"])
     return out

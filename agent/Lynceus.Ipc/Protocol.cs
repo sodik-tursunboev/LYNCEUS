@@ -12,7 +12,7 @@ public enum RequestType
 }
 
 /// <summary>A validated message from the extension (or, for Hello, from the native host).</summary>
-public sealed record Request(RequestType Type, string? Id, string? Url, string? State, int Minutes, string? Secret);
+public sealed record Request(RequestType Type, string? Id, string? Url, string? State, int Minutes, string? Secret, bool Mistake = false);
 
 /// <summary>
 /// The messages between extension, native host and agent: small, versioned, strictly validated.
@@ -35,7 +35,7 @@ public static partial class Protocol
         ["hello"] = (RequestType.Hello, ["secret"], []),
         ["status"] = (RequestType.Status, ["id"], []),
         ["check_url"] = (RequestType.CheckUrl, ["id", "url"], []),
-        ["override"] = (RequestType.Override, ["id", "url"], ["state", "minutes"]),
+        ["override"] = (RequestType.Override, ["id", "url"], ["state", "minutes", "mistake"]),
     };
 
     private static readonly HashSet<string> States = ["MALICIOUS", "SUSPICIOUS", "BENIGN", "UNKNOWN", "ERROR"];
@@ -98,6 +98,17 @@ public static partial class Protocol
                 return false;
             }
 
+            var mistake = false; // H1 B3: "this warning was wrong", a real JSON boolean only
+            if (fields.TryGetValue("mistake", out var mk))
+            {
+                if (mk.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                {
+                    return false;
+                }
+
+                mistake = mk.GetBoolean();
+            }
+
             if (!okId || !okUrl || !okState || !okSecret
                 || (id is not null && !IdPattern().IsMatch(id))
                 || (url is not null && (url.Length is 0 or > MaxUrlChars || url.Any(char.IsControl)))
@@ -107,7 +118,7 @@ public static partial class Protocol
                 return false;
             }
 
-            request = new Request(shape.Type, id, url, state, minutes, secret);
+            request = new Request(shape.Type, id, url, state, minutes, secret, mistake);
             error = string.Empty;
             return true;
         }

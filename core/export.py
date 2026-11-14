@@ -6,7 +6,9 @@ The field names follow the Elastic Common Schema where it has a field (`@timesta
 `threat.technique.id`, `url.domain`, `file.hash.sha256`); everything LYNCEUS-specific sits under
 `lynceus`. It writes a file or standard output and sends nothing anywhere. What is exported is what
 is stored: hashes, hosts, verdicts, signals, evidence summaries and provider results, never URL or
-message text (ADR-007). Output is deterministic: the same database gives the same bytes.
+message text. Hosts are stored sealed (ADR-007, H1 A8) and unsealed here: the export is yours to
+read, so treat the file like the sites it names. Output is deterministic: the same database
+gives the same bytes.
 """
 
 import argparse
@@ -20,6 +22,7 @@ from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.orm import Session
 
 from core.config import Settings
+from core.db import hosts
 from core.db import models as db
 
 SCHEMA_VERSION = 1
@@ -143,7 +146,7 @@ def _record(
                 confidence=v.confidence,
                 recommended_response=v.recommended_response,
                 applied_response=v.applied_response,
-                explanation=v.explanation,
+                explanation=hosts.reveal(v.explanation) or "",
                 engine_version=v.engine_version,
                 ruleset_version=v.ruleset_version,
             ),
@@ -153,10 +156,12 @@ def _record(
                     rule_id=d.rule_id,
                     category=d.category,
                     weight=d.weight,
-                    description=d.description,
+                    description=hosts.reveal(d.description) or "",
                     attack=d.attack,
                 )  # fmt: skip
-                for d in sorted(detections, key=lambda d: (d.rule_id, d.description))
+                for d in sorted(
+                    detections, key=lambda d: (d.rule_id, hosts.reveal(d.description) or "")
+                )
             ],
             provider_results=[
                 ProviderOut(
@@ -172,7 +177,7 @@ def _record(
             ],
         ),
         threat=ThreatBlock(technique=TechniqueBlock(id=techniques)) if techniques else None,
-        url=UrlBlock(domain=a.host) if a.host else None,
+        url=UrlBlock(domain=hosts.reveal(a.host)) if a.host else None,
         file=FileBlock(hash=HashBlock(sha256=a.sha256)) if email else None,
     )
 

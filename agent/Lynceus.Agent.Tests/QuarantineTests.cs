@@ -620,12 +620,14 @@ public class QuarantineTests : IDisposable
         // record of an attempt that moved nothing (1) and a half-written copy this class made (1). The verified
         // original after a copy to another volume goes through DeleteIfSame (checked below). Nothing else may delete.
         Assert.Equal([("Installer.cs", 2), ("QuarantineStore.cs", 3)], found);
-        // ... and the one place a user's file goes: the verified removal through a pinned handle
+        // ... and the one place a user's file goes: the verified removal through a pinned handle. Sealing (H1 A7)
+        // adds two: the plain copy inside quarantine, removed only after its sealed copy unsealed to the judged hash
+        // (in a fresh seal, and when finishing an interrupted one).
         var verified = sources
             .Select(f => (File: Path.GetFileName(f), Count: Regex.Count(File.ReadAllText(f), @"\b(DeleteIfSame|MarkForDeletion)\(")))
             .Where(x => x.Count > 0)
             .OrderBy(x => x.File)
             .ToList();
-        Assert.Equal([("QuarantineStore.cs", 4)], verified);
+        Assert.Equal([("QuarantineStore.cs", 6)], verified);
     }
 }

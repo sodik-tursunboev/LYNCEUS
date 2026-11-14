@@ -111,6 +111,19 @@ CASES: dict[str, tuple[bytes, bytes]] = {
         html('<a href="https://evil-site.test/x">https://www.example.com/offer</a>'),
         html('<a href="https://evil-site.test/x">Click here</a>'),
     ),
+    "email.svg_active": (
+        attach(
+            "invoice.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg" '
+            b"onload=\"location=atob('aHR0cHM6Ly9ldmlsLnRlc3Q=')\"><text>Invoice</text></svg>",
+            "image/svg+xml",
+        ),
+        attach(
+            "logo.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg"><circle r="4"/><a href="https://ok.test/">x</a></svg>',
+            "image/svg+xml",
+        ),
+    ),
     "email.hidden_link": (
         html('<a href="https://track.test/x" style="display:none">x</a>'),
         html('<a href="https://track.test/x">x</a>'),
@@ -347,8 +360,11 @@ CASES.update(
 # Files that are dangerous by TYPE already (a shortcut, a program) also fire a second, independent
 # rule when their content is bad; two strong categories rightly make them MALICIOUS. Everything else
 # must stay below MALICIOUS on its own positive message, and the exact-identification rules are
-# certain by design (rules/email/scoring.toml `certain`).
+# certain by design (rules/email/scoring.toml `certain`). An attached SVG is a page that opens from
+# disk (email.html_attachment); one that also runs script or holds a form is the second, independent
+# category (H1 C2), which is the SVG phishing attachment exactly.
 TWO_CATEGORIES = {
+    "email.svg_active",
     "content.lnk_runs_interpreter",
     "content.lnk_disguised",
     "content.pe_injection_or_downloader",

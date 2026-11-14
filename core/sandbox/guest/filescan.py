@@ -19,6 +19,7 @@ def inspect_standalone(data: bytes) -> dict[str, Any]:
 
     magic: str | None = detect_magic(data[:600])
     html: dict[str, Any] | None = None
+    active: list[str] = []
     if magic in ("html", "svg"):
         import htmlscan
 
@@ -26,7 +27,9 @@ def inspect_standalone(data: bytes) -> dict[str, Any]:
         text = data[: MAX_HTML_CHARS * 4].decode("utf-8", "replace")[:MAX_HTML_CHARS]
         htmlscan.scan_html(text, "1", budget)
         html = dict(budget.stats)
-    return {"magic": magic, "file": inspect_data(data), "html": html}
+        if magic == "svg":
+            active = htmlscan.svg_active(text)  # H1 C2
+    return {"magic": magic, "file": inspect_data(data), "html": html, "active": active}
 
 
 def macro_excerpt(data: bytes) -> str:

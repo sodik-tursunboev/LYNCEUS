@@ -122,6 +122,10 @@ public class MailboxWatcherTests
         Assert.DoesNotContain('‮', text.Body);
         Assert.DoesNotContain('@', text.Body);
         Assert.Null(ToastText.ForMail(new FlaggedMail(1, "UNKNOWN", null, [])));
+        var unfinished = ToastText.ForMail(new FlaggedMail(1, "NOT_ANALYSED", null, ["parser_timeout"]))!.Value;
+        Assert.Equal("Lynceus could not check an email", unfinished.Title);
+        Assert.Contains("(timeout)", unfinished.Body, StringComparison.Ordinal);
+        Assert.Contains("not marked safe", unfinished.Body, StringComparison.Ordinal);
         Assert.Contains("several signs", ToastText.ForMail(new FlaggedMail(1, "MALICIOUS", null, []))!.Value.Body, StringComparison.Ordinal);
     }
 

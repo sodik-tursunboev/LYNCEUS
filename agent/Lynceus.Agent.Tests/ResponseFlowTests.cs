@@ -442,6 +442,25 @@ public sealed class ResponseFlowTests : IDisposable
     }
 
     [Theory]
+    [InlineData("parser_timeout", "timeout")]
+    [InlineData("parser_crashed", "crashed")]
+    public void A_file_the_inspection_could_not_finish_is_announced_and_never_called_safe(string reason, string shown)
+    {
+        var verdict = new FileVerdict("UNKNOWN", null, [], reason, false, true, null);
+        var text = ToastText.ForFile(new FileOutcome(new FileEvent("id", @"C:\x\a.pdf", "a.pdf", 1, 1, DateTimeOffset.UtcNow), new string('a', 64), null, "pdf", verdict))!.Value;
+        Assert.Equal("Lynceus could not check a file", text.Title);
+        Assert.Contains($"({shown})", text.Body, StringComparison.Ordinal);
+        Assert.Contains("not marked safe", text.Body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_file_over_the_size_limit_stays_quiet()
+    {
+        var verdict = new FileVerdict("UNKNOWN", null, [], "too_large", false, true, null);
+        Assert.Null(ToastText.ForFile(new FileOutcome(new FileEvent("id", @"C:\x\big.iso", "big.iso", 1, 1, DateTimeOffset.UtcNow), new string('a', 64), null, "iso", verdict)));
+    }
+
+    [Theory]
     [InlineData("ask", true)]
     [InlineData("auto", true)]
     [InlineData("off", true)]

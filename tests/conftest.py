@@ -33,3 +33,13 @@ def no_network() -> Iterator[None]:
     patch.setattr(socket, "getaddrinfo", lookup)
     yield
     patch.undo()
+
+
+@pytest.fixture(autouse=True)
+def no_popular_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every test starts without the popular-domain list (H1 B1), whatever a local `sync` put in
+    .data: verdicts in tests must not depend on a downloaded file. Tests that need it call `use`."""
+    from core.urls import popular
+
+    monkeypatch.setattr(popular, "configure", lambda directory: None)
+    popular.use(frozenset())

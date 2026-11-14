@@ -22,6 +22,9 @@ Updated 2026-11-11 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.
 
 | Date | Added | Status |
 |---|---|---|
+| 2026-11-14 | **H1 security:** the console has its own session (one-time code, never the API token), an audit log the database refuses to change, secrets under DPAPI (`python -m core.secrets`), hash-locked Python dependencies, sealed quarantine files, site names sealed at rest (ADR-007), an RDAP lookup that cannot be steered to this machine, and a notification when a file or message could not be analysed | Verified (tests) |
+| 2026-11-14 | **H1 fewer false alarms:** a popular-domain list (Tranco top 100,000) silences look-alike alarms on brands' own sites; "Was this right?" in the console and "This warning is wrong" on the warning page, counted per rule | Verified (`docs/eval/popular.md`) |
+| 2026-11-14 | **H1 deeper analysis:** hiding through `<style>` blocks, active SVG images (`email.svg_active`), links written in PDF page text, forms inside frames and a phone visit for cloaked pages in the detonator | Verified (tests); detonator part built, live run pending |
 | 2026-11-11 | **Page detonation (D1):** open a page in a throwaway, locked-down browser container and judge what it shows, not just its address (section 2b) | Verified (on request) |
 | 2026-11-11 | **10 page rules:** brand impersonation with a credential or **card** ask (164 brands), password forms posting elsewhere, phishing-kit endpoints (Telegram bots, webhooks, form relays), sign-in pages and brand pages on free hosting or dynamic DNS, anti-analysis code, IP lookups, HTML smuggling, drive-by downloads | Verified |
 | 2026-11-11 | **"Open in sandbox" in the console:** the page's route, title, forms, hiding tricks, certificate date and a screenshot, next to the verdict | Verified |

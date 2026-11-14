@@ -26,3 +26,6 @@ deploy/msi/out/
 shell/node_modules/
 shell/src-tauri/target/
 shell/src-tauri/gen/
+
+secrets.dpapi.json
+secrets.dpapi.json.new

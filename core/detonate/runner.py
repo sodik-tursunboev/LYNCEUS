@@ -24,7 +24,7 @@ from pydantic import ValidationError
 from core.detonate.models import PageReport
 
 log = logging.getLogger(__name__)
-IMAGE = "lynceus-detonator:1.0.0"
+IMAGE = "lynceus-detonator:1.1.0"
 INNER, OUTER, EGRESS = "lynceus-dn-inner", "lynceus-dn-outer", "lynceus-egress"
 PROXY = f"http://{EGRESS}:3128"
 HERE = Path(__file__).resolve().parents[2] / "infra" / "detonator"

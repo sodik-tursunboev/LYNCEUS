@@ -17,6 +17,18 @@ Prerequisites: Python 3.14, .NET 10 SDK, Node 24, PostgreSQL (`python tasks.py u
 | Open the console, signed in | `Lynceus.Agent.exe --open-console` |
 | Store the core's API token | `Lynceus.Agent.exe --set-token` (reads it from standard input) |
 
+### Upgrading to H1 (once, in a normal PowerShell window)
+
+1. `.\deploy\go-live.ps1`: applies migrations 0004 to 0006 (append-only audit, feedback, sealed site names), rebuilds the sandbox, the agent, the extension and the console. At start the core seals site names stored before (`python -m core.db.hosts seal-existing` does the same by hand) and the agent seals files already in quarantine. **Reload the extension** in `edge://extensions` so the warning page has its new button.
+2. Secrets out of `.env`: `python -m core.secrets plaintext` lists them by name; for each, `python -m core.secrets set NAME` (paste the value, Enter), then delete that line from `.env`. Run these here, not in a terminal inside another app: DPAPI keys written from there can land in that app's private copy of your profile (ADR-024).
+3. The popular-domain list: `python -m core.intel popular sync` (about 9 MB from tranco-list.eu, non-commercial research list); `status` shows how many domains are loaded. Re-run it monthly or so.
+4. The page detonator: start Docker Desktop, then `python tasks.py detonator` builds image 1.1.0 (forms in frames, phone visit).
+5. The console now signs in with a one-time code: `Lynceus.Agent.exe --open-console` as before; typing the API token at the sign-in screen opens a session too, and the console forgets the token.
+
+**Back up your Windows profile with your data.** Quarantined files and stored site names are sealed for your Windows user (DPAPI). A reinstall that loses the profile's keys leaves them unreadable: restore anything you need from quarantine before such a change.
+
+**Connecting Gmail for the false-alarm measurement (H1 B2):** follow the live checklist in `docs/milestones/M5.md` (your own Google Cloud project, an OAuth "Desktop app" client in Testing status with your address as a test user, `LYNCEUS_GMAIL_ENABLED=true` and the client id in `.env`, the client secret through `python -m core.secrets set gmail_client_secret`), then `python -m core.mailbox connect` and grant the read-only consent yourself. Lynceus reads, never changes, and keeps counts only for the measurement.
+
 The install script builds the agent, the extension and the console, copies the agent and the extension to `%LOCALAPPDATA%\Programs\Lynceus`, writes `agent.json` if there is none (an existing one is kept), applies database migrations if `.env` names a database, registers start at logon and the Edge/Chrome native-messaging host, starts the agent and waits until the core answers. **An upgrade is the same command**: the running agent is stopped, its files replaced, your data folder untouched, and the agent started again. The core runs from the checkout (its Python environment, the sandbox, the console), so keep the checkout where it is or run the script again after moving it. The browser extension is added by hand (`edge://extensions`, Developer mode, Load unpacked, `...\Lynceus\extension`); the installer cannot do that for you.
 
 ## Where things are

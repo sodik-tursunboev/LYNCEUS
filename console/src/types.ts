@@ -21,7 +21,10 @@ export interface EventRow {
 export interface Signal { rule_id: string; category: string; weight: number; description: string; attack: string | null }
 export interface EvidenceRow { kind: string; summary: string; sha256: string | null }
 export interface ProviderRow { provider: string; status: string; state: string | null; queried_at: string; provenance: string }
-export interface EventDetail extends EventRow { signals: Signal[]; evidence: EvidenceRow[]; providers: ProviderRow[] }
+export type FeedbackLabel = "false_alarm" | "missed" | "correct";
+export interface EventDetail extends EventRow { signals: Signal[]; evidence: EvidenceRow[]; providers: ProviderRow[]; feedback?: FeedbackLabel | null }
+/** Per rule, what you said about the verdicts it fired on (H1 B3). */
+export interface RuleFeedback { rule_id: string; false_alarm: number; correct: number; missed: number }
 
 export interface ActionRow {
   id: string;

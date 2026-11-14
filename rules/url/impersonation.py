@@ -1,12 +1,15 @@
 """Rules about hosts pretending to be a brand: homographs, typos, combosquats, subdomain tricks.
 
-All of them stay silent on a brand's official registered domain.
+All of them stay silent on a brand's official registered domain. The three that judge the registered
+name itself (typosquat, combosquat, brand in domain) also stay silent on a popular domain (H1 B1,
+core/urls/popular.py): a site among the most visited is established, not a fresh look-alike.
 """
 
 import re
 import unicodedata
 from collections.abc import Iterator
 
+from core.urls import popular
 from core.urls.parse import HostKind, ParsedUrl
 from rules.url import rule
 from rules.url.data import Brand, brands, lists, official_domains, skeleton
@@ -19,6 +22,11 @@ def _candidate(u: ParsedUrl) -> bool:
     if u.host_kind is not HostKind.DOMAIN or u.registered_domain is None:
         return False
     return u.registered_domain not in official_domains()
+
+
+def _lookalike(u: ParsedUrl) -> bool:
+    """A candidate whose registered name may be judged as a look-alike: not popular (H1 B1)."""
+    return _candidate(u) and not popular.is_popular(u.registered_domain)
 
 
 def _label(u: ParsedUrl) -> str:
@@ -97,7 +105,7 @@ def mixed_script(u: ParsedUrl) -> str | None:
 def typosquat(u: ParsedUrl) -> str | None:
     # ponytail: tries every brand term with a pure-Python edit distance, about two thirds of
     # analysis time (profiled). Bucket terms by length if the M4 latency budget needs it.
-    if not _candidate(u):
+    if not _lookalike(u):
         return None
     label = _label(u)
     if label.startswith("xn--") or label in lists()["not_typos"]:
@@ -127,7 +135,7 @@ def _brand_in_label(label: str) -> tuple[Brand, str] | None:
 
 @rule("url.combosquat", "impersonation")
 def combosquat(u: ParsedUrl) -> str | None:
-    if not _candidate(u):
+    if not _lookalike(u):
         return None
     label = _label(u)
     found = _brand_in_label(label)
@@ -142,7 +150,7 @@ def combosquat(u: ParsedUrl) -> str | None:
 @rule("url.brand_in_domain", "impersonation")
 def brand_in_domain(u: ParsedUrl) -> str | None:
     """Weak on purpose: fan sites and reviews name brands too."""
-    if not _candidate(u):
+    if not _lookalike(u):
         return None
     label = _label(u)
     found = _brand_in_label(label)

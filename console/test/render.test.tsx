@@ -31,3 +31,16 @@ describe("everything from the core is shown as text", () => {
     expect(html).not.toMatch(/\sstyle=|\sonclick=|\sonload=/);
   });
 });
+describe("feedback on a verdict (H1 B3)", () => {
+  it("offers 'false alarm' on a flagged verdict and 'missed phishing' on an unflagged one", async () => {
+    const { renderToString } = await import("react-dom/server");
+    const { FeedbackPanel } = await import("../src/pages");
+    const api = {} as never;
+    const flagged = renderToString(<FeedbackPanel api={api} id="e1" state="SUSPICIOUS" given={null} />);
+    expect(flagged).toContain("False alarm");
+    expect(flagged).not.toContain("Missed phishing");
+    const quiet = renderToString(<FeedbackPanel api={api} id="e2" state="UNKNOWN" given="missed" />);
+    expect(quiet).toContain("Missed phishing");
+    expect(quiet).toContain("You said this was phishing that Lynceus missed.");
+  });
+});

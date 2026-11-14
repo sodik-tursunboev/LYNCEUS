@@ -221,6 +221,13 @@ public sealed class ActionRunner(
         var result = quarantine.Quarantine(action.Id.ToString("D"), file.Path, file.Sha256);
         if (result.Ok)
         {
+            // H1 A7: seal the copy so it cannot be run or trip an antivirus; a failure leaves it quarantined
+            // as before (plain), and the agent tries again at its next start
+            if (quarantine.Seal(action.Id.ToString("D")) is { Ok: false } seal)
+            {
+                log.LogWarning("sealing {Id} failed: {Reason}", Short(action), seal.Reason);
+            }
+
             if (await core.ReportAsync(action.Id, "applied", null, ct).ConfigureAwait(false) == CoreStatus.Ok
                 && flagged.FirstAnnouncement(action.Id, "applied"))
             {

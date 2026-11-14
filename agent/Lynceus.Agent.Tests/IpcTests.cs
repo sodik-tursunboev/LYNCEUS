@@ -45,6 +45,9 @@ public class ProtocolTests
     [InlineData("""{"v":1,"type":"override","id":"a","url":"https://x.test/","minutes":0}""", "malformed")]
     [InlineData("""{"v":1,"type":"override","id":"a","url":"https://x.test/","minutes":61}""", "malformed")]
     [InlineData("""{"v":1,"type":"override","id":"a","url":"https://x.test/","minutes":1.5}""", "malformed")]
+    [InlineData("""{"v":1,"type":"override","id":"a","url":"https://x.test/","mistake":"yes"}""", "malformed")]
+    [InlineData("""{"v":1,"type":"override","id":"a","url":"https://x.test/","mistake":1}""", "malformed")]
+    [InlineData("""{"v":1,"type":"check_url","id":"a","url":"https://x.test/","mistake":true}""", "malformed")]
     [InlineData("""{"v":1,"type":"hello","secret":"short"}""", "malformed")]
     [InlineData("""{"v":1,"type":"status","id":"a","x":{"a":{"a":{"a":{"a":1}}}}}""", "malformed")]
     public void Anything_else_is_refused_with_a_code(string json, string code)
@@ -52,6 +55,16 @@ public class ProtocolTests
         Assert.False(Protocol.TryParse(Encoding.UTF8.GetBytes(json), out var request, out var error));
         Assert.Null(request);
         Assert.Equal(code, error);
+    }
+
+    [Theory]
+    [InlineData("""{"v":1,"type":"override","id":"1","url":"https://example.test/","mistake":true}""", true)]
+    [InlineData("""{"v":1,"type":"override","id":"1","url":"https://example.test/","mistake":false}""", false)]
+    [InlineData("""{"v":1,"type":"override","id":"1","url":"https://example.test/"}""", false)]
+    public void A_reported_mistake_is_a_real_boolean_and_off_unless_sent(string json, bool expected)
+    {
+        Assert.True(Protocol.TryParse(Encoding.UTF8.GetBytes(json), out var request, out _));
+        Assert.Equal(expected, request!.Mistake);
     }
 
     [Fact]

@@ -11,6 +11,7 @@ from typing import Any, NamedTuple
 from sqlalchemy import Engine, and_, delete, func, insert, or_, select, update
 from sqlalchemy.engine import Row
 
+from core.db import hosts
 from core.db import models as db
 from core.response.machine import Event, step
 
@@ -269,6 +270,56 @@ def allow_add(engine: Engine, sha256: str, actor: str, days: int | None) -> date
     return expires
 
 
+def give_feedback(engine: Engine, verdict_id: uuid.UUID, label: str) -> bool:
+    """The person's answer about one verdict (H1 B3): the latest replaces any earlier one, and the
+    answer is audited in the same transaction. False if there is no such verdict."""
+    with engine.begin() as c:
+        if c.scalar(select(db.Verdict.id).where(db.Verdict.id == verdict_id)) is None:
+            return False
+        c.execute(delete(db.Feedback).where(db.Feedback.verdict_id == verdict_id))
+        c.execute(insert(db.Feedback).values(verdict_id=verdict_id, label=label, given_by="user"))
+        c.execute(
+            insert(db.AuditLog).values(
+                actor="user", action=f"feedback.{label}", target_type="verdict",
+                target_id=verdict_id, detail={"label": label},
+            )
+        )  # fmt: skip
+    return True
+
+
+def latest_verdict_for_url(engine: Engine, url_sha256: str) -> uuid.UUID | None:
+    """The newest verdict on this exact URL (by its hash: no URL text is stored)."""
+    with engine.connect() as c:
+        return c.scalar(
+            select(db.Verdict.id)
+            .join(db.Artifact, db.Artifact.id == db.Verdict.artifact_id)
+            .where(db.Artifact.sha256 == url_sha256)
+            .order_by(db.Verdict.created_at.desc())
+            .limit(1)
+        )
+
+
+def rule_feedback(engine: Engine) -> list[dict[str, Any]]:
+    """Per rule: on how many verdicts the person said false alarm, and on how many correct."""
+    with engine.connect() as c:
+        rows = c.execute(
+            select(
+                db.Detection.rule_id,
+                db.Feedback.label,
+                func.count(func.distinct(db.Feedback.verdict_id)),
+            )  # fmt: skip
+            .join(db.Feedback, db.Feedback.verdict_id == db.Detection.verdict_id)
+            .group_by(db.Detection.rule_id, db.Feedback.label)
+        ).all()
+    counts: dict[str, dict[str, Any]] = {}
+    for rule_id, label, n in rows:
+        entry = counts.setdefault(
+            rule_id, {"rule_id": rule_id, "false_alarm": 0, "correct": 0, "missed": 0}
+        )
+        entry[label] = int(n)
+    return sorted(counts.values(), key=lambda e: (-e["false_alarm"], e["rule_id"]))
+
+
 def allow_remove(engine: Engine, sha256: str, actor: str) -> bool:
     actor = _known(actor)
     with engine.begin() as c:
@@ -335,10 +386,11 @@ def list_events(
                 actions[a.verdict_id] = (a.id, a.state)
     return [
         {
-            "id": r.id, "kind": r.kind, "host": r.host, "source": r.source, "state": r.state,
+            "id": r.id, "kind": r.kind, "host": hosts.reveal(r.host), "source": r.source,
+            "state": r.state,
             "risk_score": r.risk_score, "created_at": r.created_at,
             "recommended": r.recommended_response, "applied": r.applied_response,
-            "explanation": r.explanation, "rules": sorted(set(rules.get(r.id, []))),
+            "explanation": hosts.reveal(r.explanation), "rules": sorted(set(rules.get(r.id, []))),
             "action_id": actions[r.id][0] if r.id in actions else None,
             "action_state": actions[r.id][1] if r.id in actions else None,
         }
@@ -353,11 +405,11 @@ def event_detail(engine: Engine, verdict_id: uuid.UUID) -> dict[str, Any] | None
     with engine.connect() as c:
         signals = [
             {"rule_id": s.rule_id, "category": s.category, "weight": s.weight,
-             "description": s.description, "attack": s.attack}
+             "description": hosts.reveal(s.description), "attack": s.attack}
             for s in c.execute(select(db.Detection).where(db.Detection.verdict_id == verdict_id))
         ]  # fmt: skip
         evidence = [
-            {"kind": e.kind, "summary": e.summary, "sha256": e.sha256}
+            {"kind": e.kind, "summary": hosts.reveal(e.summary), "sha256": e.sha256}
             for e in c.execute(select(db.Evidence).where(db.Evidence.verdict_id == verdict_id))
         ]  # fmt: skip
         providers = [
@@ -369,7 +421,9 @@ def event_detail(engine: Engine, verdict_id: uuid.UUID) -> dict[str, Any] | None
                 .where(db.Verdict.id == verdict_id)
             )
         ]  # fmt: skip
-    return found[0] | {"signals": signals, "evidence": evidence, "providers": providers}
+        feedback = c.scalar(select(db.Feedback.label).where(db.Feedback.verdict_id == verdict_id))
+    return found[0] | {"signals": signals, "evidence": evidence, "providers": providers,
+                       "feedback": feedback}  # fmt: skip
 
 
 def list_audit(engine: Engine, limit: int) -> list[dict[str, Any]]:

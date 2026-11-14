@@ -104,6 +104,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if sys.stdout.encoding.lower().replace("-", "") != "utf8":  # a Windows console is often cp1252
         sys.stdout.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
+    from core.config import Settings
+    from core.urls import popular
+
+    popular.configure(Settings().data_dir / "popular")  # the same list the running core uses
     if args.command == "analyze-url":
         report = analyze_url(args.url).report()
         print(report.model_dump_json(indent=2) if args.json else _text(report))

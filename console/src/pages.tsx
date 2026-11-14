@@ -5,7 +5,7 @@ import { compact, score, shortHash, when } from "./format";
 import { Icon } from "./Icon";
 import { consequence, group, GROUPS, isMail, LABEL, MAIL_LABEL, reasonText, verbsFor, type Verb } from "./policy";
 import { kindIcon, verdictMeta, type Tone } from "./theme";
-import type { ActionRow } from "./types";
+import type { ActionRow, FeedbackLabel } from "./types";
 import { Badge, Chip, ConfirmButton, CopyButton, Distribution, Empty, ErrorLine, Gauge, Hash, PageTitle, Panel, Skeleton, Stat, useLoad } from "./ui";
 import { SignalsPanel } from "./workbench";
 
@@ -71,6 +71,7 @@ export function Overview({ api }: { api: Api }) {
               <li><Icon name="Vault" weight="duotone" size={18} />Responses<Chip tone="accent">ask first</Chip></li>
             </ul>
           </Panel>
+          <NoisyRules api={api} />
         </div>
       </div>
       <p className="muted foot">This console only shows what Lynceus found and carries out your decisions. Monitoring runs without it.</p>
@@ -146,6 +147,7 @@ export function EventPage({ api, id }: { api: Api; id: string }) {
               {e.action_state ? <p>Response: <Badge value={e.action_state} size="sm" /> <a href="#/actions">decide</a></p> : null}
             </div>
           </section>
+          <FeedbackPanel api={api} id={e.id} state={e.state} given={e.feedback ?? null} />
           <div className="grid">
             <SignalsPanel signals={e.signals} />
             <div className="stack">
@@ -168,6 +170,56 @@ export function EventPage({ api, id }: { api: Api; id: string }) {
         </>
       ) : event.error ? null : <Skeleton lines={6} />}
     </>
+  );
+}
+
+const FEEDBACK_TEXT: Record<FeedbackLabel, string> = {
+  correct: "You said this verdict was right.",
+  false_alarm: "You said this was a false alarm.",
+  missed: "You said this was phishing that Lynceus missed.",
+};
+
+/** "Was this right?" (H1 B3): your answer is stored and audited, and counted against the rules that fired. */
+export function FeedbackPanel({ api, id, state, given }: { api: Api; id: string; state: string; given: FeedbackLabel | null }) {
+  const [label, setLabel] = useState<FeedbackLabel | null>(given);
+  const [error, setError] = useState<string | null>(null);
+  const flagged = state === "MALICIOUS" || state === "SUSPICIOUS";
+  const send = (next: FeedbackLabel) => async () => {
+    try {
+      await api.feedback(id, next);
+      setLabel(next);
+      setError(null);
+    } catch {
+      setError("Your answer could not be saved.");
+    }
+  };
+  return (
+    <Panel title="Was this right?" icon="Question">
+      <p className="muted" role="status">{label ? FEEDBACK_TEXT[label] : "Your answer teaches Lynceus which of its rules are noisy on this computer."}</p>
+      <div className="row">
+        <button type="button" className="btn" aria-pressed={label === "correct"} onClick={send("correct")}><Icon name="CheckCircle" size={16} />Right</button>
+        {flagged
+          ? <button type="button" className="btn" aria-pressed={label === "false_alarm"} onClick={send("false_alarm")}><Icon name="ShieldSlash" size={16} />False alarm</button>
+          : <button type="button" className="btn" aria-pressed={label === "missed"} onClick={send("missed")}><Icon name="Fish" size={16} />Missed phishing</button>}
+      </div>
+      <ErrorLine error={error} />
+    </Panel>
+  );
+}
+
+/** The rules whose verdicts you most often called false alarms. */
+export function NoisyRules({ api }: { api: Api }) {
+  const rules = useLoad(() => api.feedbackRules(), [api], 15000);
+  const noisy = (rules.data ?? []).filter((r) => r.false_alarm > 0).slice(0, 8);
+  return (
+    <Panel title="Rules you called wrong" icon="ShieldSlash">
+      <ErrorLine error={rules.error} />
+      {noisy.length === 0 ? <p className="muted">No false alarms reported yet. Use "Was this right?" on an event, or "This warning is wrong" in the browser.</p> : (
+        <ul className="evidence">{noisy.map((r) => (
+          <li key={r.rule_id}><code>{r.rule_id}</code><span className="muted">{r.false_alarm} false alarm{r.false_alarm === 1 ? "" : "s"}, {r.correct} right</span></li>
+        ))}</ul>
+      )}
+    </Panel>
   );
 }
 

@@ -17,12 +17,12 @@ from core.db.models import Base
 
 TABLES = {
     "events", "artifacts", "extracted_urls", "domains", "provider_results", "detections",
-    "verdicts", "evidence", "evidence_payloads", "detection_evidence", "audit_logs",
+    "verdicts", "evidence", "evidence_payloads", "detection_evidence", "audit_logs", "feedback",
     "actions", "allowlist",
 }  # fmt: skip
 LOOKUPS = {
     "events": ["observed_at"],
-    "artifacts": ["sha256", "event_id", "host"],
+    "artifacts": ["sha256", "event_id", "host_tag"],  # the host itself is sealed (H1 A8)
     "domains": ["name", "registered_domain"],
     "extracted_urls": ["artifact_id", "url_sha256", "domain_id"],
     "provider_results": ["artifact_id", "provider"],
@@ -250,3 +250,47 @@ def test_provider_checks_accept_valid_rows(
                 _provider(artifact_id, **good)
             )
         )
+
+
+def _audit_row(conn: sa.Connection) -> uuid.UUID:
+    row = uuid.uuid4()
+    conn.execute(sa.insert(Base.metadata.tables["audit_logs"]).values(
+        id=row, actor="user", action="x.test", target_type="test", detail={"n": 1}))  # fmt: skip
+    return row
+
+
+def test_0004_makes_the_audit_log_append_only_and_downgrades_cleanly(engine: Engine) -> None:
+    """H1 A2: an audit row can be added and read, never changed or removed, not even in bulk."""
+    upgrade(engine)
+    with engine.begin() as conn:
+        row = _audit_row(conn)
+    attempts = [
+        sa.text("UPDATE audit_logs SET actor = 'policy'"),
+        sa.text("DELETE FROM audit_logs"),
+    ]
+    if engine.dialect.name == "postgresql":
+        attempts.append(sa.text("TRUNCATE audit_logs"))
+    for attempt in attempts:
+        with pytest.raises(sa.exc.DatabaseError, match="append-only"), engine.begin() as conn:
+            conn.execute(attempt)
+    with engine.connect() as conn:
+        assert conn.execute(sa.text("SELECT actor FROM audit_logs")).scalars().all() == ["user"]
+    with engine.begin() as conn:
+        command.downgrade(alembic_config(conn), "0003")
+    with engine.begin() as conn:  # without 0004 the table is ordinary again
+        conn.execute(sa.text("DELETE FROM audit_logs WHERE id IS NOT NULL"))
+    upgrade(engine)
+    with engine.begin() as conn:
+        _audit_row(conn)
+    with pytest.raises(sa.exc.DatabaseError, match="append-only"), engine.begin() as conn:
+        conn.execute(sa.text("DELETE FROM audit_logs"))
+    assert row
+
+
+def test_create_all_makes_the_same_append_only_table(engine: Engine) -> None:
+    """Tables made by `create_all` (tests, a quick SQLite setup) carry the same triggers."""
+    Base.metadata.create_all(engine)
+    with engine.begin() as conn:
+        _audit_row(conn)
+    with pytest.raises(sa.exc.DatabaseError, match="append-only"), engine.begin() as conn:
+        conn.execute(sa.text("UPDATE audit_logs SET action = 'other'"))

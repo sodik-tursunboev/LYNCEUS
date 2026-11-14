@@ -28,6 +28,19 @@ public sealed class AgentService(AgentConfig config, ILogger<AgentService> log) 
             Notify(toasts, ToastText.ForFile(outcome));
         };
         var quarantine = new QuarantineStore(Path.Combine(dataDir, "quarantine"));
+        try
+        {
+            var sealedNow = quarantine.SealAll(); // H1 A7: older plain copies, or a seal a crash interrupted
+            if (sealedNow > 0)
+            {
+                log.LogInformation("sealed {Count} quarantined file(s)", sealedNow);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            log.LogWarning("sealing the quarantine folder failed ({Type})", e.GetType().Name);
+        }
+
         var responses = new ActionRunner(
             core, flagged, quarantine, config.ResponseMode, text => Notify(toasts, text),
             pipeline.Suppress, log);

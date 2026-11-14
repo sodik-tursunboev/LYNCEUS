@@ -25,6 +25,14 @@ PartFlag = Literal[
     "path_in_filename",
     "long_filename",
 ]
+ActiveFeature = Literal[
+    "script",
+    "event_handler",
+    "foreign_object",
+    "embedded_form",
+    "javascript_link",
+    "data_html_link",
+]  # fmt: skip  (what an SVG image can do when a browser opens it, H1 C2)
 LinkKind = Literal[
     "a", "area", "form", "iframe", "script", "meta_refresh", "text", "pdf_uri", "qr", "code"
 ]  # "code": an address found inside a script, macro, shortcut or program
@@ -86,6 +94,7 @@ class Part(_Strict):
     magic: Magic | None
     attachment: bool
     flags: Annotated[list[PartFlag], Field(max_length=10)]
+    active: Annotated[list[ActiveFeature], Field(max_length=8)] = []  # SVG only (H1 C2)
 
 
 class Link(_Strict):
@@ -273,6 +282,7 @@ class FileBytesReply(_Strict):
     magic: Magic | None = None
     file: FileScan | None = None
     html: HtmlStats | None = None
+    active: Annotated[list[ActiveFeature], Field(max_length=8)] = []
     error: WorkerError | None = None
 
     @model_validator(mode="after")

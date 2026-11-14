@@ -97,3 +97,17 @@ New asset: a second refresh token per provider that can **change** the mailbox (
 ## Hardening pass (M7)
 
 The new doors (native-messaging protocol, pipe, response routes, console route) were attacked with seeded random and mutated input; see `tests/adversarial/test_response_fuzz.py` and `agent/Lynceus.Agent.Tests/FuzzTests.cs`. Two defects were found and fixed: a protocol parser that threw on invalid UTF-8 (a hostile frame closed the connection instead of being refused) and an audit log that could record an unknown actor name. **Residual:** the fuzzing is bounded (fixed seeds, thousands of cases, not coverage-guided); the sandbox's escape resistance has been tested with bomb and malformed-input fixtures only, never with a real exploit; nothing has been reviewed by anyone but the author.
+
+## Hardening, false alarms, deeper analysis (H1, 2026-11-14)
+
+| Threat | Before | Now |
+|---|---|---|
+| A console tab, its history or a page reading its storage is used to act as the agent or the policy | one bearer token everywhere, the actor taken from a header | the console holds a session of its own, always the actor `user`; `--open-console` passes a one-time code (60 s); the agent's token never reaches the browser |
+| Someone with the database login rewrites history | audit append-only by convention | a trigger refuses UPDATE, DELETE and TRUNCATE (dropping it is a visible schema change) |
+| A copied database, backup or another account reveals which sites you visited or received | hosts in plain text in several tables | sealed with DPAPI for your user; lookups by keyed hash (ADR-007). Older audit rows keep what they named |
+| An IANA bootstrap entry or DNS answer steers the RDAP lookup to this machine or the local network | name checked, address not | every resolved address must be public, and the connection goes to that address |
+| Secrets read from a copied `.env` | plain text | DPAPI store (`python -m core.secrets`); `.env` values still work and are named at start |
+| A changed package on the index ends up installed | lower bounds only | `pylock.toml`, hashes required, wheels only |
+| A quarantined file is run by a double-click or trips an antivirus | plain bytes under a neutral name | sealed per file (AES-256 counter mode, key under DPAPI), checked against the judged hash on restore |
+| A hostile `<style>` sheet slows the parser | not read | read with bounds (200,000 characters, 2,000 selectors, merged per selector): a hostile sheet stays under half a second |
+| New residual | | DPAPI ties sealed data to one Windows profile: losing the profile's keys loses the quarantine and the stored site names. The popular-domain list can be gamed by a site that buys a top-100,000 rank |

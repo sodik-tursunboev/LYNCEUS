@@ -7,8 +7,10 @@ may omit the date (privacy redaction): then there is no answer, which is not the
 
 Facts as read from the RFCs on 2026-11-05. Unverified: any registry's rate limits and whether it
 logs queries. A server named by the bootstrap file is treated as untrusted input (https, a public
-name, no IP literal, no credentials); a name that resolves to a private address is not blocked here
-(documented limitation, ADR-015).
+name, no IP literal, no credentials). Its name is resolved here and the request goes to the address
+that was checked (H1 A3): every address must be public (`core.urls.addresses`), and the name is
+used only as the Host header and the TLS name, so a name that resolves, or re-resolves, to a private
+address cannot be reached.
 """
 
 import asyncio
@@ -16,7 +18,7 @@ import ipaddress
 import json
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote, urlsplit
@@ -30,8 +32,9 @@ from core.intel.base import (
     Query,
     Sends,
 )
-from core.intel.http import Client, check_status, fetch
+from core.intel.http import Client, check_status, fetch, resolve_host
 from core.urls import psl
+from core.urls.addresses import is_public
 
 BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json"
 BOOTSTRAP_TTL = 24 * 3600.0
@@ -135,8 +138,10 @@ class Rdap:
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         clock: Callable[[], float] = time.monotonic,
         bootstrap_url: str = BOOTSTRAP_URL,
+        resolve: Callable[[str], Awaitable[list[str]]] = resolve_host,
     ) -> None:
         self.client, self.now, self.clock, self.bootstrap_url = client, now, clock, bootstrap_url
+        self.resolve = resolve
         self._table: dict[str, str] = {}
         self._expires = 0.0
         self._lock = asyncio.Lock()
@@ -162,10 +167,15 @@ class Rdap:
         )
         if base is None:
             raise ProviderUnavailable("no RDAP server is listed for this top-level domain")
-        provenance = f"RDAP via {urlsplit(base).hostname}"
+        server = urlsplit(base)
+        host = server.hostname or ""
+        provenance = f"RDAP via {host}"
+        ip = await self._public_address(host)
+        at = server._replace(netloc=f"[{ip}]" if ":" in ip else ip).geturl()
         got = await fetch(
-            self.client, "GET", f"{base}domain/{quote(name, safe='')}",
-            max_bytes=MAX_REPLY, headers={"Accept": "application/rdap+json"},
+            self.client, "GET", f"{at}domain/{quote(name, safe='')}", max_bytes=MAX_REPLY,
+            headers={"Accept": "application/rdap+json", "Host": host},
+            extensions={"sni_hostname": host},  # the certificate is checked against the name
         )  # fmt: skip
         if got.status == 404:
             return Answer(
@@ -188,6 +198,16 @@ class Rdap:
             )
         state = VerdictState.SUSPICIOUS if age < YOUNG_DAYS else VerdictState.UNKNOWN
         return Answer(state, provenance, f"registered {age} days ago", {"age_days": age})
+
+    async def _public_address(self, host: str) -> str:
+        """The address to connect to: every address the name has must be public, or none is used."""
+        try:
+            addresses = await self.resolve(host)
+        except OSError:
+            raise ProviderUnavailable("the registry's name does not resolve") from None
+        if not addresses or not all(is_public(a) for a in addresses):
+            raise ProviderError("the registry's name resolves to an address that is not public")
+        return addresses[0]
 
     async def aclose(self) -> None:
         await self.client.aclose()
