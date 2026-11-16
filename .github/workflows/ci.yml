@@ -52,7 +52,7 @@ jobs:
           python -m venv .venv
           .\.venv\Scripts\python.exe tasks.py deps
           .\.venv\Scripts\python.exe tasks.py sandbox
-      - name: Python lint and tests (the Postgres tests skip: no database here)
+      - name: "Python lint and tests (the Postgres tests skip: no database here)"
         shell: pwsh
         run: |
           .\.venv\Scripts\python.exe tasks.py lint
