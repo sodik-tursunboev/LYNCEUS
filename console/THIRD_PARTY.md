@@ -4,7 +4,7 @@ The console bundles two kinds of third-party material. Neither is fetched at run
 
 ## Icons: Phosphor Icons (MIT)
 
-77 icons in three weights, taken from the Phosphor set that the Argus HUD uses (phosphor-svelte 3.1.0, https://phosphoricons.com) and reduced to plain SVG shapes by `tools/make-icons.mjs` into `src/icons.generated.ts`.
+91 icons in three weights (77 since UI1, 14 added in UI2), taken from the Phosphor set that the Argus HUD uses (phosphor-svelte 3.1.0, https://phosphoricons.com) and reduced to plain SVG shapes by `tools/make-icons.mjs` into `src/icons.generated.ts`.
 
 ```
 MIT License

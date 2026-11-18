@@ -44,7 +44,7 @@ No new permission, dependency or outside request. The content security policy is
 - Files over 16 MB and messages over 10 MB are refused with an explanation (the core's own limits); a file's metadata-only check is not offered from this page.
 - History on the page lasts for the session only.
 - Regenerating the icon set needs a copy of `phosphor-svelte` (default: the Argus HUD's): `node tools/make-icons.mjs`. The generated file is committed, so nothing else needs it.
-- Review screenshots: `node tools/shoot.mjs <base url> <token> <out dir> [width] [height]` against a core that serves the console.
+- Review screenshots: `node tools/shoot.mjs` (replaced in UI2 by `node tools/audit.mjs`, which starts its own throwaway core and also measures each page).
 
 ## Results (2026-11-06)
 

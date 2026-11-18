@@ -24,6 +24,9 @@ const NAMES = [
   "CircleNotch", "Clock", "ClockCounterClockwise", "ArrowsClockwise", "ArrowUUpLeft", "Vault", "Prohibit",
   "Info", "Bell", "Funnel", "Trash", "Plus", "Sparkle", "Binoculars", "Flask", "TreeStructure", "Cpu",
   "HardDrives", "Plugs", "EnvelopeOpen", "Crosshair", "ListMagnifyingGlass", "Stamp", "Hourglass", "CircleDashed",
+  // UI2: the new tabs, the phone menu and the theme switch
+  "ShieldStar", "ChatCircleText", "BookOpenText", "List", "Sun", "Moon", "CircleHalf", "Keyboard", "Broadcast",
+  "Rss", "ThumbsUp", "ThumbsDown", "Database", "Heartbeat",
 ];
 const WEIGHTS = ["regular", "duotone", "fill"];
 const SHAPES = /<(path|circle|rect|line|polyline|polygon|ellipse)\b([^>]*?)\/>/g;

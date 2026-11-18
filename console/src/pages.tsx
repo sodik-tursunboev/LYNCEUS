@@ -1,15 +1,18 @@
 import { useState } from "react";
 import type { Api } from "./api";
 import { relativeTime } from "./analysis";
-import { compact, score, shortHash, when } from "./format";
+import { collapseRepeats, compact, plural, ruleWords, score, shortHash, when } from "./format";
 import { Icon } from "./Icon";
 import { consequence, group, GROUPS, isMail, LABEL, MAIL_LABEL, reasonText, verbsFor, type Verb } from "./policy";
 import { kindIcon, verdictMeta, type Tone } from "./theme";
-import type { ActionRow, FeedbackLabel } from "./types";
+import type { ActionRow, EventRow, FeedbackLabel } from "./types";
 import { Badge, Chip, ConfirmButton, CopyButton, Distribution, Empty, ErrorLine, Gauge, Hash, PageTitle, Panel, Skeleton, Stat, useLoad } from "./ui";
 import { SignalsPanel } from "./workbench";
 
 const Ago = ({ iso }: { iso: string }) => <time dateTime={iso} title={when(iso)}>{relativeTime(iso, Date.now())}</time>;
+
+/** What a detection with no host was, in words. */
+const KIND_WORDS: Record<string, string> = { URL: "a link", EMAIL: "an email", FILE: "a file" };
 
 const MAIL_TONE: Record<string, { tone: Tone; text: string }> = {
   connected: { tone: "ok", text: "connected" },
@@ -22,13 +25,17 @@ const MAIL_TONE: Record<string, { tone: Tone; text: string }> = {
 export function Overview({ api }: { api: Api }) {
   const health = useLoad(() => api.health(), [api], 5000);
   const mailbox = useLoad(() => api.mailbox(), [api], 5000);
+  const intel = useLoad(() => api.intelHealth(), [api], 30000);
   const actions = useLoad(() => api.actions(undefined, 200), [api], 3000);
   const events = useLoad(() => api.events(undefined, 200), [api], 5000);
   const waiting = actions.data?.filter((a) => a.state === "PENDING").length ?? 0;
   const quarantined = actions.data?.filter((a) => a.state === "APPLIED").length ?? 0;
   const flagged = events.data?.filter((e) => e.state === "MALICIOUS" || e.state === "SUSPICIOUS") ?? [];
+  const feed = collapseRepeats(flagged).slice(0, 7);
   const mail = MAIL_TONE[mailbox.data?.state ?? ""] ?? { tone: "info" as Tone, text: mailbox.data?.state ?? "…" };
   const coreUp = health.data?.status === "ok";
+  const usable = intel.data?.providers.filter((p) => p.usable).length ?? 0;
+  const lookups = intel.data === null ? (intel.error ? "unknown" : "…") : intel.data.providers.length === 0 ? "off" : `${usable} of ${intel.data.providers.length} usable`;
   return (
     <>
       <PageTitle
@@ -37,24 +44,29 @@ export function Overview({ api }: { api: Api }) {
       />
       <ErrorLine error={health.error ?? actions.error} />
       <div className="stats">
-        <Stat icon="Cpu" label="Core" tone={coreUp ? "ok" : health.error ? "bad" : "info"} value={coreUp ? "running" : health.error ? "unreachable" : "…"} note="the analysis engine" />
-        <Stat icon="Hourglass" label="Waiting for your decision" tone={waiting > 0 ? "warn" : "accent"} value={waiting} href="#/actions" note={waiting > 0 ? "needs you" : "nothing waiting"} />
-        <Stat icon="Vault" label="In quarantine" value={quarantined} href="#/actions" note="restorable" />
-        <Stat icon="ShieldWarning" label="Flagged recently" tone={flagged.length > 0 ? "bad" : "ok"} value={flagged.length} href="#/events" note="malicious or suspicious" />
-        <Stat icon="EnvelopeSimple" label="Mail" tone={mail.tone} value={mail.text} note={mailbox.data?.state === "off" ? "read-only, off by default" : "read-only"} />
+        <Stat icon="Heartbeat" label="Core" tone={coreUp ? "ok" : health.error ? "bad" : "info"} value={coreUp ? "running" : health.error ? "down" : "…"} note="the analysis engine" />
+        <Stat icon="Hourglass" label="Waiting for you" tone={waiting > 0 ? "warn" : "accent"} value={waiting} href="#/actions" note={waiting > 0 ? "decide in Responses" : "nothing waiting"} />
+        <Stat icon="Vault" label="In quarantine" value={quarantined} href="#/actions" note="all restorable" />
+        <Stat icon="ShieldWarning" label="Flagged recently" tone={flagged.length > 0 ? "bad" : "ok"} value={flagged.length} href="#/events" note={`of the last ${events.data?.length ?? 0} events`} />
       </div>
       <div className="grid">
-        <Panel title="Recent detections" icon="Pulse" actions={<a href="#/events">All events <Icon name="ArrowRight" size={13} /></a>}>
-          {events.data === null ? <Skeleton lines={4} /> : flagged.length === 0 ? (
+        <Panel title="Recent detections" icon="Pulse" actions={<a className="panel-link" href="#/events">All events <Icon name="ArrowRight" size={14} /></a>}>
+          {events.data === null ? <Skeleton lines={4} /> : feed.length === 0 ? (
             <Empty icon="ShieldCheck" title="Nothing flagged">Links, files and mail are checked as they arrive. Detections will appear here.</Empty>
           ) : (
             <ul className="feed">
-              {flagged.slice(0, 7).map((e) => (
+              {feed.map(({ item: e, count }) => (
                 <li key={e.id}>
-                  <Icon name={kindIcon(e.kind)} weight="duotone" size={20} />
-                  <a href={`#/events/${e.id}`} className="feed-main"><strong className="mono">{e.host ?? e.kind.toLowerCase()}</strong><span className="muted">{e.rules.slice(0, 2).join(", ")}</span></a>
-                  <Badge value={e.state} size="sm" />
-                  <span className="muted feed-time"><Ago iso={e.created_at} /></span>
+                  <span className="feed-icon"><Icon name={kindIcon(e.kind)} weight="duotone" size={20} /></span>
+                  <a href={`#/events/${e.id}`} className="feed-main">
+                    <strong className={e.host ? "mono" : undefined} title={e.host ?? undefined}>{e.host ?? KIND_WORDS[e.kind.toUpperCase()] ?? e.kind.toLowerCase()}</strong>
+                    <span className="muted" title={e.rules.join(", ")}>{e.rules.slice(0, 3).map(ruleWords).join(" · ") || "no rule named"}</span>
+                  </a>
+                  <span className="feed-side">
+                    <Badge value={e.state} size="sm" />
+                    {count > 1 ? <span className="feed-count" title={`Judged the same way ${count} times`}>×{count}</span> : null}
+                    <span className="muted feed-time"><Ago iso={e.created_at} /></span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -64,11 +76,11 @@ export function Overview({ api }: { api: Api }) {
           <Panel title="Verdicts" icon="ListChecks" actions={<span className="muted">last {events.data?.length ?? 0}</span>}>
             <Distribution items={events.data ?? []} />
           </Panel>
-          <Panel title="Protection" icon="ShieldCheck">
+          <Panel title="Protection" icon="ShieldStar" actions={<a className="panel-link" href="#/protection">Details <Icon name="ArrowRight" size={14} /></a>}>
             <ul className="status-list">
-              <li><Icon name="Cpu" weight="duotone" size={18} />Analysis engine<Chip tone={coreUp ? "ok" : "bad"}>{coreUp ? "running" : "not reachable"}</Chip></li>
-              <li><Icon name="EnvelopeSimple" weight="duotone" size={18} />Mailbox<Chip tone={mail.tone}>{mail.text}</Chip></li>
-              <li><Icon name="Vault" weight="duotone" size={18} />Responses<Chip tone="accent">ask first</Chip></li>
+              <li><Icon name="Cpu" weight="duotone" size={18} /><span>Analysis engine</span><Chip tone={coreUp ? "ok" : "bad"}>{coreUp ? "running" : "not reachable"}</Chip></li>
+              <li><Icon name="EnvelopeSimple" weight="duotone" size={18} /><span>Mailbox</span><Chip tone={mail.tone}>{mail.text}</Chip></li>
+              <li><Icon name="Broadcast" weight="duotone" size={18} /><span>Outside lookups</span><Chip tone={intel.data && usable < intel.data.providers.length ? "warn" : "info"}>{lookups}</Chip></li>
             </ul>
           </Panel>
           <NoisyRules api={api} />
@@ -83,33 +95,56 @@ const FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "Everything" }, { value: "MALICIOUS", label: "Malicious" }, { value: "SUSPICIOUS", label: "Suspicious" },
   { value: "UNKNOWN", label: "Unknown" }, { value: "ERROR", label: "Errors" },
 ];
+const KINDS: Array<{ value: string; label: string }> = [{ value: "", label: "All kinds" }, { value: "URL", label: "Links" }, { value: "EMAIL", label: "Email" }, { value: "FILE", label: "Files" }];
+
+/** Events matching what was typed: host, rule id or its words, kind or verdict, case-insensitive. */
+export function matchesSearch(e: Pick<EventRow, "host" | "rules" | "kind" | "state">, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return [e.host ?? "", e.kind, e.state, ...e.rules, ...e.rules.map(ruleWords)].some((s) => s.toLowerCase().includes(q));
+}
 
 export function EventsPage({ api }: { api: Api }) {
   const [state, setState] = useState("");
+  const [kind, setKind] = useState("");
+  const [query, setQuery] = useState("");
   const events = useLoad(() => api.events(state || undefined, 100), [api, state], 5000);
+  const shown = (events.data ?? []).filter((e) => (!kind || e.kind.toUpperCase() === kind) && matchesSearch(e, query));
   return (
     <>
       <PageTitle icon="Pulse" title="Events" lead="Every link, message and file Lynceus judged, newest first." />
-      <div className="segmented" role="group" aria-label="Filter by verdict">
-        {FILTERS.map((f) => (
-          <button key={f.value} type="button" className={state === f.value ? "seg on" : "seg"} aria-pressed={state === f.value} onClick={() => setState(f.value)}>{f.label}</button>
-        ))}
+      <div className="toolbar">
+        <label className="search">
+          <Icon name="MagnifyingGlass" size={16} />
+          <input type="search" data-search value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search host, rule or kind" aria-label="Search events" />
+        </label>
+        <div className="segmented" role="group" aria-label="Filter by verdict">
+          {FILTERS.map((f) => (
+            <button key={f.value} type="button" className={state === f.value ? "seg on" : "seg"} aria-pressed={state === f.value} onClick={() => setState(f.value)}>{f.label}</button>
+          ))}
+        </div>
+        <div className="segmented" role="group" aria-label="Filter by kind">
+          {KINDS.map((k) => (
+            <button key={k.value} type="button" className={kind === k.value ? "seg on" : "seg"} aria-pressed={kind === k.value} onClick={() => setKind(k.value)}>{k.label}</button>
+          ))}
+        </div>
       </div>
       <ErrorLine error={events.error} />
       <Panel>
+        {events.data && events.data.length > 0 ? <p className="muted table-note" role="status">{shown.length === events.data.length ? `The last ${plural(events.data.length, "event")}.` : `${shown.length} of the last ${plural(events.data.length, "event")} match.`}</p> : null}
         <div className="table-wrap">
-          <table className="data">
+          <table className="data cards">
             <thead><tr><th>When</th><th>Kind</th><th>Where from</th><th>Verdict</th><th>Score</th><th>Signs</th><th>Response</th></tr></thead>
             <tbody>
-              {events.data?.map((e) => (
-                <tr key={e.id}>
-                  <td className="nowrap"><Ago iso={e.created_at} /></td>
-                  <td><span className="cell-kind"><Icon name={kindIcon(e.kind)} weight="duotone" size={16} />{e.kind.toLowerCase()}</span></td>
-                  <td className="mono">{e.host ?? ""}</td>
-                  <td><a href={`#/events/${e.id}`} className="badge-link"><Badge value={e.state} size="sm" /></a></td>
-                  <td className="mono">{score(e.risk_score)}</td>
-                  <td><span className="chips">{e.rules.slice(0, 3).map((r) => <Chip key={r}>{r.split(".").pop()?.replaceAll("_", " ")}</Chip>)}</span></td>
-                  <td>{e.action_state ? <a href="#/actions" className="badge-link"><Badge value={e.action_state} size="sm" /></a> : ""}</td>
+              {shown.map((e) => (
+                <tr key={e.id} className="event-row">
+                  <td data-label="When" className="nowrap"><Ago iso={e.created_at} /></td>
+                  <td data-label="Kind"><span className="cell-kind"><Icon name={kindIcon(e.kind)} weight="duotone" size={16} /><span>{e.kind.toLowerCase()}</span></span></td>
+                  <td data-label="Where from" className="mono cell-wrap">{e.host ?? <span className="muted">{KIND_WORDS[e.kind.toUpperCase()] ?? ""}</span>}</td>
+                  <td data-label="Verdict"><a href={`#/events/${e.id}`} className="badge-link" aria-label={`${e.state.toLowerCase()}: open this event`}><Badge value={e.state} size="sm" /></a></td>
+                  <td data-label="Score" className={e.risk_score === null ? "mono nowrap no-score" : "mono nowrap"}>{score(e.risk_score)}</td>
+                  <td data-label="Signs"><span className="chips">{e.rules.slice(0, 3).map((r) => <span key={r} title={r}><Chip>{ruleWords(r)}</Chip></span>)}</span></td>
+                  <td data-label="Response">{e.action_state ? <a href="#/actions" className="badge-link"><Badge value={e.action_state} size="sm" /></a> : <span className="muted">none</span>}</td>
                 </tr>
               ))}
             </tbody>
@@ -117,6 +152,7 @@ export function EventsPage({ api }: { api: Api }) {
         </div>
         {events.data === null ? <Skeleton lines={5} /> : null}
         {events.data && events.data.length === 0 ? <Empty icon="Pulse" title="Nothing yet">New judgements will show up here as they happen.</Empty> : null}
+        {events.data && events.data.length > 0 && shown.length === 0 ? <Empty icon="Funnel" title="Nothing matches">Try another word, or clear the filters.</Empty> : null}
       </Panel>
     </>
   );
@@ -135,8 +171,12 @@ export function EventPage({ api, id }: { api: Api; id: string }) {
           <section className={`hero tone-${meta.tone}`} aria-label="Verdict">
             <Gauge score={e.risk_score} state={e.state} />
             <div className="hero-main">
-              <div className="eyebrow"><Icon name={kindIcon(e.kind)} size={14} />{e.kind.toLowerCase()} · from {e.host ?? "an unknown place"} · {when(e.created_at)} · source {e.source}</div>
-              <h2 className="hero-title">{e.kind} from {e.host ?? "an unknown place"}</h2>
+              <div className="eyebrow">
+                <span className="eyebrow-item"><Icon name={kindIcon(e.kind)} size={14} />{e.kind.toLowerCase()}</span>
+                <span className="eyebrow-item">{when(e.created_at)}</span>
+                <span className="eyebrow-item">source {e.source.toLowerCase()}</span>
+              </div>
+              <h2 className="hero-title">{e.kind} from <span className="hero-host">{e.host ?? "an unknown place"}</span></h2>
               <p className="hero-meaning">{meta.meaning}</p>
               <p className="hero-why">{e.explanation}</p>
               <div className="chips">
@@ -212,11 +252,14 @@ export function NoisyRules({ api }: { api: Api }) {
   const rules = useLoad(() => api.feedbackRules(), [api], 15000);
   const noisy = (rules.data ?? []).filter((r) => r.false_alarm > 0).slice(0, 8);
   return (
-    <Panel title="Rules you called wrong" icon="ShieldSlash">
+    <Panel title="Rules you called wrong" icon="ShieldSlash" actions={<a className="panel-link" href="#/feedback">All rules <Icon name="ArrowRight" size={14} /></a>}>
       <ErrorLine error={rules.error} />
       {noisy.length === 0 ? <p className="muted">No false alarms reported yet. Use "Was this right?" on an event, or "This warning is wrong" in the browser.</p> : (
-        <ul className="evidence">{noisy.map((r) => (
-          <li key={r.rule_id}><code>{r.rule_id}</code><span className="muted">{r.false_alarm} false alarm{r.false_alarm === 1 ? "" : "s"}, {r.correct} right</span></li>
+        <ul className="noisy">{noisy.map((r) => (
+          <li key={r.rule_id} title={r.rule_id}>
+            <span className="noisy-name">{ruleWords(r.rule_id)}</span>
+            <span className="noisy-counts"><span className="tone-bad">{plural(r.false_alarm, "false alarm")}</span><span className="muted">{r.correct} right</span></span>
+          </li>
         ))}</ul>
       )}
     </Panel>
@@ -310,21 +353,22 @@ export function AllowPage({ api }: { api: Api }) {
       />
       <ErrorLine error={list.error} />
       <Panel>
-        {list.data && list.data.length === 0 ? <p className="muted">Empty.</p> : (
+        {list.data && list.data.length === 0 ? <Empty icon="ListChecks" title="Empty.">Use "Restore and don't flag again" on a quarantined file in Responses to add one.</Empty> : (
           <div className="table-wrap">
-            <table className="data">
-              <thead><tr><th>File (hash)</th><th>Added</th><th>By</th><th>Until</th><th /></tr></thead>
+            <table className="data cards">
+              <thead><tr><th>File (hash)</th><th>Added</th><th>By</th><th>Until</th><th><span className="sr-only">Remove</span></th></tr></thead>
               <tbody>{list.data?.map((a) => (
                 <tr key={a.sha256}>
-                  <td><Hash value={a.sha256} /> <CopyButton text={a.sha256} label="Copy the full hash" /></td>
-                  <td><Ago iso={a.created_at} /></td><td>{a.created_by}</td>
-                  <td>{a.expires_at ? when(a.expires_at) : "until removed"}</td>
-                  <td><ConfirmButton label="Remove" explain={`Lynceus will flag ${shortHash(a.sha256)} again if it sees it.`} onConfirm={async () => { await api.allowRemove(a.sha256); list.reload(); }} /></td>
+                  <td data-label="File (hash)"><span className="cell-hash"><Hash value={a.sha256} /><CopyButton text={a.sha256} label="Copy the full hash" /></span></td>
+                  <td data-label="Added"><Ago iso={a.created_at} /></td><td data-label="By">{a.created_by}</td>
+                  <td data-label="Until">{a.expires_at ? when(a.expires_at) : "until removed"}</td>
+                  <td data-label="Remove"><ConfirmButton label="Remove" explain={`Lynceus will flag ${shortHash(a.sha256)} again if it sees it.`} onConfirm={async () => { await api.allowRemove(a.sha256); list.reload(); }} /></td>
                 </tr>
               ))}</tbody>
             </table>
           </div>
         )}
+        {list.data === null ? <Skeleton lines={3} /> : null}
       </Panel>
     </>
   );
@@ -341,20 +385,21 @@ export function AuditPage({ api }: { api: Api }) {
       <ErrorLine error={audit.error} />
       <Panel>
         <div className="table-wrap">
-          <table className="data">
+          <table className="data cards">
             <thead><tr><th>When</th><th>Who</th><th>What</th><th>About</th><th>Details</th></tr></thead>
             <tbody>{audit.data?.map((r) => (
               <tr key={r.id}>
-                <td className="nowrap"><Ago iso={r.at} /></td>
-                <td><Chip tone={r.actor === "user" ? "accent" : "info"}>{r.actor}</Chip></td>
-                <td className="mono">{r.action}</td>
-                <td>{r.target_type}{r.target_id ? ` ${r.target_id.slice(0, 8)}` : ""}</td>
-                <td className="mono detail">{compact(r.detail)}</td>
+                <td data-label="When" className="nowrap"><Ago iso={r.at} /></td>
+                <td data-label="Who"><Chip tone={r.actor === "user" ? "accent" : "info"}>{r.actor}</Chip></td>
+                <td data-label="What" className="mono cell-wrap">{r.action}</td>
+                <td data-label="About" className="cell-wrap">{r.target_type}{r.target_id ? <> <span className="mono">{r.target_id.slice(0, 8)}</span></> : ""}</td>
+                <td data-label="Details" className="mono detail">{compact(r.detail) || <span className="muted">none</span>}</td>
               </tr>
             ))}</tbody>
           </table>
         </div>
         {audit.data === null ? <Skeleton lines={5} /> : null}
+        {audit.data && audit.data.length === 0 ? <Empty icon="Scroll" title="Nothing recorded yet">Decisions and actions are written here as they happen.</Empty> : null}
       </Panel>
     </>
   );

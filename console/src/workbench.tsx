@@ -167,7 +167,7 @@ function UrlIntake({ busy, onRun, onSwitch }: { busy: boolean; onRun: (url: stri
       <div className="url-box">
         <Icon name="Link" weight="duotone" size={22} />
         <input
-          className="url-input mono" type="text" inputMode="url" spellCheck={false} autoComplete="off" autoCapitalize="off"
+          className="url-input mono" type="text" inputMode="url" spellCheck={false} autoComplete="off" autoCapitalize="off" data-search
           placeholder="https://… paste a link exactly as you received it" aria-label="Link to analyze" value={value}
           maxLength={8192} onChange={(e) => setValue(e.target.value)} onKeyDown={key} disabled={busy}
         />
@@ -273,7 +273,11 @@ function Result({ done, headingRef, onDetonate }: { done: Done; headingRef: RefO
       <section className={`hero tone-${meta.tone}`} aria-label="Verdict">
         <Gauge score={v.risk_score} state={v.state} />
         <div className="hero-main">
-          <div className="eyebrow"><Icon name={kindIcon(r.type)} size={14} />{r.type === "url" ? "Link" : r.type === "email" ? "Email" : "File"} · <span className="mono">{shortWhat(done.what)}</span> · {relativeTime(new Date(done.at).toISOString(), Date.now())}</div>
+          <div className="eyebrow">
+            <span className="eyebrow-item"><Icon name={kindIcon(r.type)} size={14} />{r.type === "url" ? "Link" : r.type === "email" ? "Email" : "File"}</span>
+            <span className="eyebrow-item mono" title={done.what}>{shortWhat(done.what)}</span>
+            <span className="eyebrow-item">{relativeTime(new Date(done.at).toISOString(), Date.now())}</span>
+          </div>
           <div ref={headingRef} tabIndex={-1} className="hero-headline">
             <Icon name={meta.icon} weight="fill" size={30} />
             <h3>{meta.headline}</h3>
@@ -328,7 +332,7 @@ function Result({ done, headingRef, onDetonate }: { done: Done; headingRef: RefO
       </Panel>
 
       <footer className="result-foot">
-        <span><Icon name="Cpu" size={14} />engine {v.engine_version} · ruleset <span className="mono">{v.ruleset_version}</span> · {when(v.created_at)}</span>
+        <span className="result-versions"><Icon name="Cpu" size={14} /><span>engine <span className="mono">{v.engine_version}</span> · ruleset <span className="mono">{v.ruleset_version}</span> · {when(v.created_at)}</span></span>
         {r.persisted
           ? <a href={`#/events/${v.id}`}><Icon name="Check" size={14} />Recorded in Events</a>
           : <span><Icon name="CircleDashed" size={14} />Not recorded (no database is configured)</span>}
@@ -380,7 +384,7 @@ function SandboxOffer({ onRun }: { onRun: () => void }) {
     <Panel title="Look at the page itself" icon="Flask">
       <p>The address alone often says nothing. Lynceus can open the page in a locked-down browser that is thrown away afterwards and judge what the page shows: a brand's sign-in form on someone else's site, where a form sends your password, code that hides from analysts.</p>
       <p className="muted">The page is visited from this computer's internet connection, so whoever runs it sees your IP address. Nothing is typed into it.</p>
-      <button type="button" className="btn primary" onClick={onRun}><Icon name="Flask" size={16} />Open in sandbox</button>
+      <div className="panel-cta"><button type="button" className="btn primary" onClick={onRun}><Icon name="Flask" size={16} />Open in sandbox</button></div>
     </Panel>
   );
 }

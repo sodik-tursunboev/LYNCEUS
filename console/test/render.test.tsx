@@ -18,17 +18,31 @@ describe("everything from the core is shown as text", () => {
     expect(files.length).toBeGreaterThan(5);
     for (const f of files) {
       const text = readFileSync(new URL(f, dir), "utf8");
-      for (const banned of ["dangerouslySetInnerHTML", "innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function", "style={", "localStorage", "document.cookie"]) {
+      for (const banned of ["dangerouslySetInnerHTML", "innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function", "style={", "document.cookie"]) {
         expect(text, `${f} contains ${banned}`).not.toContain(banned);
       }
+      // UI2: the theme choice is the one thing kept between visits, in exactly one place
+      if (String(f).replaceAll("\\", "/") !== "prefs.ts") expect(text, `${f} uses localStorage`).not.toContain("localStorage");
     }
   });
 
-  it("the page loads only its own two files", () => {
+  it("keeps nothing between visits but the theme choice: one key, two accepted words", () => {
+    const prefs = readFileSync(new URL("../src/prefs.ts", import.meta.url), "utf8");
+    expect(prefs.match(/localStorage/g)).toHaveLength(1);
+    expect(prefs).toContain('THEME_KEY = "lynceus.theme"');
+    const boot = readFileSync(new URL("../static/theme.js", import.meta.url), "utf8");
+    expect(boot.match(/localStorage\.\w+\("([^"]+)"/g)).toEqual(['localStorage.getItem("lynceus.theme"']); // reads, never writes
+    expect(boot).not.toMatch(/setItem|innerHTML|eval|cookie|fetch|https?:/);
+    const statics = readdirSync(new URL("../static/", import.meta.url), { recursive: true }).filter((f) => f.endsWith(".js"));
+    expect(statics).toEqual(["theme.js"]); // the only script besides the bundle
+  });
+
+  it("the page loads only its own files", () => {
     const html = readFileSync(new URL("../static/index.html", import.meta.url), "utf8");
     expect(html).not.toMatch(/https?:\/\//);
     expect(html).not.toMatch(/<script(?![^>]*src=)/);
     expect(html).not.toMatch(/\sstyle=|\sonclick=|\sonload=/);
+    expect([...html.matchAll(/(?:src|href)="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(["console.css", "console.js", "favicon.svg", "theme.js"]);
   });
 });
 describe("feedback on a verdict (H1 B3)", () => {
