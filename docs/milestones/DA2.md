@@ -49,7 +49,7 @@ Limits: the clean set is Microsoft's own programs, the easiest case; third-party
 
 ### P1. False alarms on legitimate deep links (`docs/eval/deeplinks.md`)
 
-1,640 archived pages of 358 public domains (498 with a query string), four Tranco rank bands, split by a hash of the domain: dev 757, test 883. Every legitimate address elsewhere in the evaluation data is a bare home page, so this is the first measurement of the rules that read paths and queries. **As the product runs: 25 of 757 flagged on dev before any change (3.3%).** The false alarms were not random; reading them rule by rule:
+1,640 archived pages of 358 public domains (498 with a query string), four Tranco rank bands, split by a hash of the domain: dev 757, test 883 (the test half was read twice, not once, so it is a check and not an untouched sample). Every legitimate address elsewhere in the evaluation data is a bare home page, so this is the first measurement of the rules that read paths and queries. **As the product runs: 25 of 757 flagged on dev before any change (3.3%).** The false alarms were not random; reading them rule by rule:
 
 | rule | dev false alarms | cause | decision (cost measured on E1 train phishing) |
 |---|---|---|---|
