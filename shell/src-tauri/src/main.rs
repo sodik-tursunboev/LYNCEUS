@@ -41,7 +41,9 @@ fn agent_exe() -> Result<PathBuf, String> {
     }
 }
 
-/// `http://127.0.0.1:<port>/console/#token=<token>`, exactly this shape and nothing else. Returns the port.
+/// `http://127.0.0.1:<port>/console/#code=<one-time code>`, exactly this shape and nothing else. Returns the
+/// port. Since H1 the agent hands out a one-time code, never the API token, and the console accepts only a
+/// code of 16 to 128 letters, digits, `_` or `-` (console/src/auth.ts); the same rule applies here.
 fn check_link(link: &str) -> Result<u16, String> {
     let rest = link
         .strip_prefix("http://127.0.0.1:")
@@ -49,17 +51,43 @@ fn check_link(link: &str) -> Result<u16, String> {
         .ok_or("the console address is not on this machine")?;
     let (port, tail) = rest.split_once('/').ok_or("the console address is malformed")?;
     let port: u16 = port.parse().map_err(|_| "the console address has no valid port")?;
-    let token = tail
-        .strip_prefix("console/#token=")
+    let code = tail
+        .strip_prefix("console/#code=")
         .ok_or("the console address is malformed")?;
-    let ok = (16..=512).contains(&token.len())
-        && token
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"_-+/=.".contains(&b));
+    let ok = (16..=128).contains(&code.len())
+        && code.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-');
     if port == 0 || !ok {
         return Err("the console address is malformed".into());
     }
     Ok(port)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::check_link;
+
+    #[test]
+    fn accepts_the_agents_one_time_code_link() {
+        let code = "k2l-FKOrgbefTJES3Itb3-GzD4obrVF_oOyPXtQcuAg"; // pragma: allowlist secret
+        assert_eq!(check_link(&format!("http://127.0.0.1:8765/console/#code={code}")), Ok(8765));
+        assert_eq!(check_link(&format!("http://localhost:9000/console/#code={code}")), Ok(9000));
+    }
+
+    #[test]
+    fn refuses_a_token_link_and_anything_else() {
+        let long = "a".repeat(129);
+        for bad in [
+            "http://127.0.0.1:8765/console/#token=abcdefghijklmnopqrstuvwx", // the pre-H1 form: a token in the address
+            "http://evil.test:8765/console/#code=abcdefghijklmnopqrstuvwx",
+            "http://127.0.0.1:8765/console/#code=short",
+            "http://127.0.0.1:8765/console/#code=has+plus/slash=abcdefghijk",
+            "http://127.0.0.1:0/console/#code=abcdefghijklmnopqrstuvwx",
+            "http://127.0.0.1:8765/other/#code=abcdefghijklmnopqrstuvwx",
+            &format!("http://127.0.0.1:8765/console/#code={long}"),
+        ] {
+            assert!(check_link(bad).is_err(), "accepted {bad}");
+        }
+    }
 }
 
 fn console_link(agent: &PathBuf) -> Result<(String, u16), String> {
