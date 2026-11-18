@@ -25,7 +25,7 @@ import os
 import sqlite3
 import zipfile
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -183,12 +183,17 @@ def _judge_batch(urls: Sequence[str]) -> list[Judged]:
     return out
 
 
-def judge(samples: Sequence[Sample], workers: int) -> list[Judged]:
+def judge(
+    samples: Sequence[Sample], workers: int, initializer: Callable[[], None] | None = None
+) -> list[Judged]:
+    """`initializer` runs once in each worker first (DA1: which learned model the engine uses)."""
     urls = [s.url for s in samples]
     chunks = [urls[i : i + 2000] for i in range(0, len(urls), 2000)]
     if workers <= 1:
+        if initializer:
+            initializer()
         return [j for c in chunks for j in _judge_batch(c)]
-    with ProcessPoolExecutor(max_workers=workers) as pool:
+    with ProcessPoolExecutor(max_workers=workers, initializer=initializer) as pool:
         return [j for part in pool.map(_judge_batch, chunks) for j in part]
 
 

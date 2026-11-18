@@ -107,7 +107,23 @@ class State:
         tmp = self.path.with_suffix(".tmp")
         body = {"history_id": self.history_id, "seen": list(self.seen), "attempts": self.attempts}
         tmp.write_text(json.dumps(body), encoding="utf-8")
-        os.replace(tmp, self.path)
+        replace_retrying(tmp, self.path)
+
+
+def replace_retrying(src: Path, dst: Path, tries: int = 6) -> None:
+    """os.replace, retried briefly: on Windows a virus scanner or the indexer can hold the target
+    for a moment right after it was written, and the rename then fails with "Access is denied".
+    Seen in the test suite (2 of 4 runs of a burst of saves); the poller's own state was at risk
+    too.
+    The last failure is raised: a state that cannot be saved is not silently dropped."""
+    for attempt in range(tries):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == tries - 1:
+                raise
+            time.sleep(0.02 * (2**attempt))  # 20 ms, 40 ms, ... about 0.6 s in all
 
 
 class Mailbox:

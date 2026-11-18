@@ -68,6 +68,12 @@ _lock = threading.Lock()
 _loaded: dict[str, HostModel | None] = {}
 
 
+def use(model: HostModel | None, path: Path = DEFAULT) -> None:
+    """Measurement only (eval.learn_url): what `current()` returns; None means the rules alone."""
+    with _lock:
+        _loaded[str(path)] = model
+
+
 def current(path: Path = DEFAULT) -> HostModel | None:
     with _lock:
         key = str(path)

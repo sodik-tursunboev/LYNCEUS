@@ -62,21 +62,21 @@ def main(
     tokens = write_tokens if args.write else read_tokens
     flag = "LYNCEUS_OUTLOOK_ENABLED" if outlook else "LYNCEUS_GMAIL_ENABLED"
 
+    if args.command != "disconnect" and not (
+        settings.outlook_client_id if outlook else settings.gmail_client_id
+    ):  # connect, status and poll all need it: say what to set instead of failing with a traceback
+        print(
+            "Set LYNCEUS_OUTLOOK_CLIENT_ID (an Azure app registration of your own: "
+            "public client, redirect http://localhost, delegated "
+            f"{'Mail.ReadWrite' if args.write else 'Mail.Read'}) first."
+            if outlook
+            else "Set LYNCEUS_GMAIL_CLIENT_ID (an OAuth 'Desktop app' client of your own) first; "
+            "the steps are in docs/KEYS.md.",
+            file=sys.stderr,
+        )
+        return 2
+
     if args.command == "connect":
-        if outlook and not settings.outlook_client_id:
-            print(
-                "Set LYNCEUS_OUTLOOK_CLIENT_ID (an Azure app registration of your own: "
-                "public client, redirect http://localhost, delegated "
-                f"{'Mail.ReadWrite' if args.write else 'Mail.Read'}) first.",
-                file=sys.stderr,
-            )
-            return 2
-        if not outlook and not settings.gmail_client_id:
-            print(
-                "Set LYNCEUS_GMAIL_CLIENT_ID (an OAuth 'Desktop app' client of your own) first.",
-                file=sys.stderr,
-            )
-            return 2
         if args.write and not args.yes:
             print(CONSENT[args.provider])
             try:

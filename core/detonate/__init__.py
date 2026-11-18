@@ -36,9 +36,12 @@ def safe_screenshot(b64: str | None) -> str | None:
     return jpeg if isinstance(jpeg, str) else None
 
 
-def detonate_url(raw: str, start: UrlAnalysis | None = None) -> tuple[UrlAnalysis, PageReport]:
+def detonate_url(
+    raw: str, start: UrlAnalysis | None = None, *, auto: bool = False
+) -> tuple[UrlAnalysis, PageReport]:
     """The verdict with the page in it, and the page report. `start` is the URL verdict already
-    computed (with intelligence); without one, the offline URL verdict is used."""
+    computed (with intelligence); without one, the offline URL verdict is used. `auto`: opened
+    without anyone asking (DA1 P3)."""
     from core.detonate.judge import judge  # here, not at the top: rules.page imports our models
 
     first = start or analyze_url(raw)
@@ -48,4 +51,4 @@ def detonate_url(raw: str, start: UrlAnalysis | None = None) -> tuple[UrlAnalysi
         report = detonate(first.url.normalized)
     except Unavailable as e:
         report = PageReport(status="error", error=str(e))
-    return judge(first, report), report
+    return judge(first, report, auto=auto), report

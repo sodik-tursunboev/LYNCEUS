@@ -402,6 +402,17 @@ def test_connect_write_needs_the_client_id_before_anything_is_asked(
     assert cl.questions == [] and cl.connects == []
 
 
+@pytest.mark.parametrize("command", ["status", "poll", "connect"])
+def test_without_a_client_id_every_command_says_what_to_set_not_a_traceback(
+    cl: Cli, monkeypatch: pytest.MonkeyPatch, capsys: Any, command: str
+) -> None:
+    monkeypatch.delenv("LYNCEUS_GMAIL_CLIENT_ID")
+    assert cl.run(command) == 2
+    err = capsys.readouterr().err
+    assert "LYNCEUS_GMAIL_CLIENT_ID" in err and "docs/KEYS.md" in err
+    assert cl.connects == []
+
+
 @windows_only
 def test_disconnect_write_removes_only_the_write_token_and_revokes_it(cl: Cli) -> None:
     cl.run("connect")

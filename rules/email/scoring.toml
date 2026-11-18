@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.5.0"
+version = "1.7.0"  # 1.7.0 (DA2): what VirusTotal's engines say about a downloaded file's hash
 
 [thresholds]
 suspicious = 45
@@ -16,7 +16,7 @@ archive_bomb_ratio = 100        # ...if it also expands this many times beyond i
 
 # Exact identification (ADR-020): a signal named here makes the verdict MALICIOUS by itself.
 [certain]
-rules = ["intel.hash_known_bad", "content.eicar"]
+rules = ["intel.hash_known_bad", "content.eicar", "file.vt_known_bad"]
 
 # Most a category can contribute, however many of its signals fire. "link.*" categories carry what
 # the URL engine found in the message's links.
@@ -52,6 +52,35 @@ content = 0.3
 # SUSPICIOUS at most (0.7 < the MALICIOUS line); with one independent strong rule category beside
 # it, MALICIOUS. Weights are provisional until measured (synthetic corpus now, your mail later).
 brain = 0.7
+# DA1: where a downloaded file came from (file.origin_flagged), one independent kind of evidence
+origin = 0.6
+# DA2: how many of VirusTotal's engines flag the file's hash (file.vt_flagged, file.vt_weak)
+reputation = 0.7
+
+# DA1, measured on this computer's own verdicts (2026-11-05 to 11-11): all 6 files the agent flagged
+# were installers flagged on this rule alone ("can run code", 0.75 > 45). For a file someone
+# downloaded, being a program is what an installer is; it stays a sign but needs a second one (a
+# disguised name, a flagged origin, a packed or injecting program, a known-bad hash). Only for the
+# installer types below whose content is a program; .scr, .bat, .vbs, .hta and the rest keep 0.75.
+[file]
+installer_extensions = ["exe", "msi", "msix", "appx", "msixbundle", "appxbundle"]
+installer_weight = 0.3
+origin_flagged_weight = 0.5
+
+# DA2: which downloads are asked about at VirusTotal (the hash only leaves, docs/milestones/DA2.md):
+# program-like types, never PDFs, pictures or plain documents.
+reputation_extensions = [
+    "exe", "dll", "sys", "scr", "com", "pif", "cpl", "msi", "msp", "msix", "appx", "msixbundle",
+    "appxbundle", "bat", "cmd", "ps1", "vbs", "vbe", "js", "jse", "wsf", "hta", "jar", "lnk", "reg",
+    "iso", "img", "vhd", "zip", "rar", "7z", "cab", "docm", "xlsm", "pptm", "xlsb", "xll",
+]
+# Engines flagging the hash (of about 70): from vt_certain it is exact identification (MALICIOUS), from
+# vt_flagged a sign of its own kind (SUSPICIOUS at this weight), below that shown and weak. Provisional
+# until docs/eval/filerep.md measures them on clean Windows binaries and recent malware.
+vt_certain = 10
+vt_flagged = 4
+vt_flagged_weight = 0.6
+vt_weak_weight = 0.1
 
 [weights]
 "email.multiple_from" = 0.6

@@ -449,7 +449,13 @@ def test_only_the_named_rules_are_certain() -> None:
     from core.contracts import Signal
 
     cfg = scoring()
-    assert set(cfg["certain"]["rules"]) == {"intel.hash_known_bad", "content.eicar"}
+    # exact identification only: a hash on a known-bad list, the EICAR test file, and (DA2) a hash
+    # that at least `vt_certain` of VirusTotal's engines flag (docs/eval/filerep.md)
+    assert set(cfg["certain"]["rules"]) == {
+        "intel.hash_known_bad",
+        "content.eicar",
+        "file.vt_known_bad",
+    }
     weak = Signal(
         rule_id="content.script_encoded",
         category="obfuscation",

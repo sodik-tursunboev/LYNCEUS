@@ -23,6 +23,19 @@ from core.mailbox.tokens import TokenFile
 from core.mailbox.write import GmailMover, GraphMover
 from core.response.service import create_pending_mail
 
+# DA1 P3: what is told about each web link of a stored message (the automatic page opener decides
+# whether it is worth a visit); None = nothing is followed
+OnLink = Callable[[str], object] | None
+MAX_LINKS_FOLLOWED = 10  # per message: a message with a hundred links cannot queue a hundred visits
+
+
+def follow_links(a: EmailAnalysis, on_link: OnLink) -> None:
+    if on_link is None:
+        return
+    urls = [link.normalized_url for link in a.report.links if link.normalized_url]
+    for url in dict.fromkeys(urls[:MAX_LINKS_FOLLOWED]):
+        on_link(url)
+
 
 def mailbox_dir(settings: Settings) -> Path:
     return settings.data_dir / "mailbox"
@@ -76,7 +89,7 @@ def proposer(
 
 
 def build_mailbox(
-    settings: Settings, db: Engine | None, intel: Intel | None
+    settings: Settings, db: Engine | None, intel: Intel | None, on_link: OnLink = None
 ) -> MailboxService | None:
     """None unless turned on; a missing client id is an error, not a silent no-op."""
     if not settings.gmail_enabled:
@@ -97,6 +110,7 @@ def build_mailbox(
     def store(a: EmailAnalysis) -> None:
         if db is not None:
             save_email_analysis(db, a, EventSource.EMAIL)
+        follow_links(a, on_link)
 
     return MailboxService.build(
         GmailClient(source, http), source, tokens, directory, analyze, store,
@@ -107,7 +121,7 @@ def build_mailbox(
 
 
 def build_outlook(
-    settings: Settings, db: Engine | None, intel: Intel | None
+    settings: Settings, db: Engine | None, intel: Intel | None, on_link: OnLink = None
 ) -> MailboxService | None:
     """None unless turned on; a missing client id is an error, not a silent no-op."""
     if not settings.outlook_enabled:
@@ -132,6 +146,7 @@ def build_outlook(
     def store(a: EmailAnalysis) -> None:
         if db is not None:
             save_email_analysis(db, a, EventSource.EMAIL)
+        follow_links(a, on_link)
 
     return MailboxService.build(
         GraphClient(source, http), source, tokens, directory, analyze, store,
@@ -154,10 +169,13 @@ def _with_brain(
 
 
 def build_mailboxes(
-    settings: Settings, db: Engine | None, intel: Intel | None
+    settings: Settings, db: Engine | None, intel: Intel | None, on_link: OnLink = None
 ) -> list[MailboxService]:
     """Every provider the operator turned on."""
-    built = [build_mailbox(settings, db, intel), build_outlook(settings, db, intel)]
+    built = [
+        build_mailbox(settings, db, intel, on_link),
+        build_outlook(settings, db, intel, on_link),
+    ]
     return [s for s in built if s is not None]
 
 

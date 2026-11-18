@@ -4,6 +4,7 @@ reported by name only."""
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -58,6 +59,61 @@ def test_settings_read_the_store_after_the_environment_and_before_dotenv(
     assert s.api_token is not None and s.api_token.get_secret_value() == TOKEN
     monkeypatch.setenv("LYNCEUS_API_TOKEN", "from-the-environment-123456")
     assert Settings(_env_file=env).api_token.get_secret_value() == "from-the-environment-123456"  # type: ignore[union-attr]
+
+
+class _Stdin:
+    def __init__(self, tty: bool, text: str = "") -> None:
+        self.tty, self.text = tty, text
+
+    def isatty(self) -> bool:
+        return self.tty
+
+    def readline(self) -> str:
+        return self.text
+
+
+def test_a_value_typed_at_a_terminal_is_hidden_and_stored(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    store = tmp_path / "s.json"
+    monkeypatch.setattr(secrets, "STORE", store)
+    monkeypatch.setattr(sys, "stdin", _Stdin(tty=True))
+    asked: list[str] = []
+
+    def hidden(prompt: str) -> str:
+        asked.append(prompt)
+        return f"  {TOKEN}  "
+
+    monkeypatch.setattr(secrets.getpass, "getpass", hidden)
+    assert secrets.main(["set", "virustotal_api_key"]) == 0
+    assert asked and "virustotal_api_key" in asked[0]  # asked by name, through getpass (no echo)
+    assert secrets.load(store) == {"virustotal_api_key": TOKEN}
+    assert TOKEN not in capsys.readouterr().out  # never printed back
+
+
+def test_a_piped_value_is_read_from_standard_input(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = tmp_path / "s.json"
+    monkeypatch.setattr(secrets, "STORE", store)
+    monkeypatch.setattr(sys, "stdin", _Stdin(tty=False, text=f"{TOKEN}\n"))
+    monkeypatch.setattr(
+        secrets.getpass, "getpass", lambda p: pytest.fail("a pipe is not a terminal")
+    )
+    assert secrets.main(["set", "urlhaus_auth_key"]) == 0
+    assert secrets.load(store) == {"urlhaus_auth_key": TOKEN}
+    monkeypatch.setattr(sys, "stdin", _Stdin(tty=False, text="\n"))
+    assert secrets.main(["set", "urlhaus_auth_key"]) == 2  # an empty value stores nothing
+
+
+def test_a_byte_order_mark_from_a_powershell_pipe_is_not_part_of_the_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    store = tmp_path / "s.json"
+    monkeypatch.setattr(secrets, "STORE", store)
+    monkeypatch.setattr(sys, "stdin", _Stdin(tty=False, text=f"﻿{TOKEN}\r\n"))
+    assert secrets.main(["set", "virustotal_api_key"]) == 0
+    assert secrets.load(store) == {"virustotal_api_key": TOKEN}  # no U+FEFF in front
 
 
 def test_only_secret_settings_may_be_stored() -> None:

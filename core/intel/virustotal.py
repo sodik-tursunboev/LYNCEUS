@@ -49,7 +49,7 @@ class _Data(BaseModel):
     attributes: _Attributes
 
 
-class _Report(BaseModel):
+class Report(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     data: _Data
@@ -103,7 +103,7 @@ class VirusTotal:
             raise ProviderRateLimited(self._quota_pause(got))
         check_status(got)
         try:
-            attrs = _Report.model_validate_json(got.body).data.attributes
+            attrs = Report.model_validate_json(got.body).data.attributes
         except ValidationError:
             raise ProviderError("reply has an unexpected shape") from None
         stats = attrs.last_analysis_stats

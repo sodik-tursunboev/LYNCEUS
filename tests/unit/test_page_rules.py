@@ -10,6 +10,7 @@ from core.detonate.judge import judge
 from core.detonate.models import PageReport
 from rules.page import RULES, evaluate, scoring
 
+pytestmark = pytest.mark.usefixtures("no_learned_model")  # what the page adds to the address rules
 PW = {"type": "password", "hint": "password"}
 EMAIL = {"type": "email", "hint": "email"}
 
@@ -345,3 +346,92 @@ def test_the_phone_view_is_said_in_the_evidence() -> None:
         desktop_status="http_403",
     )
     assert any("phone" in why for rule, why in evaluate(r) if rule.id == "page.cloaked")
+
+
+# ---- fresh_certificate (DA1) ---------------------------------------------------------------------
+DAY = 86_400
+VISIT = 1_794_000_000
+
+
+def fresh(
+    url: str, *, issued_days_before: float, visited: int | None = VISIT, **kw: Any
+) -> PageReport:
+    tls = {
+        "valid_from": int(VISIT - issued_days_before * DAY),
+        "valid_to": VISIT + 80 * DAY,
+        "issuer": "R11",
+    }
+    return page(
+        url,
+        tls=tls,
+        visited_at=visited,
+        **{"title": "Sign in", "forms": [form(url, EMAIL, PW)], **kw},
+    )
+
+
+def test_a_sign_in_page_on_a_certificate_issued_days_ago_is_noted() -> None:
+    r = fresh("https://account-review.example/signin", issued_days_before=2)
+    found = [why for rule, why in evaluate(r) if rule.id == "page.fresh_certificate"]
+    assert found and "2 days before the visit" in found[0]
+    assert "the same day" in next(
+        why
+        for rule, why in evaluate(fresh("https://x-portal.example/", issued_days_before=0.2))
+        if rule.id == "page.fresh_certificate"
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        {
+            "url": "https://account-review.example/signin",
+            "issued_days_before": 30,
+        },  # an older certificate
+        {
+            "url": "https://account-review.example/signin",
+            "issued_days_before": 2,
+            "visited": None,
+        },  # a report from before DA1
+        {
+            "url": "https://login.microsoftonline.com/common",
+            "issued_days_before": 1,
+        },  # a brand's own domain
+        {
+            "url": "https://account-review.example/",
+            "issued_days_before": 1,
+            "title": "Our menu",
+            "forms": [],
+        },  # asks nothing
+    ],
+)
+def test_a_fresh_certificate_alone_or_on_a_brands_own_site_is_not_noted(
+    case: dict[str, Any],
+) -> None:
+    assert "page.fresh_certificate" not in hits(fresh(case.pop("url"), **case))
+
+
+def test_a_fresh_certificate_on_a_popular_domain_is_not_noted() -> None:
+    from core.urls import popular
+
+    popular.use(frozenset({"popular-shop.example"}))
+    try:
+        assert "page.fresh_certificate" not in hits(
+            fresh("https://www.popular-shop.example/login", issued_days_before=1)
+        )
+    finally:
+        popular.use(frozenset())
+
+
+def test_a_fresh_certificate_is_shown_but_changes_no_verdict() -> None:
+    """Evidence only until measured: next to url.login_path any weight would flag ordinary new
+    sign-in pages (found by this test with a weight of 0.25)."""
+    url = "https://account-review.example/signin"
+    start = analyze_url(url)
+    young = judge(start, fresh(url, issued_days_before=1))
+    old = judge(start, fresh(url, issued_days_before=60))
+    assert "page.fresh_certificate" in {s.rule_id for s in young.verdict.signals}
+    assert "page.fresh_certificate" not in {s.rule_id for s in old.verdict.signals}
+    assert (young.verdict.state, young.verdict.risk_score) == (
+        old.verdict.state,
+        old.verdict.risk_score,
+    )

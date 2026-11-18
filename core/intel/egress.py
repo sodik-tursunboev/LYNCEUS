@@ -4,12 +4,14 @@ Only a *public registered domain* may be sent: a name under a suffix the Public 
 Never a path, query, fragment or user name (a `Query` cannot carry them), never an IP address, a
 single-label name, or anything under a reserved or internal suffix (`.test`, `.local`, `.internal`,
 `.lan`, ...). That also means the synthetic corpus, which lives on `.test`, can never be sent.
+Since DA2 also never an established site: a domain on the popular list or a brand's own domain.
 """
 
 import re
 
-from core.urls import psl
+from core.urls import popular, psl
 from core.urls.parse import HostKind, ParsedUrl
+from rules.url.data import official_domains
 
 _LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _MAX_NAME = 253
@@ -46,4 +48,9 @@ def public_name(u: ParsedUrl) -> str | None:
     labels = name.split(".")
     if len(labels) < 2 or not all(_LABEL.match(label) for label in labels):
         return None  # also rejects non-ASCII and underscores: IDNs go as punycode or not at all
+    # DA2: an established site (the popular list, or a brand's own domain) is not asked about: an
+    # outside service knows nothing useful about google.com, and without this every site visited
+    # would be sent. The local list feeds still see it (they match on this machine).
+    if popular.is_popular(name) or name in official_domains():
+        return None
     return name

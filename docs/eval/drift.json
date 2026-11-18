@@ -1,0 +1,83 @@
+{
+ "generated_at": "2026-11-18 11:14Z",
+ "models": {
+  "shipped (all sources)": {
+   "threshold": 0.9863,
+   "PhishTank phishing (2026)": {
+    "k": 2865,
+    "n": 4199,
+    "rate": 0.6823,
+    "ci": [
+     0.6681,
+     0.6962
+    ]
+   },
+   "OpenPhish phishing (2026)": {
+    "k": 27,
+    "n": 54,
+    "rate": 0.5,
+    "ci": [
+     0.3711,
+     0.6289
+    ]
+   },
+   "PhiUSIIL phishing (2024)": {
+    "k": 8109,
+    "n": 17719,
+    "rate": 0.4576,
+    "ci": [
+     0.4503,
+     0.465
+    ]
+   },
+   "legitimate (Tranco and PhiUSIIL)": {
+    "k": 182,
+    "n": 47307,
+    "rate": 0.0038,
+    "ci": [
+     0.0033,
+     0.0044
+    ]
+   }
+  },
+  "older (PhiUSIIL and Tranco only)": {
+   "threshold": 0.9943,
+   "PhishTank phishing (2026)": {
+    "k": 2315,
+    "n": 4199,
+    "rate": 0.5513,
+    "ci": [
+     0.5362,
+     0.5663
+    ]
+   },
+   "OpenPhish phishing (2026)": {
+    "k": 24,
+    "n": 54,
+    "rate": 0.4444,
+    "ci": [
+     0.32,
+     0.5762
+    ]
+   },
+   "PhiUSIIL phishing (2024)": {
+    "k": 7838,
+    "n": 17719,
+    "rate": 0.4424,
+    "ci": [
+     0.4351,
+     0.4497
+    ]
+   },
+   "legitimate (Tranco and PhiUSIIL)": {
+    "k": 169,
+    "n": 47307,
+    "rate": 0.0036,
+    "ci": [
+     0.0031,
+     0.0042
+    ]
+   }
+  }
+ }
+}

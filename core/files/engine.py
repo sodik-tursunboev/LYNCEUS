@@ -23,6 +23,7 @@ from core.detection.engine import analyze_url
 from core.email import engine as mail
 from core.email.engine import ExtractedRef, FileSummary, LinkSummary
 from core.email.models import FileBytesReply, HtmlStats, Magic, MessageScan, Part
+from core.intel.base import FileRep
 from core.risk.scoring import Scored, score
 from rules.email import Ctx, FileInfo, LinkInfo
 from rules.email.data import ruleset_version, scoring
@@ -180,9 +181,12 @@ def analyze_file(
     origin_host: str | None = None,
     artifact_id: UUID | None = None,
     run: InspectBytes | None = None,
+    reputation: FileRep | None = None,
 ) -> FileAnalysis:
     """`sha256` and `claimed_magic` come from the agent. With `data` the core recomputes the hash
-    and learns the type itself (in the sandbox); the agent's claims are then not used."""
+    and learns the type itself (in the sandbox); the agent's claims are then not used.
+    `reputation` (DA2): what VirusTotal's engines say about this hash, already asked by the caller
+    (None: not asked, or no answer; that changes nothing)."""
     run = run or run_inspect_bytes
     aid = artifact_id or uuid4()
     digest = sha256.lower() if _SHA256.match(sha256.lower()) else ""
@@ -218,14 +222,18 @@ def analyze_file(
             inside = [h for h in mail.known_bad(scan, files) if h.where == "archive entry"]
             hits = tuple(dict.fromkeys([*known, *inside]))
             ctx = Ctx(scan, tuple(links), None, None, files, hits)
-            return _report(aid, digest, found, ctx, links, files, inspected, host)
+            installer = _ext(clean) in scoring()["file"]["installer_extensions"] and magic == "exe"
+            return _report(
+                aid, digest, found, ctx, links, files, inspected, host, installer, reputation
+            )
         except Exception:  # an engine bug is an explicit ERROR, never a silent pass
             log.exception("file analysis failed")
             return _unscored(aid, digest, VerdictState.ERROR, "Analysis failed.", "error", host)
 
     def stopped(state: VerdictState, why: str, reason: str) -> FileAnalysis:
         """The file could not be opened: UNKNOWN or ERROR, unless its hash already identifies it."""
-        return decide() if known else _unscored(aid, digest, state, why, reason, host)
+        identified = bool(known) or _reputation_decides(reputation)
+        return decide() if identified else _unscored(aid, digest, state, why, reason, host)
 
     if data is not None and len(data) > MAX_FILE_BYTES:
         why = f"The file is over the {MAX_FILE_BYTES}-byte limit for opening."
@@ -261,6 +269,82 @@ def analyze_file(
     return decide()
 
 
+def _ext(name: str) -> str:
+    return name.rsplit(".", 1)[-1].strip().lower() if "." in name else ""
+
+
+def wants_reputation(name: str) -> bool:
+    """DA2: only program-like downloads (programs, installers, scripts, shortcuts, disk images,
+    archives, macro-enabled Office files) are worth a hash lookup, and only those are asked: never a
+    PDF, a picture or a plain document, so little about what the owner keeps ever leaves."""
+    clean, _ = _flags(name)
+    return _ext(clean) in scoring()["file"]["reputation_extensions"]
+
+
+def _reputation_decides(rep: FileRep | None) -> bool:
+    return rep is not None and rep.malicious >= scoring()["file"]["vt_certain"]
+
+
+def _reputation_signal(rep: FileRep | None, digest: str) -> tuple[Signal, Evidence] | None:
+    """DA2: what VirusTotal's engines say about the file's hash. Many engines: exact identification
+    (like a known-bad list match). A few: a sign of its own kind. One or two: shown, never enough
+    alone (a clean installer is flagged by one or two small engines now and then). Nothing, or no
+    answer: nothing is added, and that is not evidence of safety."""
+    if rep is None or rep.malicious < 1:
+        return None
+    cfg = scoring()["file"]
+    when = f", analysed {rep.analysed:%Y-%m-%d}" if rep.analysed else ""
+    summary = f"VirusTotal: {rep.malicious} of {rep.engines} engines flag this file{when}"
+    if rep.malicious >= cfg["vt_certain"]:
+        rule, category, weight = "file.vt_known_bad", "known_bad", 0.99
+    elif rep.malicious >= cfg["vt_flagged"]:
+        rule, category, weight = "file.vt_flagged", "reputation", cfg["vt_flagged_weight"]
+    else:
+        rule, category, weight = "file.vt_weak", "reputation", cfg["vt_weak_weight"]
+    ev = Evidence(kind="file_reputation", summary=summary[:500], sha256=digest or None)
+    sig = Signal(
+        rule_id=rule, category=category, weight=weight, description=summary[:500],
+        evidence_ids=[ev.id], attack="T1204.002",
+    )  # fmt: skip
+    return sig, ev
+
+
+def _as_download(s: Signal) -> Signal:
+    """email.dangerous_attachment on a downloaded installer: still shown, at the file weight."""
+    if s.rule_id != "email.dangerous_attachment":
+        return s
+    return s.model_copy(
+        update={
+            "weight": scoring()["file"]["installer_weight"],
+            "description": "a program (an installer type): it can run code once opened. That is "
+            "what an installer is, so it counts only next to another sign",
+        }
+    )
+
+
+def _origin_signal(host: str | None, digest: str) -> tuple[Signal, Evidence] | None:
+    """DA1: the site the file was downloaded from (the agent reads it from Windows' download mark),
+    judged by the URL rules. A file from a site whose own address looks like phishing is a sign of
+    its own kind; a clean or unknown site adds nothing (that is not evidence of safety)."""
+    if not host:
+        return None
+    site = analyze_url(f"https://{host}/")
+    if site.verdict.state not in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS):
+        return None
+    why = sorted({s.rule_id for s in site.verdict.signals})
+    summary = (
+        f"downloaded from {host}, a site whose address Lynceus calls "
+        f"{site.verdict.state.value} ({', '.join(why[:3])})"
+    )
+    ev = Evidence(kind="file_origin", summary=summary[:500], sha256=digest or None)
+    weight = scoring()["file"]["origin_flagged_weight"]
+    sig = Signal(
+        rule_id="file.origin_flagged", category="origin", weight=weight,
+        description=summary[:500], evidence_ids=[ev.id], attack="T1204.002",
+    )  # fmt: skip
+    return sig, ev
+
+
 def _report(
     aid: UUID,
     digest: str,
@@ -270,9 +354,21 @@ def _report(
     files: tuple[FileInfo, ...],
     inspected: bool,
     host: str | None,
+    installer: bool = False,
+    reputation: FileRep | None = None,
 ) -> FileAnalysis:
-    """Rules, score and report for one file whose facts are in `ctx`."""
+    """Rules, score and report for one file whose facts are in `ctx`. `installer`: a program with an
+    installer's name, which weighs less as a download than as an attachment (DA1). `reputation`:
+    what VirusTotal says about its hash (DA2)."""
     signals, evidence = mail.rule_signals(ctx, digest)
+    if installer:
+        signals = [_as_download(s) for s in signals]
+    origin = _origin_signal(host, digest)
+    if origin is not None:
+        signals, evidence = [*signals, origin[0]], [*evidence, origin[1]]
+    rep = _reputation_signal(reputation, digest)
+    if rep is not None:
+        signals, evidence = [*signals, rep[0]], [*evidence, rep[1]]
     scored = score(signals, False, scoring())
     if scored.state is VerdictState.MALICIOUS:
         scored = scored._replace(recommended_response=ResponseAction.QUARANTINE)

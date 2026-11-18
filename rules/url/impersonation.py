@@ -15,6 +15,9 @@ from rules.url import rule
 from rules.url.data import Brand, brands, lists, official_domains, skeleton
 
 _MIN_FUZZY = 5  # shorter terms match exactly: everything is one edit from "ups"
+# DA1: a misspelling needs a longer term: one edit from a 5-letter brand is an ordinary word too
+# (bank and vbank for mbank, mail for gmail, cento for ceneo). Measured on the E1 train split.
+_MIN_MISSPELLED = 6
 _CJK = {"CJK", "HIRAGANA", "KATAKANA", "HANGUL"}
 
 
@@ -116,11 +119,18 @@ def typosquat(u: ParsedUrl) -> str | None:
             return f"{b.name}'s name on a domain it does not own ({u.registered_domain})"
         if shape == skeleton(t) or (len(t) >= 3 and single == _collapse(t)):
             return f"{b.name} lookalike ({u.registered_domain})"
-        if b.fuzzy and len(t) >= _MIN_FUZZY:
+        if b.fuzzy and len(t) >= _MIN_MISSPELLED and _keeps_the_start(label, t):
             limit = 2 if len(t) >= 9 else 1
             if _distance(label, t, limit) <= limit:
                 return f"{b.name} misspelling ({u.registered_domain})"
     return None
+
+
+def _keeps_the_start(label: str, term: str) -> bool:
+    """DA1: a look-alike keeps the brand's first letter, which the eye reads first, or holds the
+    whole name (`mfacebook`). One edit at the start makes another word: finance and binance,
+    sedex and fedex. On the E1 train split this alone dropped 11 legitimate names and 6 phishing."""
+    return label[:1] == term[:1] or term in label
 
 
 def _brand_in_label(label: str) -> tuple[Brand, str] | None:
@@ -147,6 +157,21 @@ def combosquat(u: ParsedUrl) -> str | None:
     return None
 
 
+def _inside_a_word(label: str, term: str) -> bool:
+    """DA1: every occurrence of the term has a letter on both sides (`goldappleboutique`,
+    `pineapple`, `revolution`): an ordinary word that happens to contain a brand. A brand at either
+    end or next to a hyphen or digit (`applesoporte`, `mailmicrosoft`, `my-apple`) is not."""
+    i, seen = label.find(term), False
+    while i >= 0:
+        seen = True
+        before = label[i - 1] if i else ""
+        after = label[i + len(term)] if i + len(term) < len(label) else ""
+        if not (before.isalpha() and after.isalpha()):
+            return False
+        i = label.find(term, i + 1)
+    return seen
+
+
 @rule("url.brand_in_domain", "impersonation")
 def brand_in_domain(u: ParsedUrl) -> str | None:
     """Weak on purpose: fan sites and reviews name brands too."""
@@ -155,6 +180,8 @@ def brand_in_domain(u: ParsedUrl) -> str | None:
     label = _label(u)
     found = _brand_in_label(label)
     if found is None or label == found[1] or _has_keyword(label.replace(found[1], "")):
+        return None
+    if _inside_a_word(label, found[1]):
         return None
     return f"{found[0].name}'s name inside {u.registered_domain}"
 

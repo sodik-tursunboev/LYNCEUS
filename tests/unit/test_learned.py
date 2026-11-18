@@ -68,6 +68,18 @@ def test_it_warns_alone_and_needs_a_second_category_for_malicious() -> None:
     assert both.state is V.MALICIOUS
 
 
+def test_measurement_can_switch_the_model_off_and_back() -> None:
+    """eval.learn_url compares the rules alone with the product through `use`."""
+    m = learned.current()
+    assert m is not None
+    learned.use(None)
+    try:
+        assert "url.learned_domain" not in rules_of("https://kzxqwvbn-auth.test/")
+    finally:
+        learned.use(m)
+    assert "url.learned_domain" in rules_of("https://kzxqwvbn-auth.test/")
+
+
 def test_official_and_popular_domains_are_never_judged_by_the_model() -> None:
     assert "url.learned_domain" not in rules_of("https://www.paypal.com/signin")
     assert "url.learned_domain" in rules_of("https://kzxqwvbn-auth.test/")

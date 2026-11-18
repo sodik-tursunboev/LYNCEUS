@@ -25,6 +25,16 @@ from playwright.sync_api import Response, sync_playwright
 NAV_TIMEOUT_MS = 15_000
 SETTLE_MS = 4_000
 WATCHDOG_SECONDS = 26
+# DA1: a page that showed almost nothing (D1 dev: 26 of 47 missed phishing pages had under 200
+# characters) is given a second look, if the visit is still early: wait for text or a form to appear,
+# then read it again. Nothing is clicked or typed for it.
+SECOND_LOOK_MS = 5_000
+SECOND_LOOK_BEFORE_S = 12
+NEARLY_EMPTY_CHARS = 200
+GROWN = (
+    "() => { const t = ((document.body && document.body.innerText) || '').trim();"
+    " return t.length > 200 || document.querySelector('input, textarea, select, form') !== null; }"
+)
 MAX_CHAIN = 20
 MAX_HOSTS = 100
 MAX_REFS = 100
@@ -167,7 +177,12 @@ PHONE: dict[str, Any] = {
 PHONE_NAV_MS = 8_000
 PHONE_SETTLE_MS = 3_000
 RETRY_BEFORE_S = 9  # a phone visit only if the first ended this early: both fit the watchdog
-_GATE_TITLES = ("just a moment", "attention required", "verify you are human", "checking your browser")
+_GATE_TITLES = (
+    "just a moment",
+    "attention required",
+    "verify you are human",
+    "checking your browser",
+)
 
 # Forms inside frames (H1 C5), read in each frame's own document, the same way as the page's.
 FRAME_FORMS = r"""() => {
@@ -238,8 +253,20 @@ def run(url: str, proxy: str | None) -> dict[str, Any]:
     return result
 
 
-def _visit(browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_ms: int) -> dict[str, Any]:
+def nearly_empty(seen: dict[str, Any]) -> bool:
+    """What COLLECT read shows almost nothing: little text, no form, no field."""
+    return (
+        len(str(seen.get("text") or "").strip()) < NEARLY_EMPTY_CHARS
+        and not seen.get("forms")
+        and not seen.get("loose")
+    )
+
+
+def _visit(
+    browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_ms: int
+) -> dict[str, Any]:
     """One visit in a fresh context: what the page showed, read without typing or clicking."""
+    visit_started = time.monotonic()
     result: dict[str, Any] = {"status": "ok", "error": None, "chain": [], "hosts": [],
                               "downloads": [], "popups": 0, "dialogs": 0}  # fmt: skip
     responses: list[Response] = []
@@ -322,6 +349,15 @@ def _visit(browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_
             seen = page.evaluate(COLLECT)
         except PlaywrightError:
             seen = None
+        if seen and nearly_empty(seen) and time.monotonic() - visit_started < SECOND_LOOK_BEFORE_S:
+            try:  # DA1: the page may still be drawing itself; look once more, a little later
+                page.wait_for_function(GROWN, timeout=SECOND_LOOK_MS)
+                again = page.evaluate(COLLECT)
+            except PlaywrightError:
+                again = None
+            if again and not nearly_empty(again):
+                seen = again
+                result["second_look"] = True
         if seen:
             inline = seen.pop("inline", "")
             html_events = seen.pop("html_events", "")
@@ -367,6 +403,7 @@ def _visit(browser: Any, url: str, profile: dict[str, Any], nav_ms: int, settle_
             pass
     context.close()
     return result
+
 
 def main() -> int:
     timer = threading.Timer(WATCHDOG_SECONDS, _watchdog)

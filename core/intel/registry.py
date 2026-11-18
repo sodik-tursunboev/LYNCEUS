@@ -11,6 +11,7 @@ from collections.abc import Callable
 from core.config import Settings
 from core.intel.base import Provider
 from core.intel.feeds import FEEDS, FeedStore, ListFeed
+from core.intel.filerep import FileReputation
 from core.intel.http import make_client
 from core.intel.orchestrator import Intel
 from core.intel.rdap import Rdap
@@ -45,6 +46,17 @@ QUERY_BUILDERS: dict[str, Builder] = {
     "virustotal": _virustotal,
     "urlscan": _urlscan,
 }
+
+
+def build_file_reputation(settings: Settings) -> FileReputation | None:
+    """DA2: None unless `LYNCEUS_FILE_REPUTATION` is on; on without the key stops start-up."""
+    if not settings.file_reputation:
+        return None
+    key = settings.virustotal_api_key
+    if key is None or not key.get_secret_value():
+        raise ValueError("file reputation is enabled but LYNCEUS_VIRUSTOTAL_API_KEY is not set")
+    log.info("file reputation enabled: the SHA-256 of program-like downloads goes to VirusTotal")
+    return FileReputation(make_client(), key.get_secret_value())
 
 
 def known() -> frozenset[str]:

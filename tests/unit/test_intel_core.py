@@ -321,7 +321,7 @@ def test_an_outside_provider_is_skipped_for_names_that_are_not_public() -> None:
     local = Fake("local", sends=Sends.NOTHING)
     out = ask(Intel([outside, local]), "https://login.paypal-secure.test/a?x=1")
     assert outside.calls == 0 and local.calls == 1
-    assert out.skipped == (("outside", "not a public name"),)
+    assert out.skipped == (("outside", "not a public name, or an established site: not sent out"),)
     assert [r.result.provider for r in out.results] == ["local"]
 
 

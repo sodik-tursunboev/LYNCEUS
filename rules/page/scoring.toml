@@ -9,9 +9,15 @@
 # page lands is judged instead by running the URL rules on the landing address.
 
 [ruleset]
-version = "1.2.0"
+version = "1.3.0"
+
+# DA1: how young a certificate must be for page.fresh_certificate (days before the visit)
+[freshness]
+max_days = 7
 
 [category_caps]
+# DA1: one weak kind of evidence on its own; never enough to flag a page alone (0.3 < 0.45)
+"page.freshness" = 0.3
 "page.impersonation" = 0.85
 "page.exfiltration" = 0.85
 "page.hosting" = 0.45
@@ -37,3 +43,6 @@ brain = 0.7
 "brain.page_script_exfiltration" = 0.5  # provisional (AI1 P4)
 "brain.page_visual_brand" = 0.45  # provisional (AI1 P3): a picture cannot be quoted
 "page.cloaked" = 0.0  # H1 C5: evidence only until measured on the dev half (see the rule)
+# DA1: evidence only. Next to url.login_path (0.4) even 0.1 would push an ordinary new sign-in page over
+# 45, and sites on 90-day certificates renew every few weeks. A weight needs the long-tail legitimate run.
+"page.fresh_certificate" = 0.0

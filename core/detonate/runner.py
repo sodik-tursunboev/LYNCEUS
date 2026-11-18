@@ -24,7 +24,7 @@ from pydantic import ValidationError
 from core.detonate.models import PageReport
 
 log = logging.getLogger(__name__)
-IMAGE = "lynceus-detonator:1.1.0"
+IMAGE = "lynceus-detonator:1.2.0"
 INNER, OUTER, EGRESS = "lynceus-dn-inner", "lynceus-dn-outer", "lynceus-egress"
 PROXY = f"http://{EGRESS}:3128"
 HERE = Path(__file__).resolve().parents[2] / "infra" / "detonator"
@@ -136,7 +136,9 @@ def _run(name: str, request: bytes) -> PageReport:
     except subprocess.TimeoutExpired:
         proc.kill()
     try:
-        return PageReport.model_validate_json(bytes(out))
+        report = PageReport.model_validate_json(bytes(out))
+        # the visit time is the core's clock, whatever the reply says (DA1: certificate age)
+        return report.model_copy(update={"visited_at": int(time.time())})
     except ValidationError:
         log.warning("the detonator's reply did not match the schema (%d bytes)", len(out))
         return PageReport(status="error", error="bad_reply")

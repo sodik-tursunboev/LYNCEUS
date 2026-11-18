@@ -23,15 +23,15 @@ negative = ["https://gdańsk-muzeum.test/", "https://例え.test/", "https://exa
 
 ["url.typosquat"]
 positive = ["https://paypa1.test/", "https://arnazon.test/", "https://micosoft.test/", "https://ollx.test/", "https://paypal.test/", "https://pay-pal.test/"]
-negative = ["https://www.paypal.com/", "https://apply.test/", "https://example.test/", "https://steam.test/"]
+negative = ["https://www.paypal.com/", "https://apply.test/", "https://example.test/", "https://steam.test/", "https://finance.test/", "https://sedex.test/", "https://vbank.test/"]
 
 ["url.combosquat"]
 positive = ["https://paypal-login.test/", "https://inpost-paczka.test/", "https://olxkonto.test/", "https://secure-mbank.test/"]
 negative = ["https://mbank-opinie.test/", "https://mbank.pl/", "https://example-login.test/"]
 
 ["url.brand_in_domain"]
-positive = ["https://mbank-opinie.test/", "https://allegro-poradnik.test/"]
-negative = ["https://paypal-login.test/", "https://allegro.pl/", "https://example.test/"]
+positive = ["https://mbank-opinie.test/", "https://allegro-poradnik.test/", "https://applesoporte.test/", "https://mailmicrosoft.test/"]
+negative = ["https://paypal-login.test/", "https://allegro.pl/", "https://example.test/", "https://goldappleboutique.test/", "https://bigapplevisitorscenter.test/", "https://scrapbookingstore.test/"]
 
 ["url.brand_in_subdomain"]
 positive = ["https://paypal.com.evil.test/", "https://login.mbank.pl.check.test/", "https://paypal.evil.test/", "https://www.allegro.pl-konto.check.test/"]
@@ -47,11 +47,11 @@ negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.examp
 
 ["url.encoded_target"]
 positive = ["https://go.portal.test/r?x=aHR0cDovL3BoaXNoLmludmFsaWQvbG9naW4=", "https://go.portal.test/r?x=http%253A%252F%252Fphish.invalid%252Flogin"]
-negative = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://x.test/a?sig=readable-signature-1"]
+negative = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://x.test/a?sig=readable-signature-1", "https://chat.portal.test/widget/?referrer=aHR0cHM6Ly9hLmV4YW1wbGUuY29tLw=="]
 
 ["url.credential_bait"]
 positive = ["http://203.0.113.5/inpost/paczka/odbior", "https://evil.test/paypal/verify?x=1"]
-negative = ["https://en.wikipedia.org/wiki/PayPal", "https://www.paypal.com/signin", "https://example.test/help/verify"]
+negative = ["https://en.wikipedia.org/wiki/PayPal", "https://www.paypal.com/signin", "https://example.test/help/verify", "https://news.test/story/confirme?utm_medium=twitter"]
 
 ["url.prefilled_identity"]
 positive = ["https://evil.test/a?email=jane.doe%40example.test", "https://evil.test/a?login_hint=jane%40example.test"]

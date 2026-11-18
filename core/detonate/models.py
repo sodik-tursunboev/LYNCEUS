@@ -82,6 +82,12 @@ class PageReport(_Closed):
     # opened once more as a phone, and this report is what the phone was shown
     phone_view: bool = False
     desktop_status: Annotated[str, StringConstraints(max_length=20)] | None = None
+    # DA1: when the page was opened (seconds since 1970, UTC). Set by the core when the report
+    # comes back from the container (runner.py), never taken from the page; None on reports kept
+    # before DA1
+    visited_at: int | None = Field(default=None, ge=0)
+    # DA1: the first reading showed almost nothing, and what is reported is a second, later look
+    second_look: bool = False
 
     @property
     def alive(self) -> bool:

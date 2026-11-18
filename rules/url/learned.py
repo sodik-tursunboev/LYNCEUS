@@ -42,6 +42,6 @@ def learned_domain(u: ParsedUrl) -> str | None:
         return None
     parts = ", ".join(readable(t) for t in pushes) or "its overall shape"
     return (
-        f"the learned model rates the domain {domain} as phishing-like ({p:.3f}, threshold "
+        f"the learned model rates the domain {domain} as phishing-like ({p:.3f}, above "
         f"{model.threshold}); what pushed it most: {parts}"
     )

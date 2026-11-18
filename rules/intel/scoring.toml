@@ -5,7 +5,7 @@
 # Tune against the dev split only. Any change here changes the ruleset version.
 
 [ruleset]
-version = "1.0.0"
+version = "1.1.0"  # 1.1.0 (DA3): domain-age band weights fitted and confirmed on two independent samples
 
 [thresholds]
 vt_many = 3        # engines flagging a domain at or above which VirusTotal counts as "many"
@@ -35,6 +35,9 @@ age_quarter = 90
 "intel.virustotal.detections_few" = 0.4
 "intel.urlscan.malicious" = 0.7
 "intel.urlscan.suspicious" = 0.4
+# DA3 (docs/eval/age-weights.md), fitted on 600 domains and confirmed on 600 others that share none of
+# them: 0.45 is enough to warn on its own (45 is the line), where 0.4 never was. Registered under 30 days
+# ago: 34.5% of 519 phishing domains and 0.5% of 377 ordinary long-tail sites (two random-letter names).
 "intel.domain_age.week" = 0.55
-"intel.domain_age.month" = 0.4
-"intel.domain_age.quarter" = 0.15
+"intel.domain_age.month" = 0.45
+"intel.domain_age.quarter" = 0.25

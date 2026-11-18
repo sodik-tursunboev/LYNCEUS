@@ -1,6 +1,6 @@
 # Eval report (mail)
 
-Split `dev`, n=119. Engine `email-1.2.0`, ruleset `1.5.0+83b6cbd37614`. 2026-11-14 20:22Z.
+Split `dev`, n=119. Engine `email-1.2.0`, ruleset `1.7.0+d878be93f1a3`. 2026-11-17 15:18Z.
 
 **Synthetic positives measure rule correctness, not the real-world detection rate.** The same author wrote the rules and the corpus, from shared templates.
 
@@ -18,7 +18,7 @@ Split `dev`, n=119. Engine `email-1.2.0`, ruleset `1.5.0+83b6cbd37614`. 2026-11-
 | Abstain rate | 0.387 | 0.304 to 0.476 |
 | Error rate | 0.000 | |
 
-Latency per message (includes starting the sandbox): p50 614.581 ms, p95 989.224 ms, max 1161.061 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
+Latency per message (includes starting the sandbox): p50 696.354 ms, p95 1120.708 ms, max 1278.452 ms. Wall time on a shared development machine: the same code measured 1.4 ms and 14 ms p50 hours apart, so read it as an order of magnitude.
 
 ## Rules
 
@@ -66,7 +66,7 @@ Precision here is the share of a rule's hits on malicious samples. Weak rules ar
 | `url.credential_bait` | 2 | 2 | 0 | 1.000 | 0.342 to 1.000 |
 | `url.dangerous_scheme` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
 | `url.ip_literal` | 1 | 1 | 0 | 1.000 | 0.207 to 1.000 |
-| `url.learned_domain` | 33 | 28 | 5 | 0.848 | 0.691 to 0.933 |
+| `url.learned_domain` | 35 | 30 | 5 | 0.857 | 0.706 to 0.937 |
 | `url.login_path` | 14 | 14 | 0 | 1.000 | 0.785 to 1.000 |
 | `url.prefilled_identity` | 11 | 11 | 0 | 1.000 | 0.741 to 1.000 |
 

@@ -123,6 +123,9 @@ class Settings(BaseSettings):
     urlhaus_auth_key: SecretStr | None = None
     virustotal_api_key: SecretStr | None = None
     urlscan_api_key: SecretStr | None = None
+    # DA2: ask VirusTotal about the SHA-256 of a downloaded program-like file (the hash only leaves;
+    # needs virustotal_api_key; off until the owner turns it on, docs/milestones/DA2.md)
+    file_reputation: bool = False
 
     # A local language model that reads the recovered code of a macro and gives ADVICE (ADR-023).
     # Off until enabled. It only talks to this computer (a loopback address; anything else stops
@@ -139,6 +142,10 @@ class Settings(BaseSettings):
     # Analyze page's button), never for the browser extension or mail by itself.
     detonation: bool = False
     detonation_per_minute: int = 6
+    # DA1 P3: open risky links without a click, from the browser extension and/or mail ("browser",
+    # "mail", "browser,mail"; empty = off). Needs `detonation` on and Docker running; see
+    # core/detonate/auto.py for what is opened and how it is bounded.
+    auto_detonation: str = ""
 
     # The brain (AI1, docs/milestones/AI1.md): a local model reads opened pages, their screenshots,
     # their scripts and mail, and only findings that code can check count. Off until enabled; it

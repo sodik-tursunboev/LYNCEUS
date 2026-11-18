@@ -2,7 +2,8 @@
 
     python -m core.intel sync [--feed NAME ...] [--force]   download the enabled list feeds
     python -m core.intel status                              what is enabled, downloaded, stale
-    python -m core.intel lookup <url>                        match a URL against downloaded lists
+    python -m core.intel lookup <url> [--ask]                match a URL against downloaded lists;
+                                                             --ask also asks VirusTotal, RDAP, ...
     python -m core.intel hashes status|import|check|sync     known-bad file hashes (offline lookup)
     python -m core.intel popular sync|status                 the popular-domain list (H1 B1)
 
@@ -27,6 +28,7 @@ from core.intel.feeds import FEEDS, FeedStore, ListFeed, sync
 from core.intel.http import make_client
 from core.intel.orchestrator import Intel
 from core.intel.refresh import feed_keys
+from core.intel.registry import build_intel
 from core.urls import popular
 from core.urls.parse import ParsedUrl, parse_url
 
@@ -67,20 +69,29 @@ def _status(settings: Settings) -> int:
     return 0
 
 
-async def _lookup(settings: Settings, url: str) -> int:
+async def _lookup(settings: Settings, url: str, ask: bool) -> int:
     parsed = parse_url(url)
     if not isinstance(parsed, ParsedUrl):
         print("not a URL that can be analysed")
         return 2
     store = FeedStore(settings.data_dir / "feeds")
     feeds = [ListFeed(FEEDS[n], store) for n in sorted(settings.intel_enabled() & FEEDS.keys())]
-    outcome = await Intel(feeds).query(Subject.from_parsed(parsed))
+    # --ask: also the providers that ask an outside service (each sends this one registered domain)
+    try:
+        intel = (build_intel(settings) if ask else None) or Intel(feeds)
+    except ValueError as e:  # a provider is enabled without its key, or is not a known name
+        print(str(e), file=sys.stderr)
+        return 2
+    try:
+        outcome = await intel.query(Subject.from_parsed(parsed))
+    finally:
+        await intel.aclose()
     for r in outcome.results:
         res = r.result
         state = res.state.value if res.state else "-"
         print(f"{res.provider:10} {res.status.value:12} {state:11} {res.detail or ''}")
     if not outcome.results:
-        print("no list feeds are enabled")
+        print("no providers are enabled" if ask else "no list feeds are enabled")
     return 0
 
 
@@ -172,6 +183,11 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("status", help="show what is enabled and how old each list is")
     lk = commands.add_parser("lookup", help="match one URL against the downloaded lists (offline)")
     lk.add_argument("url")
+    lk.add_argument(
+        "--ask", action="store_true",
+        help="also ask the enabled providers that use an outside service (VirusTotal, RDAP, ...): "
+        "each is sent this URL's registered domain name, nothing else",
+    )  # fmt: skip
     pop = commands.add_parser("popular", help="the popular-domain list used by look-alike rules")
     pop.add_argument("action", choices=["sync", "status"])
     args = ap.parse_args(argv)
@@ -184,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_sync(settings, args.feed, args.force))
     if args.command == "status":
         return _status(settings)
-    return asyncio.run(_lookup(settings, args.url))
+    return asyncio.run(_lookup(settings, args.url, args.ask))
 
 
 if __name__ == "__main__":

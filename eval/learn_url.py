@@ -6,9 +6,11 @@ Split by REGISTERED DOMAIN (crc32 % 10: 0-5 train, 6 calibration, 7-9 test), so 
 domain with a thousand URLs cannot sit on both sides. E1's sealed reserve stays out. Training uses
 each host once. Your browsing (Edge history, as in E1) is never trained on: weights trained on it
 would carry pieces of the sites you visit; it is only counted as a false-alarm check. The threshold
-is chosen on the calibration domains (at most 0.5% of their legitimate hosts flagged). Results
-are compared with the URL rules on the same test URLs, and checked on D1's live pages whose
-domains the model never saw. Pure Python: no new dependency. Writes the weights to
+is chosen on the calibration domains (DA1: at most 0.4% of their legitimate hosts above it).
+Results are compared with the URL rules alone and with the whole product on the same URLs: the
+test domains, D1's live pages whose domains the model never saw, and (DA1) ordinary long-tail
+sites, where rules about unknown domains really fire. Pure Python: no new dependency. Writes the
+weights to
 `.data/eval/learned/url_host.{json,bin}` (local); copying them to `rules/learned/` is the
 adoption step.
 """
@@ -23,6 +25,7 @@ import zlib
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +36,7 @@ from eval import realurl as e1
 from eval.metrics import wilson
 
 SEED = "lynceus-ai1-p1"
+TAIL = "lynceus-da1-tail-test"
 FLAGGED = ("SUSPICIOUS", "MALICIOUS")
 
 
@@ -75,12 +79,26 @@ def prob(bias: float, w: Sequence[float], idx: Iterable[int]) -> float:
     return 1.0 / (1.0 + math.exp(-max(-40.0, min(40.0, z))))
 
 
+def use_model(header: Path | None) -> None:
+    """In each judging worker: the engine with no learned model (the rules alone) or this one."""
+    from core.learn import model
+
+    model.use(model.load(header) if header else None)
+
+
+def tail_sample(data: Path, n: int) -> list[str]:
+    """DA1: home pages of ordinary long-tail sites (Tranco ranks 100,001 to 1,000,000), which
+    neither E1 (its top 50,000) nor the popular list (top 100,000) covers. A seeded sample."""
+    ranked = [s.url for s in e1.tranco(data / "tranco-top-1m.csv.zip", 1_000_000)][100_000:]
+    return random.Random(TAIL).sample(ranked, min(n, len(ranked)))  # noqa: S311  (not a secret)
+
+
 def write_model(out: Path, bias: float, w: Sequence[float], threshold: float) -> None:
     """`url_host.bin` (16-bit weights) and `url_host.json` (the header with their SHA-256)."""
     raw, scale = pack(list(w))
     (out / "url_host.bin").write_bytes(raw)
     header = {
-        "version": f"domain-lr-1+{SEED}", "bias": bias, "scale": scale,
+        "version": f"domain-lr-2+{SEED}", "bias": bias, "scale": scale,
         "threshold": round(threshold, 4), "buckets": BUCKETS,
         "sha256": hashlib.sha256(raw).hexdigest(),
         "trained_on": "E1 train domains (PhiUSIIL, PhishTank and OpenPhish of 2026-11-10, Tranco)",
@@ -122,56 +140,59 @@ def main(argv: Iterable[str] | None = None) -> int:
     calib_legit = sorted(
         prob(bias, w, f) for (h, y), (p, f) in hosts.items() if p == "calib" and y == 0
     )
-    threshold = calib_legit[int(len(calib_legit) * 0.995)] if calib_legit else 0.5
+    # DA1: 0.4% (was 0.5%), chosen on the calibration domains with model 2's features
+    threshold = calib_legit[int(len(calib_legit) * 0.996)] if calib_legit else 0.5
     threshold = max(threshold, 0.5)
+    out = args.data / "learned"
+    out.mkdir(parents=True, exist_ok=True)
+    write_model(out, bias, w, threshold)
 
-    test = [s for s in samples if (u := parsed(s.url)) and u.registered_domain
-            and part(u.registered_domain) == "test"]  # fmt: skip
-    browsing = [s for s in samples if s.source == "edge_history"]
-    states = dict(zip([s.url for s in test], e1.judge(test, args.workers), strict=True))
+    sets: dict[str, list[str]] = defaultdict(list)
+    for s in samples:
+        if (u := parsed(s.url)) and u.registered_domain and part(u.registered_domain) == "test":
+            sets[f"{s.source} {s.label}"].append(s.url)
+    sets["long-tail sites (Tranco 100,001 to 1M, home pages)"] = tail_sample(args.data, 3000)
+    seen_domains = {u.registered_domain for s in samples if (u := parsed(s.url))
+                    and u.registered_domain and part(u.registered_domain) != "test"}  # fmt: skip
+    d1_rows = [json.loads(line) for line in (args.data / "d1" / "results.jsonl").read_text(
+        encoding="utf-8").splitlines()]  # fmt: skip
+    for label in ("phish", "legit"):
+        sets[f"D1 live {label} pages, address only (domains never seen)"] = [
+            r["url"] for r in d1_rows
+            if r["label"] == label and (u := parsed(r["url"]))
+            and u.registered_domain not in seen_domains
+        ]  # fmt: skip
+    sets["your browsing (never trained on)"] = [
+        s.url for s in samples if s.source == "edge_history"
+    ]
+    urls = sorted({url for group in sets.values() for url in group})
+    batch = [e1.Sample("", "", url) for url in urls]
+    rules_alone = dict(
+        zip(urls, e1.judge(batch, args.workers, partial(use_model, None)), strict=True)
+    )
+    product = dict(
+        zip(urls, e1.judge(batch, args.workers, partial(use_model, out / "url_host.json")),
+            strict=True)
+    )  # fmt: skip
 
     def model_flag(url: str) -> bool:
         u = parsed(url)
         return u is not None and prob(bias, w, features(u)) >= threshold
 
-    by_source: dict[str, dict[str, Any]] = {}
-    groups: dict[str, list[e1.Sample]] = defaultdict(list)
-    for s in test:
-        groups[f"{s.source} {s.label}"].append(s)
-    for name, group in sorted(groups.items()):
-        rules = [states[s.url][0] in FLAGGED for s in group]
-        model = [model_flag(s.url) for s in group]
-        by_source[name] = {
-            "rules": _rate(sum(rules), len(group)),
-            "model": _rate(sum(model), len(group)),
-            "rules_or_model": _rate(
-                sum(a or b for a, b in zip(rules, model, strict=True)), len(group)
-            ),
-        }
-    seen_domains = {u.registered_domain for s in samples if (u := parsed(s.url))
-                    and u.registered_domain and part(u.registered_domain) != "test"}  # fmt: skip
-    d1_rows = [json.loads(line) for line in (args.data / "d1" / "results.jsonl").read_text(
-        encoding="utf-8").splitlines()]  # fmt: skip
-    d1: dict[str, dict[str, Any]] = {}
-    for label in ("phish", "legit"):
-        fresh = [r for r in d1_rows if r["label"] == label
-                 and (u := parsed(r["url"]))
-                 and u.registered_domain not in seen_domains]  # fmt: skip
-        d1[f"D1 {label} (domains the model never saw)"] = {
-            "url_rules": _rate(sum(r["url_state"] in FLAGGED for r in fresh), len(fresh)),
-            "model": _rate(sum(model_flag(r["url"]) for r in fresh), len(fresh)),
+    measured: dict[str, dict[str, Any]] = {}
+    for name, group in sets.items():
+        measured[name] = {
+            "rules": _rate(sum(rules_alone[url][0] in FLAGGED for url in group), len(group)),
+            "model": _rate(sum(model_flag(url) for url in group), len(group)),
+            "product": _rate(sum(product[url][0] in FLAGGED for url in group), len(group)),
         }
     report = {
         "generated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%MZ"),
         "seed": SEED, "epochs": args.epochs, "train_hosts": len(rows),
-        "threshold": round(threshold, 4), "label_clashes_dropped": len(clash),
-        "test_by_source": by_source, "d1": d1,
-        "your_browsing_flagged": _rate(sum(model_flag(s.url) for s in browsing), len(browsing)),
+        "threshold": round(threshold, 4),
+        "label_clashes_dropped": len(clash), "sets": measured,
         "nonzero_weights": sum(1 for x in w if abs(x) >= 0.002),
     }  # fmt: skip
-    out = args.data / "learned"
-    out.mkdir(parents=True, exist_ok=True)
-    write_model(out, bias, w, threshold)
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "learned-url.json").write_text(json.dumps(report, indent=1), encoding="utf-8")
     (args.out / "learned-url.md").write_text(render(report), encoding="utf-8")
@@ -187,26 +208,19 @@ def render(rep: Mapping[str, Any]) -> str:
         return f"{100 * r['rate']:.1f}% ({lo:.1f} to {hi:.1f}), {r['k']} of {r['n']}"
 
     lines = [
-        "# Learned domain model (AI1 P1)", "",
+        "# Learned domain model (AI1 P1; model 2 since DA1)", "",
         f"{rep['generated_at']}. Logistic regression on registered-domain features, "
         f"{rep['train_hosts']:,} training domains, {rep['epochs']} epochs, seed `{rep['seed']}`. "
-        "Split by registered domain; "
-        f"threshold {rep['threshold']} chosen on calibration domains (at most 0.5% of their "
-        "legitimate hosts flagged). Test domains were never seen in training.", "",
-        "## Test domains (E1): the URL rules, the model, and either", "",
-        "| set | URL rules | model | rules or model |", "|---|---|---|---|",
+        "Split by registered domain; test domains were never seen in training. Threshold "
+        f"{rep['threshold']}, chosen on the calibration domains (at most 0.4% of their legitimate "
+        "hosts above it). Flagged means SUSPICIOUS or MALICIOUS from the address alone, without "
+        "the popular-domain list. Intervals are Wilson 95%.", "",
+        "| set | URL rules alone | model alone | the product with this model |",
+        "|---|---|---|---|",
     ]  # fmt: skip
-    for name, r in rep["test_by_source"].items():
-        lines.append(
-            f"| {name} | {pct(r['rules'])} | {pct(r['model'])} | {pct(r['rules_or_model'])} |"
-        )
-    lines += ["", "## D1 live pages (2026-11-11), domains the model never saw", "",
-              "| set | URL rules | model |", "|---|---|---|"]  # fmt: skip
-    for name, r in rep["d1"].items():
-        lines.append(f"| {name} | {pct(r['url_rules'])} | {pct(r['model'])} |")
-    lines += ["", f"Your browsing (never trained on), flagged by the model: "
-              f"{pct(rep['your_browsing_flagged'])}.", ""]  # fmt: skip
-    return "\n".join(lines)
+    for name, r in rep["sets"].items():
+        lines.append(f"| {name} | {pct(r['rules'])} | {pct(r['model'])} | {pct(r['product'])} |")
+    return "\n".join([*lines, ""])
 
 
 if __name__ == "__main__":

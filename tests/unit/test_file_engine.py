@@ -12,7 +12,8 @@ from mailhelp import in_process_file, ok_result
 
 from core import sandbox
 from core.contracts import ResponseAction, VerdictState
-from core.files.engine import ENGINE_VERSION, FileAnalysis, analyze_file
+from core.files.engine import ENGINE_VERSION, FileAnalysis, analyze_file, wants_reputation
+from core.intel.filerep import FileRep
 
 EXE = b"MZ\x90\x00" + b"\x00" * 60
 RLO = chr(0x202E)
@@ -115,6 +116,111 @@ def test_a_malicious_file_recommends_quarantine_but_applies_nothing() -> None:
         mild.state is VerdictState.SUSPICIOUS and mild.recommended_response is ResponseAction.WARN
     )
     assert mild.applied_response is ResponseAction.NONE
+
+
+# ---- downloaded installers (DA1) -----------------------------------------------------------------
+# On this computer all 6 files the agent flagged were installers flagged by being a program alone.
+
+
+@pytest.mark.parametrize("name", ["setup.exe", "Tool-Installer.msi"])
+def test_an_installer_alone_is_unknown_but_keeps_its_sign(name: str) -> None:
+    a = judge(name, EXE)
+    assert state(a) is VerdictState.UNKNOWN
+    sign = next(s for s in a.report.verdict.signals if s.rule_id == "email.dangerous_attachment")
+    assert sign.weight == pytest.approx(0.3) and "installer" in sign.description
+
+
+def test_an_installer_from_a_site_that_looks_like_phishing_is_flagged() -> None:
+    a = judge("setup.exe", EXE, origin_host="paypal-login-secure.test")
+    assert "file.origin_flagged" in rules(a)
+    assert state(a) in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS)
+    origin = next(s for s in a.report.verdict.signals if s.rule_id == "file.origin_flagged")
+    assert "paypal-login-secure.test" in origin.description and origin.category == "origin"
+
+
+def test_an_installer_from_an_ordinary_site_stays_unknown() -> None:
+    a = judge("setup.exe", EXE, origin_host="downloads.example.test")
+    assert "file.origin_flagged" not in rules(a)
+    assert state(a) is VerdictState.UNKNOWN
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["invoice.pdf.exe", f"invoice{RLO}fdp.exe", "setup.scr", "update.hta"],
+)
+def test_disguised_programs_and_rare_runnable_types_are_still_flagged(name: str) -> None:
+    data = EXE if not name.endswith(".hta") else b"<html><script>x</script></html>"
+    a = judge(name, data)
+    assert state(a) in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS), (name, rules(a))
+
+
+def test_a_program_named_as_a_document_keeps_the_full_weight() -> None:
+    a = judge("invoice.pdf", EXE)
+    sign = next(s for s in a.report.verdict.signals if s.rule_id == "email.dangerous_attachment")
+    assert sign.weight == pytest.approx(0.75)
+
+
+# ---- what VirusTotal's engines say about the hash (DA2) ----------------------------------------
+
+
+def seen_by(flagged: int, harmless: int = 60) -> FileRep:
+    return FileRep(flagged, 0, harmless, 10, None)
+
+
+def test_many_engines_make_a_file_malicious() -> None:
+    a = judge("setup.exe", EXE, reputation=seen_by(25))
+    assert state(a) is VerdictState.MALICIOUS and "file.vt_known_bad" in rules(a)
+    assert a.report.verdict.recommended_response is ResponseAction.QUARANTINE
+    sign = next(s for s in a.report.verdict.signals if s.rule_id == "file.vt_known_bad")
+    assert "25 of 95 engines" in sign.description and "setup.exe" not in sign.description
+
+
+def test_a_few_engines_make_a_file_suspicious() -> None:
+    a = judge("setup.exe", EXE, reputation=seen_by(5))
+    assert state(a) is VerdictState.SUSPICIOUS and "file.vt_flagged" in rules(a)
+    assert "file.vt_known_bad" not in rules(a)
+
+
+def test_one_or_two_engines_never_flag_a_file_alone() -> None:
+    for flagged in (1, 2):
+        a = judge("setup.exe", EXE, reputation=seen_by(flagged))
+        assert "file.vt_weak" in rules(a) and state(a) is VerdictState.UNKNOWN
+    a = judge("notes.txt", b"just words", reputation=seen_by(2))
+    assert state(a) is VerdictState.UNKNOWN
+
+
+def test_no_reputation_changes_nothing() -> None:
+    plain = judge("setup.exe", EXE)
+    for rep in (None, seen_by(0, harmless=70)):  # not asked or no answer; a clean report
+        a = judge("setup.exe", EXE, reputation=rep)
+        assert (state(a), rules(a), a.report.verdict.risk_score) == (
+            state(plain), rules(plain), plain.report.verdict.risk_score,
+        )  # fmt: skip
+        assert state(a) is not VerdictState.BENIGN
+
+
+def test_a_file_that_could_not_be_opened_is_still_identified_by_many_engines() -> None:
+    def unavailable(_d: bytes) -> sandbox.Result:
+        raise sandbox.SandboxUnavailable("not built")
+
+    sha = hashlib.sha256(EXE).hexdigest()
+    a = analyze_file("setup.exe", len(EXE), sha, EXE, run=unavailable, reputation=seen_by(25))
+    assert state(a) is VerdictState.MALICIOUS
+    b = analyze_file("setup.exe", len(EXE), sha, EXE, run=unavailable, reputation=seen_by(2))
+    assert (state(b), b.report.reason) == (VerdictState.ERROR, "sandbox_unavailable")
+
+
+@pytest.mark.parametrize(
+    ("name", "asked"),
+    [
+        ("setup.exe", True), ("Tool.MSI", True), ("run.ps1", True), ("a.lnk", True),
+        ("disk.iso", True), ("pack.zip", True), ("macro.docm", True),
+        (f"evil{RLO}.exe", True), ("report.pdf", False), ("photo.png", False),
+        ("notes.txt", False), ("letter.docx", False), ("noextension", False),
+    ],
+)  # fmt: skip
+def test_only_program_like_names_are_asked_about(name: str, asked: bool) -> None:
+    assert wants_reputation(name) is asked
 
 
 # ---- no bytes ------------------------------------------------------------------------------------

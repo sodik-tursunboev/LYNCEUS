@@ -22,6 +22,7 @@ from rules.intel.data import scoring
 
 NOW = datetime(2026, 11, 5, 12, 0, tzinfo=UTC)
 CLEAN = "https://www.example.com/page"  # no rule fires: UNKNOWN locally
+pytestmark = pytest.mark.usefixtures("no_learned_model")  # about the rules and providers only
 USERINFO = "https://paypal.com@secure-check.test/login.php"  # strong local signals
 OFFICIAL = "https://www.paypal.com/signin"  # allowlisted: BENIGN locally
 
@@ -238,7 +239,7 @@ def test_versions_say_intelligence_was_used_only_when_it_was() -> None:
     local = analyze_url(CLEAN)
     mixed = mix(CLEAN, not_listed("phishtank"))
     assert mixed.verdict.engine_version == f"{local.verdict.engine_version}+intel"
-    assert mixed.verdict.ruleset_version.startswith(local.verdict.ruleset_version + "+intel.1.0.0+")
+    assert mixed.verdict.ruleset_version.startswith(local.verdict.ruleset_version + "+intel.1.1.0+")
     assert local.verdict.engine_version == "1.0.0" and correlate(local, outcome()) is local
 
 

@@ -124,7 +124,9 @@ def open_redirect(u: ParsedUrl) -> str | None:
 
 @rule("url.encoded_target", "redirect")
 def encoded_target(u: ParsedUrl) -> str | None:
-    for _, hidden, target in _targets(u):
+    for name, hidden, target in _targets(u):
+        if name in lists()["referrer_params"]:
+            continue  # DA3: where the visitor came from, not where they are sent
         if hidden:  # the parameter name is free text from the URL: it stays out of the evidence
             return f"{hidden} URL to another site ({target.host})"
     return None
@@ -143,7 +145,14 @@ def credential_bait(u: ParsedUrl) -> str | None:
     """A brand and a login word in the path or query of a site the brand does not own."""
     if u.host is None or _official(u):
         return None
-    text = unquote(f"{u.path}?{u.query}").lower()
+    # DA3: share-tracking parameters (utm_medium=twitter) name a brand without meaning it; ignoring
+    # them cost 0 of 558 training phishing hits and removed a false alarm on dev
+    query = "&".join(
+        f"{k}={v}"
+        for k, v in parse_qsl(u.query, keep_blank_values=True)[:_MAX_PARAMS]
+        if not k.lower().startswith("utm_")
+    )
+    text = unquote(f"{u.path}?{query}").lower()
     brand = _brand_named(text)
     keyword = next((k for k in lists()["keywords"] if k in text), None)
     if brand and keyword:

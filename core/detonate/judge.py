@@ -77,8 +77,11 @@ def judge(
     start: UrlAnalysis,
     report: PageReport,
     extra: tuple[list[Signal], list[Evidence]] = ([], []),
+    *,
+    auto: bool = False,
 ) -> UrlAnalysis:
-    """`extra`: checked brain findings (AI1), scored together with the page's own signals."""
+    """`extra`: checked brain findings (AI1), scored together with the page's own signals. `auto`:
+    the page was opened without anyone asking (DA1 P3), which the explanation says."""
     if start.url is None:
         return start
     if report.status in _WHY_NOT:
@@ -91,7 +94,8 @@ def judge(
         how = " (it did not finish loading)" if report.status == "partial" else ""
         if report.http_status is not None and report.http_status >= 400:
             how = f" (it answered HTTP {report.http_status})"
-        note = f" The page was opened in the sandbox{how}: {len(signals)} page signal(s)."
+        by = " automatically, because its address looked risky" if auto else ""
+        note = f" The page was opened in the sandbox{by}{how}: {len(signals)} page signal(s)."
     return rescore(
         start,
         signals,

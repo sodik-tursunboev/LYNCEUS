@@ -35,6 +35,21 @@ def no_network() -> Iterator[None]:
     patch.undo()
 
 
+@pytest.fixture
+def no_learned_model() -> Iterator[None]:
+    """For tests about the address rules, a provider's answer or a page: the learned domain model
+    (AI1) changes with every retraining and adds its own category, so these must not depend on it.
+    Tests of the model itself do not use this."""
+    from core.learn import model
+
+    before = model.current()
+    model.use(None)
+    try:
+        yield
+    finally:
+        model.use(before)
+
+
 @pytest.fixture(autouse=True)
 def no_popular_list(monkeypatch: pytest.MonkeyPatch) -> None:
     """Every test starts without the popular-domain list (H1 B1), whatever a local `sync` put in

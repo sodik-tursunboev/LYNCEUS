@@ -1,9 +1,9 @@
 {
- "version": "domain-lr-1+lynceus-ai1-p1",
- "bias": 2.1903,
- "scale": 0.0002610278633991516,
- "threshold": 0.9828,
+ "version": "domain-lr-2+lynceus-ai1-p1",
+ "bias": 1.778459150784191,
+ "scale": 0.00014384829136820983,
+ "threshold": 0.9881,
  "buckets": 262144,
- "sha256": "6c2529078663a367c6322a2c3704789266c2595e86ffd54ec6f656078d9c1f3b",
+ "sha256": "f90a09167dcfb4d9f1c1efb48b929c79183a091fb29fde386beb17d5fefd0676",
  "trained_on": "E1 train domains (PhiUSIIL, PhishTank and OpenPhish of 2026-11-10, Tranco)"
 }

@@ -71,7 +71,7 @@ class Intel:
         if source != "url" and not self.email_links:
             return None, "links from messages are not sent to outside services"
         if s.name is None:
-            return None, "not a public name"
+            return None, "not a public name, or an established site: not sent out"
         return Query(name=s.name), ""  # a HOST provider gets the name and nothing else
 
     # ---- one provider --------------------------------------------------------------------------

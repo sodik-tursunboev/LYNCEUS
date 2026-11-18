@@ -29,6 +29,7 @@ ALLOWED = {
     ROOT / "core" / "mailbox" / "write.py",  # the narrow write guard and the two movers (M6b)
     ROOT / "eval" / "perf.py",  # loopback only: checked by the test below
     ROOT / "eval" / "detonate.py",  # the two phishing lists only: checked by the test below
+    ROOT / "eval" / "deeplinks.py",  # the Internet Archive's public index only: checked below (DA2)
 }
 
 
@@ -135,6 +136,23 @@ def test_the_measurement_tool_only_ever_connects_to_this_machine() -> None:
                 targets.append(str(first.value))
     assert len(targets) >= 2, targets
     assert all(str(x).startswith("http://127.0.0.1:") for x in targets), targets
+
+
+def test_the_deep_link_builder_only_asks_the_archives_public_index() -> None:
+    """eval/deeplinks.py (DA2) may use httpx in fetch() and build() only, and only for one fixed
+    endpoint: the Internet Archive's public CDX index, asked about public Tranco domain names. It
+    reads nothing of the owner's."""
+    from urllib.parse import urlsplit
+
+    from eval.deeplinks import CDX
+
+    assert urlsplit(CDX).hostname == "web.archive.org" and urlsplit(CDX).scheme == "https"
+    tree = ast.parse((ROOT / "eval" / "deeplinks.py").read_text(encoding="utf-8"))
+    for fn in (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)):
+        uses = any(isinstance(x, ast.Name) and x.id == "httpx" for x in ast.walk(fn))
+        assert not uses or fn.name in ("fetch", "build"), fn.name
+    text = (ROOT / "eval" / "deeplinks.py").read_text(encoding="utf-8")
+    assert "edge_history" not in text  # no browsing history anywhere in this tool
 
 
 def test_the_detonation_measurement_only_downloads_the_two_phishing_lists() -> None:

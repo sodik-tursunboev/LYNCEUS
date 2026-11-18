@@ -1,0 +1,69 @@
+{
+ "generated_at": "2026-11-17 14:36Z",
+ "seed": "lynceus-da2-filerep",
+ "thresholds": {
+  "vt_certain": 10,
+  "vt_flagged": 4,
+  "vt_flagged_weight": 0.6,
+  "vt_weak_weight": 0.1
+ },
+ "clean": {
+  "asked": 100,
+  "report": 100,
+  "no_report": 0,
+  "failed": 0,
+  "bands": {
+   "0 engines": 100
+  },
+  "flagged_or_worse": {
+   "k": 0,
+   "n": 100,
+   "rate": 0.0,
+   "ci": [
+    0.0,
+    0.037
+   ]
+  },
+  "malicious_tier": {
+   "k": 0,
+   "n": 100,
+   "rate": 0.0,
+   "ci": [
+    0.0,
+    0.037
+   ]
+  },
+  "max_engines_clean": 0
+ },
+ "malware": {
+  "asked": 100,
+  "report": 97,
+  "no_report": 3,
+  "failed": 0,
+  "bands": {
+   "malicious tier": 84,
+   "weak (1 to 3)": 4,
+   "flagged tier": 5,
+   "0 engines": 4
+  },
+  "flagged_or_worse": {
+   "k": 89,
+   "n": 97,
+   "rate": 0.9175,
+   "ci": [
+    0.8456,
+    0.9576
+   ]
+  },
+  "malicious_tier": {
+   "k": 84,
+   "n": 97,
+   "rate": 0.866,
+   "ci": [
+    0.7841,
+    0.92
+   ]
+  },
+  "max_engines_clean": 56
+ }
+}

@@ -25,6 +25,11 @@ redirect_params = [
   "target", "to", "link", "out", "q",
 ]
 
+# DA3: parameters that say where the visitor CAME FROM, not where they are sent (a chat widget carries the
+# embedding page's address, base64-encoded, in `referrer`): a hidden address there is not an
+# encoded target. Costs 0 of 88,938 training phishing addresses; removed 5 false alarms on dev.
+referrer_params = ["referrer", "referer", "ref", "origin"]
+
 # Share dialogs on official domains (E1): their url parameter is the page being shared, shown in a
 # dialog; the visitor is not sent there. "path?param" also needs that query parameter.
 share_paths = [

@@ -1,0 +1,258 @@
+{
+ "generated_at": "2026-11-17 15:11Z",
+ "configs": {
+  "A": "before DA1",
+  "B": "typosquat tightened",
+  "C": "typosquat and brand-in-domain tightened (shipped)"
+ },
+ "sets": {
+  "edge_history legit": 36,
+  "openphish phish": 92,
+  "phishtank phish": 14075,
+  "phiusiil legit": 40685,
+  "phiusiil phish": 30090,
+  "tranco legit": 14911
+ },
+ "rows": {
+  "A": {
+   "edge_history legit": {
+    "flagged": {
+     "k": 0,
+     "n": 36,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.09642
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   },
+   "openphish phish": {
+    "flagged": {
+     "k": 65,
+     "n": 92,
+     "rate": 0.70652,
+     "ci": [
+      0.60671,
+      0.78978
+     ]
+    },
+    "typosquat": 12,
+    "brand_in_domain": 11
+   },
+   "phishtank phish": {
+    "flagged": {
+     "k": 3721,
+     "n": 14075,
+     "rate": 0.26437,
+     "ci": [
+      0.25715,
+      0.27172
+     ]
+    },
+    "typosquat": 14,
+    "brand_in_domain": 75
+   },
+   "phiusiil legit": {
+    "flagged": {
+     "k": 56,
+     "n": 40685,
+     "rate": 0.00138,
+     "ci": [
+      0.00106,
+      0.00179
+     ]
+    },
+    "typosquat": 20,
+    "brand_in_domain": 79
+   },
+   "phiusiil phish": {
+    "flagged": {
+     "k": 11352,
+     "n": 30090,
+     "rate": 0.37727,
+     "ci": [
+      0.37181,
+      0.38276
+     ]
+    },
+    "typosquat": 82,
+    "brand_in_domain": 496
+   },
+   "tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   }
+  },
+  "B": {
+   "edge_history legit": {
+    "flagged": {
+     "k": 0,
+     "n": 36,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.09642
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   },
+   "openphish phish": {
+    "flagged": {
+     "k": 65,
+     "n": 92,
+     "rate": 0.70652,
+     "ci": [
+      0.60671,
+      0.78978
+     ]
+    },
+    "typosquat": 12,
+    "brand_in_domain": 11
+   },
+   "phishtank phish": {
+    "flagged": {
+     "k": 3720,
+     "n": 14075,
+     "rate": 0.2643,
+     "ci": [
+      0.25708,
+      0.27165
+     ]
+    },
+    "typosquat": 13,
+    "brand_in_domain": 75
+   },
+   "phiusiil legit": {
+    "flagged": {
+     "k": 51,
+     "n": 40685,
+     "rate": 0.00125,
+     "ci": [
+      0.00095,
+      0.00165
+     ]
+    },
+    "typosquat": 15,
+    "brand_in_domain": 79
+   },
+   "phiusiil phish": {
+    "flagged": {
+     "k": 11347,
+     "n": 30090,
+     "rate": 0.3771,
+     "ci": [
+      0.37164,
+      0.38259
+     ]
+    },
+    "typosquat": 77,
+    "brand_in_domain": 496
+   },
+   "tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   }
+  },
+  "C": {
+   "edge_history legit": {
+    "flagged": {
+     "k": 0,
+     "n": 36,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.09642
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   },
+   "openphish phish": {
+    "flagged": {
+     "k": 65,
+     "n": 92,
+     "rate": 0.70652,
+     "ci": [
+      0.60671,
+      0.78978
+     ]
+    },
+    "typosquat": 12,
+    "brand_in_domain": 11
+   },
+   "phishtank phish": {
+    "flagged": {
+     "k": 3720,
+     "n": 14075,
+     "rate": 0.2643,
+     "ci": [
+      0.25708,
+      0.27165
+     ]
+    },
+    "typosquat": 13,
+    "brand_in_domain": 73
+   },
+   "phiusiil legit": {
+    "flagged": {
+     "k": 51,
+     "n": 40685,
+     "rate": 0.00125,
+     "ci": [
+      0.00095,
+      0.00165
+     ]
+    },
+    "typosquat": 15,
+    "brand_in_domain": 57
+   },
+   "phiusiil phish": {
+    "flagged": {
+     "k": 11347,
+     "n": 30090,
+     "rate": 0.3771,
+     "ci": [
+      0.37164,
+      0.38259
+     ]
+    },
+    "typosquat": 77,
+    "brand_in_domain": 482
+   },
+   "tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "typosquat": 0,
+    "brand_in_domain": 0
+   }
+  }
+ }
+}

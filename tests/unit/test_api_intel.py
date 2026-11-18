@@ -85,7 +85,9 @@ def test_a_provider_that_cannot_be_asked_is_listed_as_skipped(
     outside = Fake("rdap", sends=Sends.HOST)
     body = post(client(Intel([outside]), monkeypatch), "https://paypal-login.test/").json()
     assert outside.calls == 0
-    assert body["intel_skipped"] == [{"provider": "rdap", "reason": "not a public name"}]
+    assert body["intel_skipped"] == [
+        {"provider": "rdap", "reason": "not a public name, or an established site: not sent out"}
+    ]
 
 
 def test_the_request_cannot_choose_providers(monkeypatch: pytest.MonkeyPatch) -> None:

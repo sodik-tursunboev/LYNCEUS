@@ -56,7 +56,7 @@ A **modular monolith** (ADR-001): one Python process holds all detection logic; 
                          │                          ├─ local model reviewer ──loopback──> Ollama :11434   │
                          │                          ├─ response engine (actions, audit)                   │
                          │                          ├─ console (React) at /console/  <── browser / Tauri  │
-                         │                          └─ PostgreSQL 17 (Docker, 127.0.0.1:55432)             │
+                         │                          └─ PostgreSQL 17 (Docker, 127.0.0.1:15432)             │
                          └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -142,7 +142,7 @@ Central package management (`Directory.Packages.props`), solution `agent/Lynceus
 |---|---|
 | Tauri | 2 (`shell/src-tauri`, Rust 1.99.1) |
 | WiX Toolset | 5.0.2 (per-user MSI, `deploy/msi/Lynceus.wxs`; last built `Lynceus-0.4.0-x64.msi`, unsigned) |
-| PostgreSQL | 17 in Docker (`infra/docker-compose.yml`, `127.0.0.1:55432`, volume `mirage_pgdata`) |
+| PostgreSQL | 17 in Docker (`infra/docker-compose.yml`, `127.0.0.1:15432`, volume `mirage_pgdata`) |
 | Ollama + `llama3.2:3b` | local model server on `127.0.0.1:11434` (optional) |
 | Playwright image | `mcr.microsoft.com/playwright/python:v1.64.1-noble` pinned by digest (about 3.5 GB), plus `playwright==1.64.1` from hash-pinned wheels; built as `lynceus-detonator:1.0.0` (D1) |
 

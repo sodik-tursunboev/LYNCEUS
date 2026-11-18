@@ -1,6 +1,6 @@
 """Secrets at rest, protected by Windows (DPAPI) instead of plain text in .env (H1 A4).
 
-    python -m core.secrets set NAME        read one value from standard input and store it
+    python -m core.secrets set NAME        store one value, typed hidden or read from standard input
     python -m core.secrets list            the names stored (never the values)
     python -m core.secrets remove NAME
     python -m core.secrets plaintext       the secret names still written in plain text in .env
@@ -18,6 +18,7 @@ create a new key in the user profile, and such an app writes the profile into a 
 
 import base64
 import ctypes
+import getpass
 import json
 import os
 import sys
@@ -124,9 +125,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("plaintext")
     args = ap.parse_args(argv)
     if args.command == "set":
-        value = sys.stdin.readline().strip()
+        # at a terminal the value is typed hidden (no echo, nothing in shell history);
+        # a script pipes it in
+        typed = (
+            getpass.getpass(f"{args.name} (hidden, then Enter): ") if sys.stdin.isatty() else None
+        )
+        # a byte-order mark is what Windows PowerShell puts in front of piped text; it is not part
+        # of a key, and kept it would make every request with that key fail
+        value = (typed if typed is not None else sys.stdin.readline()).lstrip("﻿").strip()
         if not value:
-            print("give the value on standard input", file=sys.stderr)
+            print("no value given", file=sys.stderr)
             return 2
         put(args.name, value)
         print(f"stored {args.name} (DPAPI, this Windows user only) in {STORE}")

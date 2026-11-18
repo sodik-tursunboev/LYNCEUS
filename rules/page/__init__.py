@@ -18,6 +18,7 @@ from typing import Any
 
 from core.detonate.models import PageForm, PageReport
 from core.urls.parse import HostKind, ParsedUrl, parse_url
+from core.urls.popular import is_popular
 from rules.url.data import Brand, brands, official_domains
 
 HERE = Path(__file__).parent
@@ -266,6 +267,24 @@ def brand_on_hosting(ctx: PageCtx) -> str | None:
     if ctx.domain in brand.domains and where not in _shared():
         return None
     return f"the page presents itself as {brand.name} (in its {place}) on {where}"
+
+
+@rule("page.fresh_certificate", "page.freshness")
+def fresh_certificate(ctx: PageCtx) -> str | None:
+    """DA1: a sign-in page under a TLS certificate issued days before the visit. D1 dev half: 31% of
+    live phishing pages had one under 7 days old, 8% of legitimate ones. Weak and in its own
+    category: a site on a short-lived certificate renews often, so this only adds to other signs.
+    Never on a brand's own domain or a popular one."""
+    r = ctx.report
+    if r.tls is None or r.visited_at is None or ctx.domain is None or not asks_credentials(r):
+        return None
+    days = (r.visited_at - r.tls.valid_from) / 86_400
+    if not 0 <= days < scoring()["freshness"]["max_days"]:
+        return None
+    if ctx.domain in _all_official() or is_popular(ctx.domain):
+        return None
+    when = "the same day" if days < 1 else f"{int(days)} day{'s' if int(days) != 1 else ''} before"
+    return f"asks for credentials on {ctx.domain}, whose certificate was issued {when} the visit"
 
 
 @rule("page.evasion", "page.evasion", EVASION)

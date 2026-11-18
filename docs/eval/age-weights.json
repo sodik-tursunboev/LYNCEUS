@@ -1,0 +1,723 @@
+{
+ "generated_at": "2026-11-17 14:39Z",
+ "weights_now": {
+  "week": 0.55,
+  "month": 0.4,
+  "quarter": 0.15
+ },
+ "chosen_on_A": {
+  "week": 0.55,
+  "month": 0.45,
+  "quarter": 0.25
+ },
+ "samples": {
+  "A (fit)": 600,
+  "B (confirm)": 600
+ },
+ "rows": [
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     159,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     162,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     162,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     162,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     172,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     172,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     172,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "A (fit)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     175,
+     300
+    ],
+    "legit_tail": [
+     6,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     164,
+     300
+    ],
+    "legit_tail": [
+     12,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     164,
+     300
+    ],
+    "legit_tail": [
+     12,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     164,
+     300
+    ],
+    "legit_tail": [
+     12,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.4,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     164,
+     300
+    ],
+    "legit_tail": [
+     12,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.45,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.5,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.15
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.25
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.3
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  },
+  {
+   "sample": "B (confirm)",
+   "weights": {
+    "week": 0.55,
+    "month": 0.55,
+    "quarter": 0.35
+   },
+   "tally": {
+    "phish": [
+     187,
+     300
+    ],
+    "legit_tail": [
+     14,
+     250
+    ],
+    "legit_top": [
+     0,
+     50
+    ]
+   }
+  }
+ ]
+}

@@ -6,6 +6,7 @@ a fetch option: analysis is offline.
 """
 
 import asyncio
+import hashlib
 import hmac
 import json
 import logging
@@ -15,7 +16,7 @@ import secrets
 import threading
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from functools import partial
@@ -27,7 +28,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, sta
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -41,13 +42,14 @@ from core.db import audit, hosts
 from core.db.store import save_analysis, save_email_analysis, save_file_analysis
 from core.detection.engine import ENGINE_VERSION, UrlAnalysis, UrlReport
 from core.detonate import PageReport, detonate_url, safe_screenshot
+from core.detonate.auto import AutoOpener, parse_sources
 from core.email import engine as email_engine
 from core.email.engine import EmailReport
-from core.files.engine import FileReport, analyze_file
+from core.files.engine import FileReport, analyze_file, wants_reputation
 from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.refresh import feed_keys, keep_fresh
-from core.intel.registry import build_intel
+from core.intel.registry import build_file_reputation, build_intel
 from core.llm.build import build_advisor
 from core.log import configure
 from core.mailbox.quarantine import MailQuarantineRunner
@@ -275,6 +277,37 @@ def _file_ref(value: str | None) -> str | None:
     return value if value and re.fullmatch(r"[0-9a-f]{32}", value) else None
 
 
+def _auto_opener(
+    settings: Settings,
+    db: Engine | None,
+    write_audit: Callable[[str, str, dict[str, object]], None],
+) -> AutoOpener | None:
+    """DA1 P3: the automatic page opener, if LYNCEUS_AUTO_DETONATION names sources and page
+    detonation itself is on. Every opening is audited (who: auto; from: browser or mail; how the
+    page went; never the address) and stored as an event of its source."""
+    sources = parse_sources(settings.auto_detonation)
+    if not sources:
+        return None
+    if not settings.detonation:
+        log.warning(
+            "LYNCEUS_AUTO_DETONATION is set but LYNCEUS_DETONATION is off: nothing is opened"
+        )
+        return None
+
+    def open_page(raw: str, start: UrlAnalysis) -> tuple[UrlAnalysis, str]:
+        deeper, page = detonate_url(raw, start, auto=True)
+        return deeper, page.status
+
+    def record(deeper: UrlAnalysis, source: str, page_status: str) -> None:
+        write_audit("url.detonate", "url", {"by": "auto", "from": source, "page": page_status})
+        if db is not None:
+            kind = EventSource.EMAIL if source == "mail" else EventSource.BROWSER
+            save_analysis(db, deeper, kind)
+
+    log.info("pages are opened automatically for: %s", ", ".join(sorted(sources)))
+    return AutoOpener(open_page, record, sources=sources)
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     configure(settings.log_level)
@@ -283,6 +316,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "settings still use the old MIRAGE_ names (%s): rename them to LYNCEUS_", ", ".join(old)
         )
     intel = build_intel(settings)  # None unless the operator named providers; a typo stops start-up
+    file_rep = build_file_reputation(settings)  # DA2: None unless LYNCEUS_FILE_REPUTATION is on
     feed_store = FeedStore(settings.data_dir / "feeds")
     feed_names = sorted(settings.intel_enabled() & FEEDS.keys())  # the lists to keep downloaded
     advisor = build_advisor(settings)  # None unless the local model review is on (ADR-023)
@@ -310,8 +344,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await run_in_threadpool(runner.stop)
         for service in mailboxes:
             await run_in_threadpool(service.stop)
+        if opener is not None:
+            opener.close()  # pages still waiting are not opened after shutdown
         if intel is not None:
             await intel.aclose()
+        if file_rep is not None:
+            await file_rep.aclose()
         if advisor is not None:
             await advisor.aclose()
         if brain is not None:
@@ -342,7 +380,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if settings.database_url
         else None
     )
-    mailboxes.extend(build_mailboxes(settings, db, intel))  # only what the operator enabled
+    opener = _auto_opener(settings, db, lambda *a: write_audit(*a))  # DA1 P3; None unless enabled
+    on_link = (
+        (lambda url: opener.consider_link(url, "mail"))
+        if opener is not None and "mail" in opener.sources
+        else None
+    )
+    mailboxes.extend(
+        build_mailboxes(settings, db, intel, on_link)
+    )  # only what the operator enabled
     runner = build_quarantine(mailboxes, db)
     if runner is not None:
         quarantine.append(runner)
@@ -478,6 +524,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         persisted = False
         # the browser extension says so; anything else is recorded as a plain API call
         source = EventSource.BROWSER if x_lynceus_source == "BROWSER" else EventSource.API
+        if opener is not None and source is EventSource.BROWSER:
+            # DA1 P3: an address whose page was opened recently gets that graver verdict back;
+            # otherwise a risky one is queued to be opened (this answer does not wait for it)
+            deeper = opener.deeper(analysis)
+            if deeper is not None:
+                analysis = deeper
+            else:
+                opener.consider(request.url, analysis, "browser")
         if db is not None:
             try:
                 await run_in_threadpool(save_analysis, db, analysis, source)
@@ -591,6 +645,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         host: str | None,
         file_ref: str | None = None,
     ) -> FileResponse:
+        reputation = None
+        if file_rep is not None and wants_reputation(name):  # DA2, before a parser slot is taken
+            digest = (
+                await run_in_threadpool(lambda: hashlib.sha256(data).hexdigest())
+                if data is not None
+                else sha256.lower()
+            )
+            if not hashlists.hits_for_file(
+                "1", {"sha256": digest}
+            ):  # the local lists know it: no need
+                reputation, outcome = await file_rep.ask(digest)  # only the hash leaves
+                write_audit("file.reputation", "file", {"by": "core", "answer": outcome})
         try:
             await asyncio.wait_for(parser_slots.acquire(), timeout=1.0)
         except TimeoutError:
@@ -601,8 +667,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ) from None
         try:
             analyze = partial(
-                analyze_file, name, size, sha256, data, claimed_magic=magic, origin_host=host
-            )
+                analyze_file, name, size, sha256, data, claimed_magic=magic, origin_host=host,
+                reputation=reputation,
+            )  # fmt: skip
             analysis = await run_in_threadpool(analyze)
         finally:
             parser_slots.release()

@@ -9,6 +9,7 @@ so a provider cannot send what it was never given (tests check the real requests
 import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
 from typing import Any, NamedTuple, Protocol
 
@@ -69,6 +70,23 @@ class Answer:
     detail: str | None = None  # human-readable, no attacker text
     facts: Mapping[str, Any] = field(default_factory=dict)  # structured, for correlation
     # (a provider's `ttl` says how long an answer may be reused; an Answer is per query)
+
+
+@dataclass(frozen=True)
+class FileRep:
+    """DA2: what an antivirus aggregator's engines say about a file's SHA-256 (data only: the lookup
+    itself is core/intel/filerep.py)."""
+
+    malicious: int  # engines that flag the file
+    suspicious: int
+    harmless: int
+    undetected: int
+    analysed: datetime | None
+
+    @property
+    def engines(self) -> int:
+        """Engines that gave an opinion (timeouts, failures and unsupported types left out)."""
+        return self.malicious + self.suspicious + self.harmless + self.undetected
 
 
 class ProviderError(Exception):

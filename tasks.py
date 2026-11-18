@@ -22,7 +22,7 @@ TASKS: dict[str, list[list[str]]] = {
     "migrate": [[PY, "-m", "alembic", "upgrade", "head"]],
     "sandbox": [[PY, "-m", "core.sandbox.build"]],  # build .sandbox/ (Windows)
     # the page detonator's image (D1); needs Docker and the pinned Playwright base image
-    "detonator": [["docker", "build", "-t", "lynceus-detonator:1.1.0", "infra/detonator"]],
+    "detonator": [["docker", "build", "-t", "lynceus-detonator:1.2.0", "infra/detonator"]],
     "serve": [
         [
             PY,

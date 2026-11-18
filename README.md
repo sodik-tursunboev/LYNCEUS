@@ -28,7 +28,7 @@ A local-first phishing detector for Windows. It watches your downloads and your 
 | Threat intelligence | optional: list feeds matched locally, a popular-domain list, query providers asked about a bare domain only; a provider failure is never "safe" | `core/intel`, `core/urls/popular.py` |
 | Windows agent | watches Downloads, judges each new file, answers the browser, shows notifications, carries out your decisions, seals quarantined files | `agent/` (.NET) |
 | Browser extension | Edge/Chrome MV3: warns before a page that looks like phishing; "this warning is wrong" reports a false alarm | `extension/` |
-| Console and workbench | paste a link or drop an email or file and see the verdict, the signs and the evidence; review and undo responses; say "was this right?" | `console/` |
+| Console and workbench | paste a link or drop an email or file and see the verdict, the signs and the evidence; review and undo responses; say "was this right?"; see the state of every guard (Protection), which rules you called wrong (Feedback) and a Guide; dark or light, keyboard shortcuts, phone-width layout | `console/` |
 | Live Gmail and Outlook | read-only; new mail is analysed once and missed mail is found again (tested against fakes only so far) | `core/mailbox` |
 
 Every verdict is one of `MALICIOUS | SUSPICIOUS | BENIGN | UNKNOWN | ERROR`, with a score, the signals that fired and the evidence behind them. UNKNOWN is never treated as safe. One kind of evidence alone never makes something MALICIOUS: the learned model or the brain alone can only warn.
@@ -66,7 +66,7 @@ cd lynceus
 python -m venv .venv
 copy .env.example .env                    # settings only; leave secrets out of it
 python -m core.secrets set api_token      # paste a long random token, then Enter
-python -m core.secrets set database_url   # e.g. postgresql+psycopg://user:password@127.0.0.1:55432/db
+python -m core.secrets set database_url   # e.g. postgresql+psycopg://user:password@127.0.0.1:15432/db
 python tasks.py up
 .\deploy\install.ps1
 ```

@@ -84,7 +84,7 @@ Back up the PostgreSQL database and the data folder (`%LOCALAPPDATA%\Lynceus`, w
 
 ## When something is wrong
 
-- **The database refuses the password** (`password authentication failed for user "mirage"`): something else is answering on the port. On this machine Splunk's own PostgreSQL (`splunk-postgres.exe`) takes 127.0.0.1:5432, which is why Lynceus's database is published on **127.0.0.1:55432** (`infra/docker-compose.yml`, the URLs in `.env`). Check with `netstat -ano | findstr :55432` and `docker ps` (the Lynceus container must show `127.0.0.1:55432->5432/tcp`).
+- **The database refuses the password** (`password authentication failed for user "mirage"`): something else is answering on the port. On this machine Splunk's own PostgreSQL (`splunk-postgres.exe`) takes 127.0.0.1:5432, which is why Lynceus's database is published on **127.0.0.1:15432** (`infra/docker-compose.yml`, the URLs in `.env`). Check with `netstat -ano | findstr :15432` and `docker ps` (the Lynceus container must show `127.0.0.1:15432->5432/tcp`).
 
 | Symptom | Look at |
 |---|---|

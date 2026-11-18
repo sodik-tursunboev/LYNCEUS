@@ -32,9 +32,11 @@ import httpx
 
 from core.detection.engine import analyze_url
 from core.detonate import detonate_url, runner
+from core.detonate.auto import worth_opening
 from core.detonate.judge import judge
 from core.detonate.models import PageReport
 from core.detonate.runner import ensure_ready
+from core.urls import popular
 from eval.metrics import wilson
 from eval.realurl import LEGIT, PHISH, Sample, tranco
 from rules.url.data import brands
@@ -104,6 +106,15 @@ def sign_in_pages(eval_data: Path, n: int) -> list[Sample]:
     ]
 
 
+def long_tail(eval_data: Path, n: int) -> list[Sample]:
+    """DA1: legitimate sites the popular list does not cover, where rules about unknown domains
+    actually fire: a seeded sample of Tranco ranks 100,001 to 1,000,000, at their home page. Being
+    ranked is not proof of being harmless; the report says so."""
+    rng = random.Random(f"{SEED}|tail")  # noqa: S311  (a reproducible sample, not a secret)
+    ranked = list(tranco(eval_data / "tranco-top-1m.csv.zip", 1_000_000))[100_000:]
+    return [Sample("tranco_tail", LEGIT, s.url) for s in rng.sample(ranked, min(n, len(ranked)))]
+
+
 def split_of(url: str) -> str:
     return SPLITS[int(hashlib.sha256(f"{SEED}|{url}".encode()).hexdigest()[:8], 16) % 2]
 
@@ -126,6 +137,8 @@ def row_for(s: Sample, page: PageReport) -> dict[str, Any]:
         "status": page.status, "error": page.error, "http": page.http_status, "alive": page.alive,
         "page_rules": page_rules, "landing_rules": landing, "ms": page.elapsed_ms,
         "password": any(f.type == "password" for f in page.fields()),
+        # DA1: the second look at a near-empty page, and whether automatic opening would pick it
+        "second_look": page.second_look, "auto_open": worth_opening(base),
     }  # fmt: skip
 
 
@@ -235,6 +248,16 @@ def _measure(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         and r["state"] in FLAGGED
         and r["url_state"] not in FLAGGED
     ]
+    for label in (PHISH, LEGIT):  # DA1
+        group = [r for r in rows if r["label"] == label]
+        alive = [r for r in group if r["alive"]]
+        looked = [r for r in alive if r.get("second_look")]
+        rep[label]["second_look"] = _rate(len(looked), len(alive))
+        rep[label]["second_look_flagged"] = _rate(_flagged(looked, "state"), len(looked))
+        rep[label]["fresh_certificate"] = _rate(
+            sum("page.fresh_certificate" in r["page_rules"] for r in alive), len(alive)
+        )
+        rep[label]["auto_open"] = _rate(sum(bool(r.get("auto_open")) for r in group), len(group))
     rep["phish"]["caught_only_by_page"] = len(gained)
     rep["legit"]["false_alarms_from_page"] = sum(
         r["label"] == LEGIT and r["state"] in FLAGGED and r["url_state"] not in FLAGGED
@@ -295,6 +318,15 @@ def render(full: Mapping[str, Any]) -> str:
             )
     lines += [
         "",
+        "## DA1: what the deeper look adds, and what automatic opening would cost (test half)",
+        "",
+        "| | phishing | legitimate |",
+        "|---|---|---|",
+        f"| alive pages read on a second look (the first showed almost nothing) | {_pct(p['second_look'])} | {_pct(g['second_look'])} |",
+        f"| ... of those, flagged | {_pct(p['second_look_flagged'])} | {_pct(g['second_look_flagged'])} |",
+        f"| `page.fresh_certificate` (evidence only, no weight) | {_pct(p['fresh_certificate'])} | {_pct(g['fresh_certificate'])} |",
+        f"| would be opened automatically (address SUSPICIOUS, or UNKNOWN with a sign, not popular) | {_pct(p['auto_open'])} | {_pct(g['auto_open'])} |",
+        "",
         "## Page rules that fired (alive pages)",
         "",
         "| Rule | phishing | legitimate |",
@@ -322,15 +354,22 @@ def main(argv: list[str] | None = None) -> int:
         "--rescore", action="store_true", help="judge the kept pages again; open nothing"
     )
     ap.add_argument("--parallel", type=int, default=runner.MAX_PARALLEL, help="pages at once")
+    ap.add_argument(
+        "--folder", default="d1", help="the run's folder under --data (DA1: a new run, D1 kept)"
+    )
+    ap.add_argument("--tail", type=int, default=0, help="DA1: long-tail legitimate sites to open")
+    ap.add_argument("--name", default="detonate", help="the report's file name in --out")
     args = ap.parse_args(argv)
-    d1 = args.data / "d1"
+    d1 = args.data / args.folder
     pages = d1 / "pages"
+    popular.configure(args.data.parent / "popular")  # the list the core uses (H1 B1), if synced
     if not args.rescore and (args.refresh or not (d1 / "openphish.txt").exists()):
         refresh(d1)
     samples = (
         phishing(d1, args.phish)
         + legitimate(args.data, args.legit)
         + sign_in_pages(args.data, args.logins)
+        + long_tail(args.data, args.tail)
     )
     if args.rescore:
         rows = rescore(samples, pages)
@@ -341,8 +380,8 @@ def main(argv: list[str] | None = None) -> int:
         rows = run(samples, d1 / "results.jsonl", pages, args.parallel)
     rep = measure(rows)
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / "detonate.json").write_text(json.dumps(rep, indent=2), encoding="utf-8")
-    (args.out / "detonate.md").write_text(render(rep), encoding="utf-8")
+    (args.out / f"{args.name}.json").write_text(json.dumps(rep, indent=2), encoding="utf-8")
+    (args.out / f"{args.name}.md").write_text(render(rep), encoding="utf-8")
     print(render(rep))
     return 0
 

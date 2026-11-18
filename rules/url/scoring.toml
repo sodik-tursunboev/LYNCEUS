@@ -2,7 +2,7 @@
 # Tune against the dev split only. Any change here changes ruleset_version.
 
 [ruleset]
-version = "1.2.0"  # 1.2.0 (AI1): the learned domain model; 1.1.0 (E1): path-only double encoding, share dialogs
+version = "1.4.0"  # 1.4.0 (DA3): two conditions narrowed on the deep-link dev half (referrer parameters, utm_* parameters); 1.3.0 (DA1): learned model 2, typosquat misspellings keep the start; 1.2.0 (AI1): the learned domain model; 1.1.0 (E1): path-only double encoding, share dialogs
 
 [thresholds]
 suspicious = 45       # score at or above: SUSPICIOUS
