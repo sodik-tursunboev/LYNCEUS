@@ -22,6 +22,7 @@ Updated 2026-11-11 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.
 
 | Date | Added | Status |
 |---|---|---|
+| 2026-11-17 | **DA1 to DA3, deeper analysis:** learned model 2, a stricter typosquat rule, domain-age weights fitted on one sample and confirmed on another, a corpus of 1,640 legitimate deep links for honest false-alarm counts, VirusTotal lookups of a downloaded program's SHA-256 (off by default), risky browser links opened in the sandbox automatically (off by default), established sites never sent to an outside provider, and two tests of the engine itself: how cheaply phishing evades it and how fast the learned model ages (`docs/milestones/DA3.md`) | Verified (measured; acceptance 9 of 9) |
 | 2026-11-14 | **AI1 learned model:** `url.learned_domain`, a model fitted to 136,875 real domains, catches phishing domains no rule describes (fresh PhishTank 1.6% to 17.1%, live phishing pages 12.2% to 54.0%, your browsing 0 false alarms of 86); explains which parts of the name pushed it | Verified (`docs/eval/learned-url.md`) |
 | 2026-11-14 | **AI1 local brain:** a local model reads an opened page's text, its own code and its screenshot, and an email's request, and answers with quotes; code checks every claim before it counts (business-email compromise, brands in pictures, where a kit sends what you type) | Built and tested against a fake model; off by default, not yet measured |
 | 2026-11-14 | **H1 security:** the console has its own session (one-time code, never the API token), an audit log the database refuses to change, secrets under DPAPI (`python -m core.secrets`), hash-locked Python dependencies, sealed quarantine files, site names sealed at rest (ADR-007), an RDAP lookup that cannot be steered to this machine, and a notification when a file or message could not be analysed | Verified (tests) |
@@ -72,7 +73,7 @@ Updated 2026-11-11 from the code (URL ruleset 1.1.0, email and file ruleset 1.3.
 | Your browsing (Edge, Chrome) | judges every page you open and shows a warning page before phishing | Verified (Edge); Chrome expected, not tested |
 | Your downloads | judges every new file in Downloads, notifies you, offers quarantine | Verified |
 | Files you are unsure about | drop them on the Analyze page for a full explanation | Verified |
-| Pages you are unsure about | open the page in a throwaway, locked-down browser and judge what it shows | Verified (on request) |
+| Pages you are unsure about | open the page in a throwaway, locked-down browser and judge what it shows | Verified (on request; risky browser links open by themselves if `LYNCEUS_AUTO_DETONATION` is switched on) |
 | Your email | reads Gmail or Outlook (read-only) and judges every new message | Fakes only |
 | Unknown Office macros | reads the macro's code and works out what it would do | Tested (synthetic macros) |
 | Known phishing and malware | matches against OpenPhish, PhishTank and local hash lists | Verified (lists on) |
@@ -281,11 +282,11 @@ Rules are tagged with **27 MITRE ATT&CK techniques** (e.g. T1566.001 spearphishi
 | OpenPhish community feed | exact phishing URLs, downloaded and matched on this machine | Verified (on) |
 | PhishTank | exact phishing URLs, downloaded and matched on this machine | Verified (on) |
 | Automatic refresh | lists refreshed in the background; a stale list reports itself unavailable instead of matching old data | Verified |
-| URLhaus | malware URLs | Needs key |
-| MalwareBazaar | recent malware hashes into the local hash lists | Needs key |
-| VirusTotal | domain reputation (sends only the bare domain) | Needs key, off |
+| URLhaus | malware URLs | Needs your abuse.ch key (`docs/KEYS.md`); checked live |
+| MalwareBazaar | recent malware hashes into the local hash lists | Needs your abuse.ch key; checked live |
+| VirusTotal | domain reputation (sends only the registered domain, never for a popular or brand-owned site) and, if `LYNCEUS_FILE_REPUTATION` is switched on, the SHA-256 of a downloaded program | Needs your key; checked live; off until named |
 | urlscan.io | domain verdicts (sends only the bare domain) | Needs key, off |
-| RDAP domain age | young domains (sends only the bare domain) | Off by default |
+| RDAP domain age | young domains (sends only the registered domain, never for a popular site) | Off by default; no key needed |
 | Resilience | timeouts, rate limits, circuit breakers, caching; a provider that fails is shown as failed, never "safe" | Tested |
 | One provider is never enough | a single listing gives SUSPICIOUS at most; nothing from intel ever gives BENIGN | Verified |
 | Local hash lists | `python -m core.intel hashes import|check|sync|status` | Verified |
