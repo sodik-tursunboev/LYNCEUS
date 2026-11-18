@@ -561,7 +561,10 @@ public class HostProcessTests
             UseShellExecute = false,
             CreateNoWindow = true,
         };
-        start.Environment["LOCALAPPDATA"] = Path.Combine(Path.GetTempPath(), "lynceus-no-such-" + Guid.NewGuid().ToString("N"));
+        var nowhere = Path.Combine(Path.GetTempPath(), "lynceus-no-such-" + Guid.NewGuid().ToString("N"));
+        start.Environment["LOCALAPPDATA"] = nowhere;
+        // a moved agent home also changes the pipe's name, so a real agent running on this computer is not found
+        start.Environment["LYNCEUS_AGENT_HOME"] = nowhere;
         using var process = Process.Start(start)!;
         var clock = Stopwatch.StartNew();
         await FrameIO.WriteAsync(process.StandardInput.BaseStream, """{"v":1,"type":"check_url","id":"z","url":"https://x.test/"}"""u8.ToArray(), CancellationToken.None);
