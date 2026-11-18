@@ -18,6 +18,7 @@ select = ["E", "F", "I", "B", "UP", "S", "SIM"]
 
 [tool.mypy]
 python_version = "3.12"
+platform = "win32"  # the sandbox and DPAPI code are Windows-only; CI's Linux job must type-check them as such
 strict = true
 plugins = ["pydantic.mypy"]
 

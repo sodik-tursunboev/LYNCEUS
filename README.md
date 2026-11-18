@@ -66,7 +66,7 @@ cd lynceus
 python -m venv .venv
 copy .env.example .env                    # settings only; leave secrets out of it
 python -m core.secrets set api_token      # paste a long random token, then Enter
-python -m core.secrets set database_url   # e.g. postgresql+psycopg://user:password@127.0.0.1:15432/db
+python -m core.secrets set database_url   # e.g. postgresql+psycopg://<user>:<password>@127.0.0.1:15432/<db>
 python tasks.py up
 .\deploy\install.ps1
 ```

@@ -5,6 +5,7 @@ attempt, so a test can show the guard stopped it before anything left the proces
 """
 
 import asyncio
+import itertools
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -305,9 +306,13 @@ def test_slow_dns_hits_the_total_deadline() -> None:
 
 
 def test_the_deadline_spans_the_whole_chain_not_each_hop() -> None:
-    async def creeping(t: Target) -> Reply:
-        await asyncio.sleep(0.03)
-        return Reply(302, f"/{len(t.path_query)}x")
+    hops = (
+        itertools.count()
+    )  # a new address every time: a repeated one would end the chain as a loop
+
+    async def creeping(_: Target) -> Reply:
+        await asyncio.sleep(0.05)  # each hop is well inside the deadline; fifty of them are not
+        return Reply(302, f"/{next(hops)}x")
 
     net = Net({"a.test": [[PUBLIC]]})
     chain = asyncio.run(
@@ -316,7 +321,7 @@ def test_the_deadline_spans_the_whole_chain_not_each_hop() -> None:
             enabled=True,
             resolve=net.resolve,
             connect=creeping,
-            limits=Limits(50, 0.1),
+            limits=Limits(50, 0.3),  # loose enough that a loaded CI machine still finishes one hop
         )
     )
     assert chain.outcome is Outcome.TIMEOUT and 0 < len(chain.hops) < 10

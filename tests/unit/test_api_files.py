@@ -10,7 +10,7 @@ from urllib.parse import quote
 import filehelp as fh
 import pytest
 from fastapi.testclient import TestClient
-from mailhelp import in_process_file
+from mailhelp import HOSTS_SEALED, in_process_file
 from sqlalchemy import create_engine, select
 
 from core.api.app import create_app
@@ -173,9 +173,9 @@ def test_a_file_is_stored_by_hash_and_origin_host_only(tmp_path: Path) -> None:
         )
         sources = {e.source for e in conn.execute(select(db.Event))}
     assert art.kind == "FILE" and len(art.sha256) == 64
-    assert (
-        art.host.startswith(hosts.PREFIX) and hosts.reveal(art.host) == "origin-site.test"
-    )  # sealed (A8)
+    assert hosts.reveal(art.host) == "origin-site.test"
+    if HOSTS_SEALED:
+        assert art.host.startswith(hosts.PREFIX)  # sealed (A8)
     assert art.host_tag == hosts.tag("origin-site.test")
     assert sources == {"AGENT"}
     for private in ("FILEMARK", "PATHMARK", "QUERYMARK", "statement.pdf"):

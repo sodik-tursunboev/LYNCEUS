@@ -14,7 +14,7 @@ from urllib.parse import quote
 import filehelp as fh
 import pytest
 from fastapi.testclient import TestClient
-from mailhelp import in_process_file
+from mailhelp import HOSTS_SEALED, in_process_file
 from sqlalchemy import create_engine, select
 
 from core.api.app import create_app
@@ -378,8 +378,11 @@ def test_nothing_about_a_name_or_a_location_is_stored(world: World) -> None:
         dump = "\n".join(
             repr(row) for t in db.Base.metadata.sorted_tables for row in c.execute(select(t))
         )
-    for private in ("PRIVATENAME", "statement.pdf", "paypal-login.test", "jane", "C:\\"):
-        assert private not in dump, private  # H1 A8: even the host of a link is stored only sealed
+    names = ["PRIVATENAME", "statement.pdf", "jane", "C:\\"]
+    if HOSTS_SEALED:
+        names.append("paypal-login.test")  # H1 A8: even the host of a link is stored only sealed
+    for private in names:
+        assert private not in dump, private
     detail = world.client.get("/v1/events", headers=AUTH).json()[0]
     shown = world.client.get(f"/v1/events/{detail['id']}", headers=AUTH).json()
     assert "paypal-login.test" in json.dumps(shown)  # ... and read back for you, through the API

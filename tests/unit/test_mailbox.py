@@ -19,7 +19,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from gmailhelp import FakeGmail
-from mailhelp import PHISH_LINK, analyze, eml
+from mailhelp import HOSTS_SEALED, PHISH_LINK, analyze, eml
 from sqlalchemy import create_engine, select
 
 from core.contracts import EventSource, VerdictState
@@ -426,7 +426,8 @@ def test_no_address_subject_body_token_or_message_id_is_kept(
         assert marker not in dumped, marker
     assert message_key("IDMARK1234567890") in state
     assert (sources, kinds) == ({"EMAIL"}, {"EMAIL"})
-    assert "paypal-login.test" not in rows  # the link's host is stored only sealed (ADR-007, H1 A8)
+    if HOSTS_SEALED:
+        assert "paypal-login.test" not in rows  # a link's host is stored only sealed (ADR-007)
     assert hosts.tag("paypal-login.test") in rows  # ... and found by its keyed hash
 
 

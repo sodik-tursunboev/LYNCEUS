@@ -5,6 +5,7 @@ proves nothing about isolation: tests/sandbox and the `real_sandbox` tests do th
 """
 
 import json
+import os
 from collections.abc import Sequence
 from email.message import EmailMessage
 
@@ -15,6 +16,7 @@ from core import sandbox
 from core.email.engine import EmailAnalysis, analyze_message
 from core.email.models import MessageScan
 
+HOSTS_SEALED = os.name == "nt"  # stored site names are sealed with DPAPI (ADR-007): Windows only
 Attachment = tuple[str, bytes, str]  # file name, content, content type
 PHISH_LINK = '<a href="https://evil-site.test/x">https://www.paypal.com/login</a>'
 

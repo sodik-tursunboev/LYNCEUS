@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 
 import pytest
-from mailhelp import analyze, eml
+from mailhelp import HOSTS_SEALED, analyze, eml
 from sqlalchemy import Engine, func, select
 
 from core.contracts import EventSource, ProviderResult, ProviderStatus, VerdictState
@@ -40,7 +40,8 @@ def test_saves_the_whole_analysis(migrated: Engine) -> None:
     assert hosts.reveal(art.host) == "secure-check.test" and art.host_tag == hosts.tag(
         "secure-check.test"
     )
-    assert "secure-check.test" not in art.host  # sealed at rest (ADR-007, H1 A8)
+    if HOSTS_SEALED:
+        assert "secure-check.test" not in art.host  # sealed at rest (ADR-007, H1 A8)
     assert a.url and art.sha256 == a.url.url_sha256 and art.ref == f"sha256:{art.sha256}"
     assert ver.state == a.verdict.state.value and ver.risk_score == a.verdict.risk_score
     assert ver.ruleset_version == a.verdict.ruleset_version
