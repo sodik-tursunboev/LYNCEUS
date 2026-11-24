@@ -57,6 +57,7 @@ from core.mailbox.service import MailboxService, combined_status
 from core.mailbox.wiring import build_mailboxes, build_quarantine
 from core.response import service as response_service
 from core.response.routes import build_router as response_router
+from core.retro import raise_alerts
 from core.urls import popular
 from core.urls.parse import ParsedUrl, parse_url
 
@@ -341,7 +342,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         for runner in quarantine:
             runner.start()
         refresh = (
-            asyncio.create_task(keep_fresh(feed_store, feed_names, feed_keys(settings)))
+            asyncio.create_task(
+                keep_fresh(
+                    feed_store,
+                    feed_names,
+                    feed_keys(settings),
+                    on_new=partial(raise_alerts, db) if db is not None else None,  # DA5 re-check
+                )
+            )
             if feed_names
             else None
         )

@@ -6,6 +6,7 @@ Each feed is one file, replaced atomically, so a bad download can never leave a 
 emptied list. A missing or old list reports UNAVAILABLE; it never reads as "not listed, so fine".
 """
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -278,6 +279,10 @@ class SyncOutcome(NamedTuple):
     detail: str
 
 
+# Told what an update ADDED (feed name, new URL hashes, new hosts, when): the DA5 re-check.
+OnNew = Callable[[str, set[str], set[str], datetime], object]  # what it returns is ignored
+
+
 def _allowed(spec: FeedSpec, url: str) -> bool:
     parts = urlsplit(url)
     host = (parts.hostname or "").lower()
@@ -318,8 +323,12 @@ async def sync(
     key: str | None = None,
     now: datetime | None = None,
     force: bool = False,
+    on_new: OnNew | None = None,
 ) -> SyncOutcome:
-    """Download one feed if it is due. The previous good copy survives every failure."""
+    """Download one feed if it is due. The previous good copy survives every failure.
+
+    `on_new` hears what the new list adds to the previous one (all of it on a first download), only
+    after the list is stored: a failing hook is logged and never costs the update."""
     now = now or datetime.now(UTC)
     current = store.load(spec.name)
     if current and not force and now - current.meta.fetched_at < timedelta(seconds=spec.interval):
@@ -365,6 +374,15 @@ async def sync(
         last_modified=got.headers.get("last-modified"),
     )
     store.write(spec.name, urls, hosts, meta)
+    if on_new is not None:
+        added_urls = urls - (current.urls if current else frozenset())
+        added_hosts = hosts - (current.hosts if current else frozenset())
+        if added_urls or added_hosts:
+            try:
+                # ponytail: a failed check is not retried (the entries are no longer new next time)
+                await asyncio.to_thread(on_new, spec.name, added_urls, added_hosts, now)
+            except Exception:  # noqa: BLE001  (never echo what failed: it may name a site)
+                log.warning("the re-check of stored links against %s failed", spec.name)
     return SyncOutcome(spec.name, "updated", len(urls), "ok")
 
 

@@ -18,7 +18,7 @@ from core.db.models import Base
 TABLES = {
     "events", "artifacts", "extracted_urls", "domains", "provider_results", "detections",
     "verdicts", "evidence", "evidence_payloads", "detection_evidence", "audit_logs", "feedback",
-    "actions", "allowlist",
+    "actions", "allowlist", "retro_alerts",
 }  # fmt: skip
 LOOKUPS = {
     "events": ["observed_at"],

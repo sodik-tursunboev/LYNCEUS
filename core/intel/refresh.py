@@ -13,7 +13,7 @@ import logging
 from collections.abc import Collection, Mapping
 
 from core.config import Settings
-from core.intel.feeds import FEEDS, HOUR, FeedSpec, FeedStore, sync
+from core.intel.feeds import FEEDS, HOUR, FeedSpec, FeedStore, OnNew, sync
 from core.intel.http import make_client
 
 log = logging.getLogger(__name__)
@@ -53,8 +53,10 @@ async def keep_fresh(
     *,
     check_every: float = CHECK_EVERY,
     retry_after: float = RETRY_AFTER_ERROR,
+    on_new: OnNew | None = None,
 ) -> None:
-    """Run until cancelled. A failure is logged by name and reason only; it never stops the loop."""
+    """Run until cancelled. A failure is logged by name and reason only; it never stops the loop.
+    `on_new` hears what each updated list adds (DA5 re-check: `partial(raise_alerts, engine)`)."""
     loop = asyncio.get_running_loop()
     not_before: dict[str, float] = {}
     while True:
@@ -64,8 +66,9 @@ async def keep_fresh(
                 async with make_client(timeout=30.0) as client:
                     for name in due:
                         out = await sync(
-                            spec_for(name, keys.get(name)), store, client, key=keys.get(name)
-                        )
+                            spec_for(name, keys.get(name)), store, client, key=keys.get(name),
+                            on_new=on_new,
+                        )  # fmt: skip
                         if out.status == "error":
                             not_before[name] = loop.time() + retry_after
                             log.warning(

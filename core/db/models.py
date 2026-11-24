@@ -22,6 +22,7 @@ from sqlalchemy import (
     MetaData,
     String,
     Text,
+    UniqueConstraint,
     event,
     func,
 )
@@ -351,3 +352,31 @@ class Allow(Base):
     created_by: Mapped[str] = mapped_column(String(16))
     created_at: Mapped[CreatedAt]
     expires_at: Mapped[datetime | None]
+
+
+RETRO_KINDS = ("url", "host")
+
+
+class RetroAlert(Base):
+    """DA5 re-check: a link stored earlier was listed by a threat feed afterwards (core/retro).
+
+    One row per reference and feed, so a rerun adds nothing. `ref` is `sha256:<url hash>` (the exact
+    address) or `host:<keyed host hash>` (another address on a listed host); never a URL or a host
+    name. The verdict it points at is the one the link got when first seen: it is never edited."""
+
+    __tablename__ = "retro_alerts"
+    __table_args__ = (
+        UniqueConstraint("ref", "feed"),
+        CheckConstraint(f"kind IN ({_quoted(RETRO_KINDS)})", name="kind_valid"),
+    )
+
+    id: Mapped[UuidPk]
+    ref: Mapped[str] = mapped_column(String(80))
+    feed: Mapped[str] = mapped_column(String(32))
+    kind: Mapped[str] = mapped_column(String(8))
+    verdict_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("verdicts.id", ondelete="CASCADE"), index=True
+    )
+    first_seen_at: Mapped[datetime]
+    listed_at: Mapped[datetime]
+    created_at: Mapped[CreatedAt]

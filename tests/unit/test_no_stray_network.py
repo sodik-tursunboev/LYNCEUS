@@ -30,6 +30,9 @@ ALLOWED = {
     ROOT / "eval" / "perf.py",  # loopback only: checked by the test below
     ROOT / "eval" / "detonate.py",  # the two phishing lists only: checked by the test below
     ROOT / "eval" / "deeplinks.py",  # the Internet Archive's public index only: checked below (DA2)
+    ROOT
+    / "eval"
+    / "retro.py",  # fake feeds over httpx.MockTransport, no socket: checked below (DA5)
 }
 
 
@@ -76,7 +79,33 @@ def test_only_intelligence_code_uses_the_intelligence_http_module() -> None:
         for path in (ROOT / package).rglob("*.py")
         if "core.intel.http" in imports(path)
     }
-    assert all(u.startswith("core/intel/") or u == "core/llm/ollama.py" for u in users), users
+    assert all(
+        u.startswith("core/intel/") or u in ("core/llm/ollama.py", "eval/retro.py") for u in users
+    ), users
+
+
+def test_the_retro_measurement_reaches_no_real_server() -> None:
+    """DA5: eval/retro.py runs the product's feed update against fake feeds. Its only transport is
+    httpx.MockTransport, handed to make_client; there is no other client and no URL in it."""
+    path = ROOT / "eval" / "retro.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    attrs = {
+        f"{n.value.id}.{n.attr}"
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name)
+    }
+    assert "httpx.MockTransport" in attrs
+    assert not {a for a in attrs if a.startswith("httpx.")} - {
+        "httpx.MockTransport",
+        "httpx.Response",
+    }
+    calls = [
+        n
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "make_client"
+    ]
+    assert calls and all(c.args or c.keywords for c in calls)  # always given the mock transport
+    assert "https://" not in path.read_text(encoding="utf-8")
 
 
 def test_the_analysis_engines_do_not_import_the_local_model() -> None:
