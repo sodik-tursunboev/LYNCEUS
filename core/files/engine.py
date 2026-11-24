@@ -10,7 +10,7 @@ verdict rests on the name and the type the agent reported. A file is never BENIG
 
 import logging
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import get_args
 from uuid import UUID, uuid4
 
@@ -50,6 +50,7 @@ INSPECTABLE = frozenset(
         "svg",
     ]
 )
+_FLAGGED = (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS)
 _BIDI = re.compile("[\u200e\u200f\u202a-\u202e\u2066-\u2069]")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -68,6 +69,17 @@ class HashMatch(_Frozen):
     algorithm: str
     source: str
     where: str  # "file" or "archive entry"
+
+
+class StoredVerdict(_Frozen):
+    """What an earlier check of a site found (DA5 phase 3): its state and the ids of the rules that
+    fired, read back by the caller from storage. Never the site's name."""
+
+    state: VerdictState
+    rules: tuple[str, ...] = ()
+
+
+OriginLookup = Callable[[str], StoredVerdict | None]  # a host -> the latest stored verdict of it
 
 
 class FileReport(_Frozen):
@@ -182,11 +194,14 @@ def analyze_file(
     artifact_id: UUID | None = None,
     run: InspectBytes | None = None,
     reputation: FileRep | None = None,
+    origin_lookup: OriginLookup | None = None,
 ) -> FileAnalysis:
     """`sha256` and `claimed_magic` come from the agent. With `data` the core recomputes the hash
     and learns the type itself (in the sandbox); the agent's claims are then not used.
     `reputation` (DA2): what VirusTotal's engines say about this hash, already asked by the caller
-    (None: not asked, or no answer; that changes nothing)."""
+    (None: not asked, or no answer; that changes nothing). `origin_lookup` (DA5): what an earlier
+    check of the origin site stored (the page, the lists, the sandbox); it is extra evidence for
+    the origin signal only, and without it, or when it finds nothing or fails, nothing changes."""
     run = run or run_inspect_bytes
     aid = artifact_id or uuid4()
     digest = sha256.lower() if _SHA256.match(sha256.lower()) else ""
@@ -224,8 +239,9 @@ def analyze_file(
             ctx = Ctx(scan, tuple(links), None, None, files, hits)
             installer = _ext(clean) in scoring()["file"]["installer_extensions"] and magic == "exe"
             return _report(
-                aid, digest, found, ctx, links, files, inspected, host, installer, reputation
-            )
+                aid, digest, found, ctx, links, files, inspected, host, installer, reputation,
+                origin_lookup,
+            )  # fmt: skip
         except Exception:  # an engine bug is an explicit ERROR, never a silent pass
             log.exception("file analysis failed")
             return _unscored(aid, digest, VerdictState.ERROR, "Analysis failed.", "error", host)
@@ -322,20 +338,50 @@ def _as_download(s: Signal) -> Signal:
     )
 
 
-def _origin_signal(host: str | None, digest: str) -> tuple[Signal, Evidence] | None:
+def _stored_origin(host: str, lookup: OriginLookup | None) -> StoredVerdict | None:
+    """DA5: what an earlier check of this site stored, when that flagged it. Storage trouble never
+    stops or changes a verdict: the file is then judged as it was before."""
+    if lookup is None:
+        return None
+    try:
+        found = lookup(host)
+    except Exception:  # noqa: BLE001  (a database problem must not cost the caller a verdict)
+        log.warning("the stored verdict of the download's origin could not be read")
+        return None
+    return found if found is not None and found.state in _FLAGGED else None
+
+
+def _named(state: VerdictState, rule_ids: Iterable[str]) -> str:
+    named = sorted(set(rule_ids))[:3]
+    return f"{state.value} ({', '.join(named)})" if named else state.value
+
+
+def _origin_signal(
+    host: str | None, digest: str, lookup: OriginLookup | None = None
+) -> tuple[Signal, Evidence] | None:
     """DA1: the site the file was downloaded from (the agent reads it from Windows' download mark),
     judged by the URL rules. A file from a site whose own address looks like phishing is a sign of
-    its own kind; a clean or unknown site adds nothing (that is not evidence of safety)."""
+    its own kind; a clean or unknown site adds nothing (that is not evidence of safety).
+    DA5: what an earlier check of that site stored (its page, the lists, the sandbox) counts too,
+    so a site that was already caught is not judged again from its bare address. It only adds: a
+    stored verdict that does not flag the site never cancels what the address says."""
     if not host:
         return None
     site = analyze_url(f"https://{host}/")
-    if site.verdict.state not in (VerdictState.SUSPICIOUS, VerdictState.MALICIOUS):
+    seen = _stored_origin(host, lookup)
+    address = site.verdict.state if site.verdict.state in _FLAGGED else None
+    if address is None and seen is None:
         return None
-    why = sorted({s.rule_id for s in site.verdict.signals})
-    summary = (
-        f"downloaded from {host}, a site whose address Lynceus calls "
-        f"{site.verdict.state.value} ({', '.join(why[:3])})"
-    )
+    told: list[str] = []
+    if address is not None:
+        rules = (s.rule_id for s in site.verdict.signals)
+        told.append(f"a site whose address Lynceus calls {_named(address, rules)}")
+    if seen is not None:
+        before = _named(seen.state, seen.rules)
+        told.append(
+            f"had already judged it {before}" if told else f"a site Lynceus judged {before}"
+        )
+    summary = f"downloaded from {host}, " + " and ".join(told)
     ev = Evidence(kind="file_origin", summary=summary[:500], sha256=digest or None)
     weight = scoring()["file"]["origin_flagged_weight"]
     sig = Signal(
@@ -356,14 +402,16 @@ def _report(
     host: str | None,
     installer: bool = False,
     reputation: FileRep | None = None,
+    origin_lookup: OriginLookup | None = None,
 ) -> FileAnalysis:
     """Rules, score and report for one file whose facts are in `ctx`. `installer`: a program with an
     installer's name, which weighs less as a download than as an attachment (DA1). `reputation`:
-    what VirusTotal says about its hash (DA2)."""
+    what VirusTotal says about its hash (DA2). `origin_lookup`: what was stored about its origin
+    site (DA5)."""
     signals, evidence = mail.rule_signals(ctx, digest)
     if installer:
         signals = [_as_download(s) for s in signals]
-    origin = _origin_signal(host, digest)
+    origin = _origin_signal(host, digest, origin_lookup)
     if origin is not None:
         signals, evidence = [*signals, origin[0]], [*evidence, origin[1]]
     rep = _reputation_signal(reputation, digest)

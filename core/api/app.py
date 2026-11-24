@@ -46,6 +46,7 @@ from core.detonate.auto import AutoOpener, parse_sources
 from core.email import engine as email_engine
 from core.email.engine import EmailReport
 from core.files.engine import FileReport, analyze_file, wants_reputation
+from core.incidents import stored_origin
 from core.intel.analyze import analyze_with_intel, link_analyzer
 from core.intel.feeds import FEEDS, FeedStore, feed_status
 from core.intel.refresh import feed_keys, keep_fresh
@@ -690,6 +691,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             analyze = partial(
                 analyze_file, name, size, sha256, data, claimed_magic=magic, origin_host=host,
                 reputation=reputation,
+                origin_lookup=stored_origin(db) if db is not None else None,  # DA5
             )  # fmt: skip
             analysis = await run_in_threadpool(analyze)
         finally:
