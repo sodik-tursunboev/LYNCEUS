@@ -25,6 +25,16 @@ redirect_params = [
   "target", "to", "link", "out", "q",
 ]
 
+# DA5: sign-in services' own hosts (a host or any subdomain of it). Their `redirect_uri` names the app
+# that asked for the sign-in, in every legitimate flow, so it weighs little there (url.idp_redirect).
+# Costs 0 of 88,938 training phishing addresses; consent phishing keeps its other signals.
+identity_provider_hosts = [
+  "login.microsoftonline.com", "login.live.com", "login.windows.net", "b2clogin.com",
+  "accounts.google.com", "auth0.com", "okta.com", "oktapreview.com", "okta-emea.com",
+  "onelogin.com", "login.salesforce.com", "appleid.apple.com",
+  "idp.test",  # a reserved name, so the rule's fixtures can stay on reserved hosts
+]
+
 # DA3: parameters that say where the visitor CAME FROM, not where they are sent (a chat widget carries the
 # embedding page's address, base64-encoded, in `referrer`): a hidden address there is not an
 # encoded target. Costs 0 of 88,938 training phishing addresses; removed 5 false alarms on dev.

@@ -1,0 +1,486 @@
+{
+ "generated_at": "2026-11-22 20:24Z",
+ "configs": {
+  "C": "before DA5",
+  "D": "C with ranks 100,001 to 1M silencing the learned model (1c)",
+  "E": "D with the two narrowed conditions (1d), as shipped"
+ },
+ "sets": {
+  "E1 test: openphish phish": 92,
+  "E1 test: phishtank phish": 14075,
+  "E1 test: phiusiil legit": 40685,
+  "E1 test: phiusiil phish": 30090,
+  "E1 test: tranco legit": 14911,
+  "deep links, dev half": 757,
+  "deep links, test half": 883,
+  "long tail, 3,000 home pages (Tranco 100,001 to 1M)": 3000,
+  "your browsing (all)": 97
+ },
+ "rows": {
+  "C": {
+   "E1 test: openphish phish": {
+    "flagged": {
+     "k": 65,
+     "n": 92,
+     "rate": 0.70652,
+     "ci": [
+      0.60671,
+      0.78978
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 53,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phishtank phish": {
+    "flagged": {
+     "k": 3720,
+     "n": 14075,
+     "rate": 0.2643,
+     "ci": [
+      0.25708,
+      0.27165
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 3399,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 218,
+     "url.credential_bait": 28
+    }
+   },
+   "E1 test: phiusiil legit": {
+    "flagged": {
+     "k": 51,
+     "n": 40685,
+     "rate": 0.00125,
+     "ci": [
+      0.00095,
+      0.00165
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 36,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phiusiil phish": {
+    "flagged": {
+     "k": 11347,
+     "n": 30090,
+     "rate": 0.3771,
+     "ci": [
+      0.37164,
+      0.38259
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 10908,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 82,
+     "url.credential_bait": 238
+    }
+   },
+   "E1 test: tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "deep links, dev half": {
+    "flagged": {
+     "k": 19,
+     "n": 757,
+     "rate": 0.0251,
+     "ci": [
+      0.01613,
+      0.03887
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 9,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 4,
+     "url.credential_bait": 4
+    }
+   },
+   "deep links, test half": {
+    "flagged": {
+     "k": 20,
+     "n": 883,
+     "rate": 0.02265,
+     "ci": [
+      0.01471,
+      0.03473
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 13,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 2,
+     "url.credential_bait": 5
+    }
+   },
+   "long tail, 3,000 home pages (Tranco 100,001 to 1M)": {
+    "flagged": {
+     "k": 72,
+     "n": 3000,
+     "rate": 0.024,
+     "ci": [
+      0.0191,
+      0.03012
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 69,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "your browsing (all)": {
+    "flagged": {
+     "k": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.03809
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   }
+  },
+  "D": {
+   "E1 test: openphish phish": {
+    "flagged": {
+     "k": 64,
+     "n": 92,
+     "rate": 0.69565,
+     "ci": [
+      0.59536,
+      0.78026
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 52,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phishtank phish": {
+    "flagged": {
+     "k": 3704,
+     "n": 14075,
+     "rate": 0.26316,
+     "ci": [
+      0.25595,
+      0.2705
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 3382,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 218,
+     "url.credential_bait": 28
+    }
+   },
+   "E1 test: phiusiil legit": {
+    "flagged": {
+     "k": 44,
+     "n": 40685,
+     "rate": 0.00108,
+     "ci": [
+      0.00081,
+      0.00145
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 29,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phiusiil phish": {
+    "flagged": {
+     "k": 11287,
+     "n": 30090,
+     "rate": 0.37511,
+     "ci": [
+      0.36965,
+      0.38059
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 10846,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 82,
+     "url.credential_bait": 238
+    }
+   },
+   "E1 test: tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "deep links, dev half": {
+    "flagged": {
+     "k": 15,
+     "n": 757,
+     "rate": 0.01982,
+     "ci": [
+      0.01204,
+      0.03243
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 5,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 4,
+     "url.credential_bait": 4
+    }
+   },
+   "deep links, test half": {
+    "flagged": {
+     "k": 10,
+     "n": 883,
+     "rate": 0.01133,
+     "ci": [
+      0.00616,
+      0.02072
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 3,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 2,
+     "url.credential_bait": 5
+    }
+   },
+   "long tail, 3,000 home pages (Tranco 100,001 to 1M)": {
+    "flagged": {
+     "k": 3,
+     "n": 3000,
+     "rate": 0.001,
+     "ci": [
+      0.00034,
+      0.00294
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "your browsing (all)": {
+    "flagged": {
+     "k": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.03809
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   }
+  },
+  "E": {
+   "E1 test: openphish phish": {
+    "flagged": {
+     "k": 64,
+     "n": 92,
+     "rate": 0.69565,
+     "ci": [
+      0.59536,
+      0.78026
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 52,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phishtank phish": {
+    "flagged": {
+     "k": 3704,
+     "n": 14075,
+     "rate": 0.26316,
+     "ci": [
+      0.25595,
+      0.2705
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 3382,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 218,
+     "url.credential_bait": 28
+    }
+   },
+   "E1 test: phiusiil legit": {
+    "flagged": {
+     "k": 44,
+     "n": 40685,
+     "rate": 0.00108,
+     "ci": [
+      0.00081,
+      0.00145
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 29,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "E1 test: phiusiil phish": {
+    "flagged": {
+     "k": 11287,
+     "n": 30090,
+     "rate": 0.37511,
+     "ci": [
+      0.36965,
+      0.38059
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 10846,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 82,
+     "url.credential_bait": 238
+    }
+   },
+   "E1 test: tranco legit": {
+    "flagged": {
+     "k": 0,
+     "n": 14911,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.00026
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "deep links, dev half": {
+    "flagged": {
+     "k": 13,
+     "n": 757,
+     "rate": 0.01717,
+     "ci": [
+      0.01006,
+      0.02916
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 5,
+     "url.idp_redirect": 2,
+     "url.open_redirect": 0,
+     "url.credential_bait": 4
+    }
+   },
+   "deep links, test half": {
+    "flagged": {
+     "k": 10,
+     "n": 883,
+     "rate": 0.01133,
+     "ci": [
+      0.00616,
+      0.02072
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 3,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 2,
+     "url.credential_bait": 5
+    }
+   },
+   "long tail, 3,000 home pages (Tranco 100,001 to 1M)": {
+    "flagged": {
+     "k": 3,
+     "n": 3000,
+     "rate": 0.001,
+     "ci": [
+      0.00034,
+      0.00294
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   },
+   "your browsing (all)": {
+    "flagged": {
+     "k": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci": [
+      0.0,
+      0.03809
+     ]
+    },
+    "rules": {
+     "url.learned_domain": 0,
+     "url.idp_redirect": 0,
+     "url.open_redirect": 0,
+     "url.credential_bait": 0
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,553 @@
+{
+  "generated": "2026-11-22T20:32:02+00:00",
+  "seed": "lynceus-d1-2026-11-11",
+  "test": {
+    "phish": {
+      "n": 223,
+      "alive": {
+        "k": 118,
+        "n": 223,
+        "rate": 0.5291479820627802,
+        "low": 0.4636967384858339,
+        "high": 0.5936120095010267
+      },
+      "status": {
+        "ok": 109,
+        "http_403": 65,
+        "partial": 9,
+        "error": 4,
+        "http_404": 11,
+        "dead": 20,
+        "http_400": 1,
+        "http_410": 1,
+        "http_503": 3
+      },
+      "url_only_all": {
+        "k": 130,
+        "n": 223,
+        "rate": 0.5829596412556054,
+        "low": 0.5173748266563881,
+        "high": 0.6457346868446768
+      },
+      "with_page_all": {
+        "k": 141,
+        "n": 223,
+        "rate": 0.6322869955156951,
+        "low": 0.5672589976385021,
+        "high": 0.6928345509172502
+      },
+      "url_only_alive": {
+        "k": 58,
+        "n": 118,
+        "rate": 0.4915254237288136,
+        "low": 0.40302385756405673,
+        "high": 0.5805613685292348
+      },
+      "with_page_alive": {
+        "k": 67,
+        "n": 118,
+        "rate": 0.5677966101694916,
+        "low": 0.4776719510869139,
+        "high": 0.6536462401667547
+      },
+      "malicious_alive": {
+        "k": 22,
+        "n": 118,
+        "rate": 0.1864406779661017,
+        "low": 0.12646990770688732,
+        "high": 0.26618345774489643
+      },
+      "password_pages": {
+        "k": 29,
+        "n": 118,
+        "rate": 0.2457627118644068,
+        "low": 0.17691193989468285,
+        "high": 0.3306448429040609
+      },
+      "by_source": {
+        "openphish": {
+          "n": 165,
+          "alive": 89,
+          "with_page_alive": {
+            "k": 51,
+            "n": 89,
+            "rate": 0.5730337078651685,
+            "low": 0.46935116291905615,
+            "high": 0.6706724876853722
+          }
+        },
+        "phishtank": {
+          "n": 58,
+          "alive": 29,
+          "with_page_alive": {
+            "k": 16,
+            "n": 29,
+            "rate": 0.5517241379310345,
+            "low": 0.3754796308384869,
+            "high": 0.7158683208722871
+          }
+        }
+      },
+      "rules": {
+        "page.brand_credential": 19,
+        "page.hosting_platform_login": 17,
+        "page.collection_endpoint": 12,
+        "page.geofence": 10,
+        "page.brand_on_hosting": 7,
+        "page.cloaked": 3,
+        "page.evasion": 1,
+        "page.form_offsite": 1
+      },
+      "landing_rules": {
+        "url.typosquat": 1,
+        "url.host_shape": 1,
+        "url.learned_domain": 1
+      },
+      "ms_p50": 5069,
+      "second_look": {
+        "k": 0,
+        "n": 118,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.031528339504195695
+      },
+      "second_look_flagged": {
+        "k": 0,
+        "n": 0,
+        "rate": null,
+        "low": null,
+        "high": null
+      },
+      "fresh_certificate": {
+        "k": 0,
+        "n": 118,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.031528339504195695
+      },
+      "auto_open": {
+        "k": 123,
+        "n": 223,
+        "rate": 0.5515695067264574,
+        "low": 0.4859708950785679,
+        "high": 0.6154215052058779
+      },
+      "caught_only_by_page": 9
+    },
+    "legit": {
+      "n": 371,
+      "alive": {
+        "k": 186,
+        "n": 371,
+        "rate": 0.5013477088948787,
+        "low": 0.4507173254738973,
+        "high": 0.5519504690731213
+      },
+      "status": {
+        "ok": 169,
+        "http_403": 31,
+        "partial": 18,
+        "dead": 98,
+        "http_404": 50,
+        "http_521": 1,
+        "http_500": 2,
+        "http_400": 1,
+        "http_405": 1
+      },
+      "url_only_all": {
+        "k": 0,
+        "n": 371,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.010248223056117453
+      },
+      "with_page_all": {
+        "k": 2,
+        "n": 371,
+        "rate": 0.005390835579514825,
+        "low": 0.0014796085525196258,
+        "high": 0.01943979269167203
+      },
+      "url_only_alive": {
+        "k": 0,
+        "n": 186,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.020235089342091422
+      },
+      "with_page_alive": {
+        "k": 1,
+        "n": 186,
+        "rate": 0.005376344086021506,
+        "low": 0.0009496880147904629,
+        "high": 0.02982050789351503
+      },
+      "malicious_alive": {
+        "k": 0,
+        "n": 186,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.020235089342091422
+      },
+      "password_pages": {
+        "k": 26,
+        "n": 186,
+        "rate": 0.13978494623655913,
+        "low": 0.09721111893380979,
+        "high": 0.19693674112984744
+      },
+      "by_source": {
+        "brand_home": {
+          "n": 58,
+          "alive": 52,
+          "with_page_alive": {
+            "k": 0,
+            "n": 52,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.06879223713445441
+          }
+        },
+        "tranco": {
+          "n": 148,
+          "alive": 93,
+          "with_page_alive": {
+            "k": 0,
+            "n": 93,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.03966750321269624
+          }
+        },
+        "tranco_login": {
+          "n": 165,
+          "alive": 41,
+          "with_page_alive": {
+            "k": 1,
+            "n": 41,
+            "rate": 0.024390243902439025,
+            "low": 0.00431853152113585,
+            "high": 0.12595062178093377
+          }
+        }
+      },
+      "rules": {
+        "page.brand_on_hosting": 2,
+        "page.cloaked": 1,
+        "page.brand_credential": 1
+      },
+      "landing_rules": {},
+      "ms_p50": 5784,
+      "second_look": {
+        "k": 0,
+        "n": 186,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.020235089342091422
+      },
+      "second_look_flagged": {
+        "k": 0,
+        "n": 0,
+        "rate": null,
+        "low": null,
+        "high": null
+      },
+      "fresh_certificate": {
+        "k": 0,
+        "n": 186,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.020235089342091422
+      },
+      "auto_open": {
+        "k": 1,
+        "n": 371,
+        "rate": 0.0026954177897574125,
+        "low": 0.0004759659850154018,
+        "high": 0.015107846165139154
+      },
+      "false_alarms_from_page": 2,
+      "sign_in_pages_flagged": {
+        "k": 1,
+        "n": 26,
+        "rate": 0.038461538461538464,
+        "low": 0.006821984917985538,
+        "high": 0.18892779073917254
+      }
+    }
+  },
+  "dev": {
+    "phish": {
+      "n": 177,
+      "alive": {
+        "k": 107,
+        "n": 177,
+        "rate": 0.6045197740112994,
+        "low": 0.5310015410874102,
+        "high": 0.6735975604067154
+      },
+      "status": {
+        "ok": 101,
+        "http_403": 50,
+        "http_404": 6,
+        "partial": 6,
+        "dead": 12,
+        "http_451": 1,
+        "http_503": 1
+      },
+      "url_only_all": {
+        "k": 110,
+        "n": 177,
+        "rate": 0.6214689265536724,
+        "low": 0.5481513331306582,
+        "high": 0.6896260010381905
+      },
+      "with_page_all": {
+        "k": 118,
+        "n": 177,
+        "rate": 0.6666666666666666,
+        "low": 0.5943294443801834,
+        "high": 0.7319231769212597
+      },
+      "url_only_alive": {
+        "k": 53,
+        "n": 107,
+        "rate": 0.4953271028037383,
+        "low": 0.40241070331555595,
+        "high": 0.5885674017175893
+      },
+      "with_page_alive": {
+        "k": 61,
+        "n": 107,
+        "rate": 0.5700934579439252,
+        "low": 0.47546911129432695,
+        "high": 0.6598593132084938
+      },
+      "malicious_alive": {
+        "k": 18,
+        "n": 107,
+        "rate": 0.16822429906542055,
+        "low": 0.10914210827526358,
+        "high": 0.2503033490780505
+      },
+      "password_pages": {
+        "k": 27,
+        "n": 107,
+        "rate": 0.2523364485981308,
+        "low": 0.17960432299076345,
+        "high": 0.3422352437659357
+      },
+      "by_source": {
+        "openphish": {
+          "n": 135,
+          "alive": 87,
+          "with_page_alive": {
+            "k": 50,
+            "n": 87,
+            "rate": 0.5747126436781609,
+            "low": 0.46983887336254326,
+            "high": 0.673267591021602
+          }
+        },
+        "phishtank": {
+          "n": 42,
+          "alive": 20,
+          "with_page_alive": {
+            "k": 11,
+            "n": 20,
+            "rate": 0.55,
+            "low": 0.3420853410191274,
+            "high": 0.7418021429623598
+          }
+        }
+      },
+      "rules": {
+        "page.brand_credential": 18,
+        "page.hosting_platform_login": 15,
+        "page.brand_on_hosting": 10,
+        "page.collection_endpoint": 8,
+        "page.geofence": 5,
+        "page.form_offsite": 2,
+        "page.evasion": 1,
+        "page.cloaked": 1
+      },
+      "landing_rules": {
+        "url.typosquat": 1
+      },
+      "ms_p50": 5455,
+      "second_look": {
+        "k": 0,
+        "n": 107,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.03465723854654379
+      },
+      "second_look_flagged": {
+        "k": 0,
+        "n": 0,
+        "rate": null,
+        "low": null,
+        "high": null
+      },
+      "fresh_certificate": {
+        "k": 0,
+        "n": 107,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.03465723854654379
+      },
+      "auto_open": {
+        "k": 104,
+        "n": 177,
+        "rate": 0.5875706214689266,
+        "low": 0.5139392940886224,
+        "high": 0.6574815747307802
+      },
+      "caught_only_by_page": 8
+    },
+    "legit": {
+      "n": 329,
+      "alive": {
+        "k": 187,
+        "n": 329,
+        "rate": 0.5683890577507599,
+        "low": 0.51438326029334,
+        "high": 0.620816243251826
+      },
+      "status": {
+        "ok": 159,
+        "http_403": 22,
+        "dead": 61,
+        "http_404": 50,
+        "partial": 29,
+        "http_451": 1,
+        "http_400": 2,
+        "http_503": 1,
+        "http_405": 1,
+        "http_412": 1,
+        "http_406": 1,
+        "http_410": 1
+      },
+      "url_only_all": {
+        "k": 0,
+        "n": 329,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.011541407414230844
+      },
+      "with_page_all": {
+        "k": 3,
+        "n": 329,
+        "rate": 0.00911854103343465,
+        "low": 0.0031058780429369607,
+        "high": 0.026462129843982683
+      },
+      "url_only_alive": {
+        "k": 0,
+        "n": 187,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.02012905845414544
+      },
+      "with_page_alive": {
+        "k": 2,
+        "n": 187,
+        "rate": 0.0106951871657754,
+        "low": 0.0029379228938951688,
+        "high": 0.038150941796525235
+      },
+      "malicious_alive": {
+        "k": 0,
+        "n": 187,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.02012905845414544
+      },
+      "password_pages": {
+        "k": 26,
+        "n": 187,
+        "rate": 0.13903743315508021,
+        "low": 0.0966810775206047,
+        "high": 0.19592546200511532
+      },
+      "by_source": {
+        "brand_home": {
+          "n": 47,
+          "alive": 39,
+          "with_page_alive": {
+            "k": 0,
+            "n": 39,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.08966685499529356
+          }
+        },
+        "tranco": {
+          "n": 147,
+          "alive": 108,
+          "with_page_alive": {
+            "k": 2,
+            "n": 108,
+            "rate": 0.018518518518518517,
+            "low": 0.005093224298949841,
+            "high": 0.06501904855345103
+          }
+        },
+        "tranco_login": {
+          "n": 135,
+          "alive": 40,
+          "with_page_alive": {
+            "k": 0,
+            "n": 40,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.08762160245846368
+          }
+        }
+      },
+      "rules": {
+        "page.brand_credential": 1,
+        "page.form_offsite": 1,
+        "page.cloaked": 1
+      },
+      "landing_rules": {},
+      "ms_p50": 7254,
+      "second_look": {
+        "k": 0,
+        "n": 187,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.02012905845414544
+      },
+      "second_look_flagged": {
+        "k": 0,
+        "n": 0,
+        "rate": null,
+        "low": null,
+        "high": null
+      },
+      "fresh_certificate": {
+        "k": 0,
+        "n": 187,
+        "rate": 0.0,
+        "low": 0.0,
+        "high": 0.02012905845414544
+      },
+      "auto_open": {
+        "k": 3,
+        "n": 329,
+        "rate": 0.00911854103343465,
+        "low": 0.0031058780429369607,
+        "high": 0.026462129843982683
+      },
+      "false_alarms_from_page": 3,
+      "sign_in_pages_flagged": {
+        "k": 2,
+        "n": 26,
+        "rate": 0.07692307692307693,
+        "low": 0.0213550882794125,
+        "high": 0.24141553940631577
+      }
+    }
+  }
+}

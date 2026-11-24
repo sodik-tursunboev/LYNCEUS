@@ -1,0 +1,205 @@
+{
+ "generated_at": "2026-11-22 20:30Z",
+ "threshold": {
+  "candidate": 0.9908
+ },
+ "fresh_train_domains": 770,
+ "sets": {
+  "E1 test: openphish phish": 92,
+  "E1 test: phishtank phish": 14075,
+  "E1 test: phiusiil legit": 40685,
+  "E1 test: phiusiil phish": 30090,
+  "E1 test: tranco legit": 14911,
+  "deep links, dev half": 757,
+  "deep links, test half": 883,
+  "fresh feeds, phishing on the fresh TEST part": 460,
+  "long tail, 3,000 home pages (Tranco 100,001 to 1M)": 3000,
+  "your browsing (all)": 97
+ },
+ "rows": {
+  "shipped": {
+   "E1 test: openphish phish": {
+    "k": 64,
+    "n": 92,
+    "rate": 0.69565,
+    "ci": [
+     0.59536,
+     0.78026
+    ]
+   },
+   "E1 test: phishtank phish": {
+    "k": 3704,
+    "n": 14075,
+    "rate": 0.26316,
+    "ci": [
+     0.25595,
+     0.2705
+    ]
+   },
+   "E1 test: phiusiil legit": {
+    "k": 44,
+    "n": 40685,
+    "rate": 0.00108,
+    "ci": [
+     0.00081,
+     0.00145
+    ]
+   },
+   "E1 test: phiusiil phish": {
+    "k": 11287,
+    "n": 30090,
+    "rate": 0.37511,
+    "ci": [
+     0.36965,
+     0.38059
+    ]
+   },
+   "E1 test: tranco legit": {
+    "k": 0,
+    "n": 14911,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.00026
+    ]
+   },
+   "deep links, dev half": {
+    "k": 13,
+    "n": 757,
+    "rate": 0.01717,
+    "ci": [
+     0.01006,
+     0.02916
+    ]
+   },
+   "deep links, test half": {
+    "k": 10,
+    "n": 883,
+    "rate": 0.01133,
+    "ci": [
+     0.00616,
+     0.02072
+    ]
+   },
+   "fresh feeds, phishing on the fresh TEST part": {
+    "k": 297,
+    "n": 460,
+    "rate": 0.64565,
+    "ci": [
+     0.6009,
+     0.68799
+    ]
+   },
+   "long tail, 3,000 home pages (Tranco 100,001 to 1M)": {
+    "k": 3,
+    "n": 3000,
+    "rate": 0.001,
+    "ci": [
+     0.00034,
+     0.00294
+    ]
+   },
+   "your browsing (all)": {
+    "k": 0,
+    "n": 97,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.03809
+    ]
+   }
+  },
+  "candidate": {
+   "E1 test: openphish phish": {
+    "k": 66,
+    "n": 92,
+    "rate": 0.71739,
+    "ci": [
+     0.61811,
+     0.79924
+    ]
+   },
+   "E1 test: phishtank phish": {
+    "k": 3778,
+    "n": 14075,
+    "rate": 0.26842,
+    "ci": [
+     0.26116,
+     0.2758
+    ]
+   },
+   "E1 test: phiusiil legit": {
+    "k": 53,
+    "n": 40685,
+    "rate": 0.0013,
+    "ci": [
+     0.001,
+     0.0017
+    ]
+   },
+   "E1 test: phiusiil phish": {
+    "k": 11503,
+    "n": 30090,
+    "rate": 0.38229,
+    "ci": [
+     0.37681,
+     0.38779
+    ]
+   },
+   "E1 test: tranco legit": {
+    "k": 0,
+    "n": 14911,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.00026
+    ]
+   },
+   "deep links, dev half": {
+    "k": 14,
+    "n": 757,
+    "rate": 0.01849,
+    "ci": [
+     0.01105,
+     0.0308
+    ]
+   },
+   "deep links, test half": {
+    "k": 10,
+    "n": 883,
+    "rate": 0.01133,
+    "ci": [
+     0.00616,
+     0.02072
+    ]
+   },
+   "fresh feeds, phishing on the fresh TEST part": {
+    "k": 308,
+    "n": 460,
+    "rate": 0.66957,
+    "ci": [
+     0.62533,
+     0.71099
+    ]
+   },
+   "long tail, 3,000 home pages (Tranco 100,001 to 1M)": {
+    "k": 3,
+    "n": 3000,
+    "rate": 0.001,
+    "ci": [
+     0.00034,
+     0.00294
+    ]
+   },
+   "your browsing (all)": {
+    "k": 0,
+    "n": 97,
+    "rate": 0.0,
+    "ci": [
+     0.0,
+     0.03809
+    ]
+   }
+  }
+ }
+}

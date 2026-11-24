@@ -112,13 +112,41 @@ def _share_dialog(u: ParsedUrl) -> bool:
     return False
 
 
+def _idp_host(host: str | None) -> bool:
+    """DA5: a sign-in service's own host. Its `redirect_uri` names the app that asked for the
+    sign-in; that is what every legitimate flow looks like (Azure B2C tenants were 4 of the 19 false
+    alarms on the deep-link dev half)."""
+    return host is not None and any(
+        host == d or host.endswith("." + d) for d in lists()["identity_provider_hosts"]
+    )
+
+
+def _strip_oauth(text: str) -> str:
+    """DA5: `auth` is a login word, but inside `oauth` it is the protocol's name."""
+    return text.replace("oauth", "o_")
+
+
 @rule("url.open_redirect", "redirect")
 def open_redirect(u: ParsedUrl) -> str | None:
     if _share_dialog(u):
         return None
     for name, _, target in _targets(u):
         if name in lists()["redirect_params"]:
+            if name == "redirect_uri" and _idp_host(u.host):
+                continue  # url.idp_redirect says it, at a weight that cannot warn alone
             return f"parameter '{name}' sends the visitor to another site ({target.host})"
+    return None
+
+
+@rule("url.idp_redirect", "redirect")
+def idp_redirect(u: ParsedUrl) -> str | None:
+    """Weak by design (DA5): a sign-in service hands the visitor back to the app that asked, which
+    is what consent phishing does too, so it stays visible but cannot warn on its own."""
+    if _share_dialog(u) or not _idp_host(u.host):
+        return None
+    for name, _, target in _targets(u):
+        if name == "redirect_uri":
+            return f"the sign-in service hands the visitor back to another site ({target.host})"
     return None
 
 
@@ -152,7 +180,7 @@ def credential_bait(u: ParsedUrl) -> str | None:
         for k, v in parse_qsl(u.query, keep_blank_values=True)[:_MAX_PARAMS]
         if not k.lower().startswith("utm_")
     )
-    text = unquote(f"{u.path}?{query}").lower()
+    text = _strip_oauth(unquote(f"{u.path}?{query}").lower())
     brand = _brand_named(text)
     keyword = next((k for k in lists()["keywords"] if k in text), None)
     if brand and keyword:

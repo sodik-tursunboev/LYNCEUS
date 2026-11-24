@@ -43,7 +43,11 @@ negative = ["https://shorty-reviews.test/", "https://example.test/abc123"]
 
 ["url.open_redirect"]
 positive = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "https://go.portal.test/r?next=//phish.invalid/x"]
-negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.example.test/o?url=https%3A%2F%2Fb.example.test%2F", "https://www.google.com/out?to=https%3A%2F%2Fmail.google.com%2F", "https://x.test/track?dl=https%3A%2F%2Fy.test%2F", "https://www.linkedin.com/shareArticle?url=https%3A%2F%2Fnews.example.test%2Fa&title=t&summary=s", "https://www.linkedin.com/feed/?shareActive=true&url=https%3A%2F%2Fnews.example.test%2Fa", "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnews.example.test%2Fa"]
+negative = ["https://app.example.test/login?next=%2Fdashboard", "https://a.example.test/o?url=https%3A%2F%2Fb.example.test%2F", "https://www.google.com/out?to=https%3A%2F%2Fmail.google.com%2F", "https://x.test/track?dl=https%3A%2F%2Fy.test%2F", "https://www.linkedin.com/shareArticle?url=https%3A%2F%2Fnews.example.test%2Fa&title=t&summary=s", "https://www.linkedin.com/feed/?shareActive=true&url=https%3A%2F%2Fnews.example.test%2Fa", "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnews.example.test%2Fa", "https://login.idp.test/authorize?redirect_uri=https%3A%2F%2Fapp.example.test%2Fcb"]
+
+["url.idp_redirect"]
+positive = ["https://login.idp.test/authorize?redirect_uri=https%3A%2F%2Fapp.example.test%2Fcb", "https://tenant.idp.test/oauth2/authorize?redirect_uri=https%3A%2F%2Fapp.example.test%2Fcb"]
+negative = ["https://app.example.test/oauth?redirect_uri=https%3A%2F%2Fother.example.test%2Fcb", "https://login.idp.test/authorize?next=%2Fdashboard", "https://login.idp.test/authorize?redirect_uri=https%3A%2F%2Ftenant.idp.test%2Fcb"]
 
 ["url.encoded_target"]
 positive = ["https://go.portal.test/r?x=aHR0cDovL3BoaXNoLmludmFsaWQvbG9naW4=", "https://go.portal.test/r?x=http%253A%252F%252Fphish.invalid%252Flogin"]
@@ -51,7 +55,7 @@ negative = ["https://go.portal.test/r?url=http%3A%2F%2Fphish.invalid%2Fx", "http
 
 ["url.credential_bait"]
 positive = ["http://203.0.113.5/inpost/paczka/odbior", "https://evil.test/paypal/verify?x=1"]
-negative = ["https://en.wikipedia.org/wiki/PayPal", "https://www.paypal.com/signin", "https://example.test/help/verify", "https://news.test/story/confirme?utm_medium=twitter"]
+negative = ["https://en.wikipedia.org/wiki/PayPal", "https://www.paypal.com/signin", "https://example.test/help/verify", "https://news.test/story/confirme?utm_medium=twitter", "https://apps.example.test/oauth-callback?state=paypal&code=abc"]
 
 ["url.prefilled_identity"]
 positive = ["https://evil.test/a?email=jane.doe%40example.test", "https://evil.test/a?login_hint=jane%40example.test"]

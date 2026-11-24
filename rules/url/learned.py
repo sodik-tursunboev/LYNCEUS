@@ -35,8 +35,8 @@ def learned_domain(u: ParsedUrl) -> str | None:
     domain = u.registered_domain
     if model is None or domain is None:
         return None
-    if domain in official_domains() or popular.is_popular(domain):
-        return None
+    if domain in official_domains() or popular.is_popular(domain) or popular.is_ranked(domain):
+        return None  # DA5: a site Tranco ranks, even low, is an ordinary site, not a fresh name
     p, pushes = model.probability(u)
     if p < model.threshold:
         return None

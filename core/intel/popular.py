@@ -47,5 +47,10 @@ async def sync(directory: Path, client: Client) -> tuple[int, str]:
     header = f"# Tranco top {len(top)} from {SOURCE}, downloaded {when}, zip sha256 {digest}\n"
     tmp.write_text(header + "\n".join(top) + "\n", encoding="ascii")
     tmp.replace(directory / popular.FILE)
+    ranked = popular.ranked_from_csv(text)  # DA5: the same download's ranks 100,001 to 1,000,000
+    if len(ranked) > 400_000:  # a short list is not kept: it would silence the model unevenly
+        rtmp = directory / (popular.RANKED_FILE + ".new")
+        rtmp.write_bytes(popular.ranked_bytes(ranked))
+        rtmp.replace(directory / popular.RANKED_FILE)
     popular.configure(directory)  # reloaded on next use
     return len(top), f"{when} sha256 {digest[:16]}"
