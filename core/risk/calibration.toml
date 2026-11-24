@@ -1,0 +1,377 @@
+# Written by `python -m eval.calibrate`; do not edit by hand.
+# detection = share of PHISHING samples in the band; false_alarm = share of LEGITIMATE samples in it.
+# They are likelihoods, NOT the probability that a page in the band is phishing (see docs/eval/calibration.md).
+[meta]
+generated = "2026-11-22 20:33Z"
+stamp = "1.0.0|1.5.0+ffe8541c40ee|domain-lr-3+lynceus-da5-refit|cc9937a0"
+tolerance = 0.05
+min_samples = 30
+met = true
+
+[[band]]
+set = "d1"
+family = "score"
+band = "score 0-44"
+checked = true
+fit_samples = 49
+fit_detection = 0.0
+fit_detection_ci = [0.0, 0.009656]
+fit_false_alarm = 0.102941
+fit_false_alarm_ci = [0.078745, 0.133495]
+held_samples = 58
+held_detection = 0.0
+held_detection_ci = [0.0, 0.009373]
+held_false_alarm = 0.111111
+held_false_alarm_ci = [0.086941, 0.140963]
+
+[[band]]
+set = "d1"
+family = "score"
+band = "score 45-59"
+checked = true
+fit_samples = 130
+fit_detection = 0.327411
+fit_detection_ci = [0.282935, 0.37522]
+fit_false_alarm = 0.002101
+fit_false_alarm_ci = [0.000371, 0.011803]
+held_samples = 136
+held_detection = 0.330049
+held_detection_ci = [0.286089, 0.377195]
+held_false_alarm = 0.003831
+held_false_alarm_ci = [0.001051, 0.013861]
+
+[[band]]
+set = "d1"
+family = "score"
+band = "score 60-79"
+checked = true
+fit_samples = 126
+fit_detection = 0.312183
+fit_detection_ci = [0.268426, 0.359566]
+fit_false_alarm = 0.006303
+fit_false_alarm_ci = [0.002146, 0.018364]
+held_samples = 108
+held_detection = 0.26601
+held_detection_ci = [0.225368, 0.311039]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 0.007305]
+
+[[band]]
+set = "d1"
+family = "score"
+band = "score 80-94"
+checked = true
+fit_samples = 39
+fit_detection = 0.093909
+fit_detection_ci = [0.068899, 0.12676]
+fit_false_alarm = 0.004202
+fit_false_alarm_ci = [0.001153, 0.015189]
+held_samples = 40
+held_detection = 0.096059
+held_detection_ci = [0.071067, 0.128624]
+held_false_alarm = 0.001916
+held_false_alarm_ci = [0.000338, 0.010771]
+
+[[band]]
+set = "d1"
+family = "score"
+band = "score 95-100"
+checked = false
+fit_samples = 12
+fit_detection = 0.030457
+fit_detection_ci = [0.017507, 0.052474]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 0.008006]
+held_samples = 14
+held_detection = 0.034483
+held_detection_ci = [0.02065, 0.057042]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 0.007305]
+
+[[band]]
+set = "d1"
+family = "score"
+band = "unscored"
+checked = true
+fit_samples = 514
+fit_detection = 0.236041
+fit_detection_ci = [0.196784, 0.280395]
+fit_false_alarm = 0.884454
+fit_false_alarm_ci = [0.852608, 0.910144]
+held_samples = 572
+held_detection = 0.273399
+held_detection_ci = [0.23232, 0.318726]
+held_false_alarm = 0.883142
+held_false_alarm_ci = [0.852743, 0.907943]
+
+[[band]]
+set = "d1"
+family = "tier"
+band = "MALICIOUS HIGH"
+checked = false
+fit_samples = 9
+fit_detection = 0.022843
+fit_detection_ci = [0.012063, 0.042837]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 0.008006]
+held_samples = 11
+held_detection = 0.027094
+held_detection_ci = [0.015195, 0.047858]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 0.007305]
+
+[[band]]
+set = "d1"
+family = "tier"
+band = "MALICIOUS MEDIUM"
+checked = false
+fit_samples = 29
+fit_detection = 0.073604
+fit_detection_ci = [0.051734, 0.103709]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 0.008006]
+held_samples = 30
+held_detection = 0.073892
+held_detection_ci = [0.052246, 0.103525]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 0.007305]
+
+[[band]]
+set = "d1"
+family = "tier"
+band = "SUSPICIOUS LOW"
+checked = true
+fit_samples = 269
+fit_detection = 0.667513
+fit_detection_ci = [0.619575, 0.712216]
+fit_false_alarm = 0.012605
+fit_false_alarm_ci = [0.005789, 0.027224]
+held_samples = 257
+held_detection = 0.625616
+held_detection_ci = [0.577569, 0.671308]
+held_false_alarm = 0.005747
+held_false_alarm_ci = [0.001956, 0.016759]
+
+[[band]]
+set = "d1"
+family = "tier"
+band = "BENIGN HIGH"
+checked = true
+fit_samples = 49
+fit_detection = 0.0
+fit_detection_ci = [0.0, 0.009656]
+fit_false_alarm = 0.102941
+fit_false_alarm_ci = [0.078745, 0.133495]
+held_samples = 58
+held_detection = 0.0
+held_detection_ci = [0.0, 0.009373]
+held_false_alarm = 0.111111
+held_false_alarm_ci = [0.086941, 0.140963]
+
+[[band]]
+set = "d1"
+family = "tier"
+band = "UNKNOWN LOW"
+checked = true
+fit_samples = 514
+fit_detection = 0.236041
+fit_detection_ci = [0.196784, 0.280395]
+fit_false_alarm = 0.884454
+fit_false_alarm_ci = [0.852608, 0.910144]
+held_samples = 572
+held_detection = 0.273399
+held_detection_ci = [0.23232, 0.318726]
+held_false_alarm = 0.883142
+held_false_alarm_ci = [0.852743, 0.907943]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "score 0-44"
+checked = true
+fit_samples = 1056
+fit_detection = 0.010153
+fit_detection_ci = [0.009515, 0.010833]
+fit_false_alarm = 0.001383
+fit_false_alarm_ci = [0.001181, 0.00162]
+held_samples = 511
+held_detection = 0.01001
+held_detection_ci = [0.009124, 0.010981]
+held_false_alarm = 0.001222
+held_false_alarm_ci = [0.000964, 0.001549]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "score 45-59"
+checked = true
+fit_samples = 26908
+fit_detection = 0.301603
+fit_detection_ci = [0.298596, 0.304628]
+fit_false_alarm = 0.000759
+fit_false_alarm_ci = [0.000613, 0.00094]
+held_samples = 13527
+held_detection = 0.304788
+held_detection_ci = [0.300516, 0.309093]
+held_false_alarm = 0.000683
+held_false_alarm_ci = [0.000498, 0.000937]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "score 60-79"
+checked = true
+fit_samples = 3000
+fit_detection = 0.033394
+fit_detection_ci = [0.032233, 0.034595]
+fit_false_alarm = 0.000271
+fit_false_alarm_ci = [0.00019, 0.000387]
+held_samples = 1540
+held_detection = 0.034458
+held_detection_ci = [0.032798, 0.036198]
+held_false_alarm = 0.00027
+held_false_alarm_ci = [0.000163, 0.000445]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "score 80-94"
+checked = true
+fit_samples = 718
+fit_detection = 0.008073
+fit_detection_ci = [0.007506, 0.008683]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 3.5e-05]
+held_samples = 332
+held_detection = 0.007502
+held_detection_ci = [0.006739, 0.008349]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 6.9e-05]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "score 95-100"
+checked = false
+fit_samples = 1
+fit_detection = 1.1e-05
+fit_detection_ci = [2e-06, 6.4e-05]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 3.5e-05]
+held_samples = 1
+held_detection = 2.3e-05
+held_detection_ci = [4e-06, 0.000128]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 6.9e-05]
+
+[[band]]
+set = "e1"
+family = "score"
+band = "unscored"
+checked = true
+fit_samples = 167893
+fit_detection = 0.646765
+fit_detection_ci = [0.643618, 0.6499]
+fit_false_alarm = 0.997587
+fit_false_alarm_ci = [0.99728, 0.997859]
+held_samples = 83978
+held_detection = 0.64322
+held_detection_ci = [0.638745, 0.647671]
+held_false_alarm = 0.997825
+held_false_alarm_ci = [0.997402, 0.998179]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "MALICIOUS HIGH"
+checked = false
+fit_samples = 5
+fit_detection = 5.6e-05
+fit_detection_ci = [2.4e-05, 0.000132]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 3.5e-05]
+held_samples = 2
+held_detection = 4.5e-05
+held_detection_ci = [1.2e-05, 0.000165]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 6.9e-05]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "MALICIOUS MEDIUM"
+checked = true
+fit_samples = 700
+fit_detection = 0.007871
+fit_detection_ci = [0.007311, 0.008473]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 3.5e-05]
+held_samples = 325
+held_detection = 0.007343
+held_detection_ci = [0.00659, 0.008183]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 6.9e-05]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "SUSPICIOUS LOW"
+checked = true
+fit_samples = 29812
+fit_detection = 0.333918
+fit_detection_ci = [0.330826, 0.337025]
+fit_false_alarm = 0.00103
+fit_false_alarm_ci = [0.000858, 0.001238]
+held_samples = 15019
+held_detection = 0.338161
+held_detection_ci = [0.333768, 0.342583]
+held_false_alarm = 0.000953
+held_false_alarm_ci = [0.000728, 0.001246]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "SUSPICIOUS MEDIUM"
+checked = true
+fit_samples = 110
+fit_detection = 0.001237
+fit_detection_ci = [0.001026, 0.00149]
+fit_false_alarm = 0.0
+fit_false_alarm_ci = [0.0, 3.5e-05]
+held_samples = 54
+held_detection = 0.00122
+held_detection_ci = [0.000935, 0.001592]
+held_false_alarm = 0.0
+held_false_alarm_ci = [0.0, 6.9e-05]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "BENIGN HIGH"
+checked = true
+fit_samples = 1056
+fit_detection = 0.010153
+fit_detection_ci = [0.009515, 0.010833]
+fit_false_alarm = 0.001383
+fit_false_alarm_ci = [0.001181, 0.00162]
+held_samples = 511
+held_detection = 0.01001
+held_detection_ci = [0.009124, 0.010981]
+held_false_alarm = 0.001222
+held_false_alarm_ci = [0.000964, 0.001549]
+
+[[band]]
+set = "e1"
+family = "tier"
+band = "UNKNOWN LOW"
+checked = true
+fit_samples = 167893
+fit_detection = 0.646765
+fit_detection_ci = [0.643618, 0.6499]
+fit_false_alarm = 0.997587
+fit_false_alarm_ci = [0.99728, 0.997859]
+held_samples = 83978
+held_detection = 0.64322
+held_detection_ci = [0.638745, 0.647671]
+held_false_alarm = 0.997825
+held_false_alarm_ci = [0.997402, 0.998179]
