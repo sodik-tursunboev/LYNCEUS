@@ -5,6 +5,8 @@ python -m core.cli analyze-eml <path> [--json]
 python -m core.cli detonate <url> [--json] [--screenshot FILE]
     (D1: opens the page in the sandbox container from this computer's internet connection;
     needs Docker and `python tasks.py detonator`)
+python -m core.cli investigate <url | .eml | file> [--json] [--html FILE] [--page-report FILE]
+    (DA5 1a: the evidence dossier; offline, opens no socket; docs/INVESTIGATE.md)
 """
 
 import argparse
@@ -88,6 +90,34 @@ def _detonate(url: str, as_json: bool, shot: Path | None) -> int:
     return 1 if report.verdict.state is VerdictState.ERROR else 0
 
 
+def _investigate(target: str, as_json: bool, html: Path | None, page_report: Path | None) -> int:
+    from core import hashlists
+    from core.config import Settings
+    from core.investigate import (
+        investigate,
+        load_page_report,
+        render_html,
+        render_json,
+        render_text,
+    )
+
+    hashlists.configure(Settings().data_dir / "hashes")  # the known-bad lists on this machine
+    try:
+        page = load_page_report(page_report) if page_report else None
+        dossier = investigate(target, page_report=page)
+    except OSError as e:
+        print(f"cannot read {e.filename or target}: {e.strerror}", file=sys.stderr)
+        return 2
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 2
+    if html is not None:
+        html.write_text(render_html(dossier), encoding="utf-8")
+        print(f"wrote {html}", file=sys.stderr)
+    print(render_json(dossier) if as_json else render_text(dossier))
+    return 1 if dossier["verdict"]["state"] == VerdictState.ERROR.value else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m core.cli")
     commands = ap.add_subparsers(dest="command", required=True)
@@ -98,7 +128,15 @@ def main(argv: list[str] | None = None) -> int:
     det_cmd = commands.add_parser("detonate", help="open one URL in the sandboxed browser (D1)")
     det_cmd.add_argument("url")
     det_cmd.add_argument("--screenshot", type=Path, help="save the page's screenshot (JPEG) here")
-    for cmd in (url_cmd, eml_cmd, det_cmd):
+    inv_cmd = commands.add_parser(
+        "investigate", help="the evidence dossier for a URL, an .eml or a file, offline"
+    )
+    inv_cmd.add_argument("target", help="a web address, or the path of an .eml or another file")
+    inv_cmd.add_argument("--html", type=Path, help="also write the dossier as one HTML file")
+    inv_cmd.add_argument(
+        "--page-report", type=Path, help="a saved page report (JSON) to read the page from"
+    )
+    for cmd in (url_cmd, eml_cmd, det_cmd, inv_cmd):
         cmd.add_argument("--json", action="store_true", help="print the full report as JSON")
     args = ap.parse_args(argv)
 
@@ -114,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if report.verdict.state is VerdictState.ERROR else 0
     if args.command == "detonate":
         return _detonate(args.url, args.json, args.screenshot)
+    if args.command == "investigate":
+        return _investigate(args.target, args.json, args.html, args.page_report)
 
     raw = _read(args.path)
     if raw is None:
