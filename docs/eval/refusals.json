@@ -1,0 +1,1132 @@
+{
+  "generated": "2026-11-22T20:29:56+00:00",
+  "popular_list_loaded": true,
+  "runs": {
+    "d1": {
+      "folder": "d1",
+      "rows": 1100,
+      "kept_pages": 1098,
+      "rows_without_page": 2,
+      "classified": 638,
+      "groups": {
+        "dev": {
+          "phish": {
+            "pages": 177,
+            "classified": 120,
+            "classes": {
+              "takedown": {
+                "k": 54,
+                "n": 120,
+                "rate": 0.45,
+                "low": 0.36391735019244387,
+                "high": 0.5391845664968435
+              },
+              "challenge": {
+                "k": 5,
+                "n": 120,
+                "rate": 0.041666666666666664,
+                "low": 0.01792671676662358,
+                "high": 0.09384085288517821
+              },
+              "blocked": {
+                "k": 4,
+                "n": 120,
+                "rate": 0.03333333333333333,
+                "low": 0.01303755100780557,
+                "high": 0.0825803380922108
+              },
+              "empty_stub": {
+                "k": 14,
+                "n": 120,
+                "rate": 0.11666666666666667,
+                "low": 0.07078117779976723,
+                "high": 0.18633351681810334
+              },
+              "other": {
+                "k": 28,
+                "n": 120,
+                "rate": 0.23333333333333334,
+                "low": 0.16665575087844448,
+                "high": 0.316554471464422
+              },
+              "unknown_no_body": {
+                "k": 15,
+                "n": 120,
+                "rate": 0.125,
+                "low": 0.07723497244037196,
+                "high": 0.19602940272928399
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 9,
+              "n": 120,
+              "rate": 0.075,
+              "low": 0.039957115201337684,
+              "high": 0.1364091766576058
+            },
+            "details": {
+              "blocked/cloudflare_block": 1,
+              "blocked/http_403": 2,
+              "blocked/text": 1,
+              "challenge/text": 4,
+              "challenge/title": 1,
+              "empty_stub/blank": 3,
+              "empty_stub/short_text": 11,
+              "other/http_503": 1,
+              "other/short_with_form": 27,
+              "takedown/host_notice": 25,
+              "takedown/host_notice+form": 17,
+              "takedown/http_404": 6,
+              "takedown/proxy_connect": 1,
+              "takedown/proxy_dns": 5,
+              "unknown_no_body/partial_blank": 3,
+              "unknown_no_body/proxy_tunnel_failed": 8,
+              "unknown_no_body/tls_error": 4
+            },
+            "http_403": {
+              "takedown": 47,
+              "blocked": 3
+            }
+          },
+          "legit": {
+            "pages": 329,
+            "classified": 159,
+            "classes": {
+              "takedown": {
+                "k": 52,
+                "n": 159,
+                "rate": 0.3270440251572327,
+                "low": 0.2589540096379369,
+                "high": 0.4032941648881062
+              },
+              "challenge": {
+                "k": 8,
+                "n": 159,
+                "rate": 0.050314465408805034,
+                "low": 0.025712675982270457,
+                "high": 0.09613257778544185
+              },
+              "blocked": {
+                "k": 15,
+                "n": 159,
+                "rate": 0.09433962264150944,
+                "low": 0.05800591216994127,
+                "high": 0.1498125335365964
+              },
+              "empty_stub": {
+                "k": 7,
+                "n": 159,
+                "rate": 0.0440251572327044,
+                "low": 0.021486920427991295,
+                "high": 0.08807644877703166
+              },
+              "other": {
+                "k": 15,
+                "n": 159,
+                "rate": 0.09433962264150944,
+                "low": 0.05800591216994127,
+                "high": 0.1498125335365964
+              },
+              "unknown_no_body": {
+                "k": 62,
+                "n": 159,
+                "rate": 0.389937106918239,
+                "low": 0.31757673598160663,
+                "high": 0.46749028417133
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 23,
+              "n": 159,
+              "rate": 0.14465408805031446,
+              "low": 0.09836441962108275,
+              "high": 0.2077091025869696
+            },
+            "details": {
+              "blocked/cloudflare_block": 1,
+              "blocked/http_403": 12,
+              "blocked/http_403_no_body": 1,
+              "blocked/http_451": 1,
+              "challenge/title": 8,
+              "empty_stub/blank": 2,
+              "empty_stub/short_text": 5,
+              "other/http_400": 2,
+              "other/http_405": 1,
+              "other/http_406_no_body": 1,
+              "other/http_412": 1,
+              "other/http_503": 1,
+              "other/short_with_form": 9,
+              "takedown/host_notice": 1,
+              "takedown/http_404": 50,
+              "takedown/http_410": 1,
+              "unknown_no_body/connection_dropped": 2,
+              "unknown_no_body/other_error": 3,
+              "unknown_no_body/partial_blank": 1,
+              "unknown_no_body/proxy_tunnel_failed": 48,
+              "unknown_no_body/tls_error": 8
+            },
+            "http_403": {
+              "blocked": 14,
+              "challenge": 8
+            }
+          }
+        },
+        "test": {
+          "phish": {
+            "pages": 223,
+            "classified": 156,
+            "classes": {
+              "takedown": {
+                "k": 72,
+                "n": 156,
+                "rate": 0.46153846153846156,
+                "low": 0.38517415332456684,
+                "high": 0.5397514568144671
+              },
+              "challenge": {
+                "k": 3,
+                "n": 156,
+                "rate": 0.019230769230769232,
+                "low": 0.006561406337214231,
+                "high": 0.05500872040070938
+              },
+              "blocked": {
+                "k": 4,
+                "n": 156,
+                "rate": 0.02564102564102564,
+                "low": 0.010015466003460486,
+                "high": 0.06406705904462413
+              },
+              "empty_stub": {
+                "k": 17,
+                "n": 156,
+                "rate": 0.10897435897435898,
+                "low": 0.06915919804695939,
+                "high": 0.16758450503321848
+              },
+              "other": {
+                "k": 35,
+                "n": 156,
+                "rate": 0.22435897435897437,
+                "low": 0.16597464495799663,
+                "high": 0.2959922277050796
+              },
+              "unknown_no_body": {
+                "k": 25,
+                "n": 156,
+                "rate": 0.16025641025641027,
+                "low": 0.11096813677353674,
+                "high": 0.22587475278792934
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 7,
+              "n": 156,
+              "rate": 0.04487179487179487,
+              "low": 0.021903337373769545,
+              "high": 0.08971638260479814
+            },
+            "details": {
+              "blocked/cloudflare_block": 2,
+              "blocked/http_403": 2,
+              "challenge/text": 2,
+              "challenge/title": 1,
+              "empty_stub/blank": 2,
+              "empty_stub/short_text": 15,
+              "other/http_400": 1,
+              "other/http_503": 1,
+              "other/http_503_no_body": 2,
+              "other/proxy_port": 1,
+              "other/short_with_form": 30,
+              "takedown/host_notice": 21,
+              "takedown/host_notice+form": 31,
+              "takedown/http_404": 11,
+              "takedown/proxy_dns": 9,
+              "unknown_no_body/partial_blank": 1,
+              "unknown_no_body/proxy_tunnel_failed": 13,
+              "unknown_no_body/sandbox_timeout": 4,
+              "unknown_no_body/tls_error": 7
+            },
+            "http_403": {
+              "other": 1,
+              "takedown": 60,
+              "blocked": 4
+            }
+          },
+          "legit": {
+            "pages": 371,
+            "classified": 203,
+            "classes": {
+              "takedown": {
+                "k": 51,
+                "n": 203,
+                "rate": 0.2512315270935961,
+                "low": 0.1965641958112709,
+                "high": 0.3151391128664988
+              },
+              "challenge": {
+                "k": 8,
+                "n": 203,
+                "rate": 0.03940886699507389,
+                "low": 0.020102050167657003,
+                "high": 0.0758238777802927
+              },
+              "blocked": {
+                "k": 26,
+                "n": 203,
+                "rate": 0.12807881773399016,
+                "low": 0.08892387461562999,
+                "high": 0.18104839875410478
+              },
+              "empty_stub": {
+                "k": 9,
+                "n": 203,
+                "rate": 0.04433497536945813,
+                "low": 0.02349741678468958,
+                "high": 0.08209775257558152
+              },
+              "other": {
+                "k": 8,
+                "n": 203,
+                "rate": 0.03940886699507389,
+                "low": 0.020102050167657003,
+                "high": 0.0758238777802927
+              },
+              "unknown_no_body": {
+                "k": 101,
+                "n": 203,
+                "rate": 0.4975369458128079,
+                "low": 0.4294439445359269,
+                "high": 0.5657214347579125
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 34,
+              "n": 203,
+              "rate": 0.16748768472906403,
+              "low": 0.12240168858746758,
+              "high": 0.2249245160808383
+            },
+            "details": {
+              "blocked/cloudflare_block": 2,
+              "blocked/http_403": 22,
+              "blocked/http_403_no_body": 1,
+              "blocked/text": 1,
+              "challenge/text": 2,
+              "challenge/title": 6,
+              "empty_stub/blank": 4,
+              "empty_stub/short_text": 5,
+              "other/http_400": 1,
+              "other/http_405": 1,
+              "other/http_500": 1,
+              "other/short_with_form": 5,
+              "takedown/host_notice": 1,
+              "takedown/host_notice+form": 2,
+              "takedown/http_404": 47,
+              "takedown/origin_down": 1,
+              "unknown_no_body/connection_dropped": 4,
+              "unknown_no_body/other_error": 6,
+              "unknown_no_body/partial_blank": 3,
+              "unknown_no_body/proxy_tunnel_failed": 81,
+              "unknown_no_body/tls_error": 7
+            },
+            "http_403": {
+              "blocked": 25,
+              "challenge": 6
+            }
+          }
+        },
+        "all": {
+          "phish": {
+            "pages": 400,
+            "classified": 276,
+            "classes": {
+              "takedown": {
+                "k": 126,
+                "n": 276,
+                "rate": 0.45652173913043476,
+                "low": 0.3987557127970464,
+                "high": 0.5154814409973082
+              },
+              "challenge": {
+                "k": 8,
+                "n": 276,
+                "rate": 0.028985507246376812,
+                "low": 0.014759111761228284,
+                "high": 0.056143387677614384
+              },
+              "blocked": {
+                "k": 8,
+                "n": 276,
+                "rate": 0.028985507246376812,
+                "low": 0.014759111761228284,
+                "high": 0.056143387677614384
+              },
+              "empty_stub": {
+                "k": 31,
+                "n": 276,
+                "rate": 0.11231884057971014,
+                "low": 0.08026450414707609,
+                "high": 0.15501678385258671
+              },
+              "other": {
+                "k": 63,
+                "n": 276,
+                "rate": 0.22826086956521738,
+                "low": 0.18267497517022896,
+                "high": 0.28130723604448793
+              },
+              "unknown_no_body": {
+                "k": 40,
+                "n": 276,
+                "rate": 0.14492753623188406,
+                "low": 0.1082699237205204,
+                "high": 0.19133349893337637
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 16,
+              "n": 276,
+              "rate": 0.057971014492753624,
+              "low": 0.03599479065854107,
+              "high": 0.09208293958406512
+            },
+            "details": {
+              "blocked/cloudflare_block": 3,
+              "blocked/http_403": 4,
+              "blocked/text": 1,
+              "challenge/text": 6,
+              "challenge/title": 2,
+              "empty_stub/blank": 5,
+              "empty_stub/short_text": 26,
+              "other/http_400": 1,
+              "other/http_503": 2,
+              "other/http_503_no_body": 2,
+              "other/proxy_port": 1,
+              "other/short_with_form": 57,
+              "takedown/host_notice": 46,
+              "takedown/host_notice+form": 48,
+              "takedown/http_404": 17,
+              "takedown/proxy_connect": 1,
+              "takedown/proxy_dns": 14,
+              "unknown_no_body/partial_blank": 4,
+              "unknown_no_body/proxy_tunnel_failed": 21,
+              "unknown_no_body/sandbox_timeout": 4,
+              "unknown_no_body/tls_error": 11
+            },
+            "http_403": {
+              "other": 1,
+              "takedown": 107,
+              "blocked": 7
+            }
+          },
+          "legit": {
+            "pages": 700,
+            "classified": 362,
+            "classes": {
+              "takedown": {
+                "k": 103,
+                "n": 362,
+                "rate": 0.2845303867403315,
+                "low": 0.24050355517804856,
+                "high": 0.33308222573089674
+              },
+              "challenge": {
+                "k": 16,
+                "n": 362,
+                "rate": 0.04419889502762431,
+                "low": 0.027386421384695665,
+                "high": 0.07058349976884265
+              },
+              "blocked": {
+                "k": 41,
+                "n": 362,
+                "rate": 0.1132596685082873,
+                "low": 0.08459351987118394,
+                "high": 0.15004762535000007
+              },
+              "empty_stub": {
+                "k": 16,
+                "n": 362,
+                "rate": 0.04419889502762431,
+                "low": 0.027386421384695665,
+                "high": 0.07058349976884265
+              },
+              "other": {
+                "k": 23,
+                "n": 362,
+                "rate": 0.06353591160220995,
+                "low": 0.04270703086683103,
+                "high": 0.09353083302564807
+              },
+              "unknown_no_body": {
+                "k": 163,
+                "n": 362,
+                "rate": 0.45027624309392267,
+                "low": 0.39981409252861283,
+                "high": 0.5017826261426821
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 57,
+              "n": 362,
+              "rate": 0.1574585635359116,
+              "low": 0.12355912305011155,
+              "high": 0.19855160557436566
+            },
+            "details": {
+              "blocked/cloudflare_block": 3,
+              "blocked/http_403": 34,
+              "blocked/http_403_no_body": 2,
+              "blocked/http_451": 1,
+              "blocked/text": 1,
+              "challenge/text": 2,
+              "challenge/title": 14,
+              "empty_stub/blank": 6,
+              "empty_stub/short_text": 10,
+              "other/http_400": 3,
+              "other/http_405": 2,
+              "other/http_406_no_body": 1,
+              "other/http_412": 1,
+              "other/http_500": 1,
+              "other/http_503": 1,
+              "other/short_with_form": 14,
+              "takedown/host_notice": 2,
+              "takedown/host_notice+form": 2,
+              "takedown/http_404": 97,
+              "takedown/http_410": 1,
+              "takedown/origin_down": 1,
+              "unknown_no_body/connection_dropped": 6,
+              "unknown_no_body/other_error": 9,
+              "unknown_no_body/partial_blank": 4,
+              "unknown_no_body/proxy_tunnel_failed": 129,
+              "unknown_no_body/tls_error": 15
+            },
+            "http_403": {
+              "blocked": 39,
+              "challenge": 14
+            }
+          }
+        }
+      },
+      "phone_view": null,
+      "page_only": {
+        "dev": {
+          "catches": 8,
+          "pass": 1,
+          "fail": 7,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 1,
+            "n": 8,
+            "rate": 0.125,
+            "low": 0.022417491199971912,
+            "high": 0.47088818505608376
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 7
+          },
+          "cannot_tell_why": {}
+        },
+        "test": {
+          "catches": 7,
+          "pass": 0,
+          "fail": 7,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 0,
+            "n": 7,
+            "rate": 0.0,
+            "low": 0.0,
+            "high": 0.35433043867586833
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 6,
+            "official or popular host": 1
+          },
+          "cannot_tell_why": {}
+        },
+        "all": {
+          "catches": 15,
+          "pass": 1,
+          "fail": 14,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 1,
+            "n": 15,
+            "rate": 0.06666666666666667,
+            "low": 0.01186689536153232,
+            "high": 0.2981653010887565
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 13,
+            "official or popular host": 1
+          },
+          "cannot_tell_why": {}
+        }
+      }
+    },
+    "da1": {
+      "folder": "da1-2026-11-16",
+      "rows": 1000,
+      "kept_pages": 1000,
+      "rows_without_page": 0,
+      "classified": 608,
+      "groups": {
+        "dev": {
+          "phish": {
+            "pages": 217,
+            "classified": 180,
+            "classes": {
+              "takedown": {
+                "k": 118,
+                "n": 180,
+                "rate": 0.6555555555555556,
+                "low": 0.5835387265469214,
+                "high": 0.7210715628881643
+              },
+              "challenge": {
+                "k": 0,
+                "n": 180,
+                "rate": 0.0,
+                "low": 0.0,
+                "high": 0.020895498244367063
+              },
+              "blocked": {
+                "k": 1,
+                "n": 180,
+                "rate": 0.005555555555555556,
+                "low": 0.0009813660563752335,
+                "high": 0.03079307109638775
+              },
+              "empty_stub": {
+                "k": 8,
+                "n": 180,
+                "rate": 0.044444444444444446,
+                "low": 0.022690093336306102,
+                "high": 0.08523691617522834
+              },
+              "other": {
+                "k": 22,
+                "n": 180,
+                "rate": 0.12222222222222222,
+                "low": 0.0821154047564022,
+                "high": 0.17811674947267517
+              },
+              "unknown_no_body": {
+                "k": 31,
+                "n": 180,
+                "rate": 0.17222222222222222,
+                "low": 0.12406395503881201,
+                "high": 0.23407864936582867
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 1,
+              "n": 180,
+              "rate": 0.005555555555555556,
+              "low": 0.0009813660563752335,
+              "high": 0.03079307109638775
+            },
+            "details": {
+              "blocked/cloudflare_block": 1,
+              "empty_stub/blank": 3,
+              "empty_stub/short_text": 5,
+              "other/proxy_private_address": 13,
+              "other/short_with_form": 9,
+              "takedown/host_notice": 80,
+              "takedown/host_notice+form": 30,
+              "takedown/http_404": 7,
+              "takedown/proxy_dns": 1,
+              "unknown_no_body/connection_dropped": 1,
+              "unknown_no_body/proxy_tunnel_failed": 23,
+              "unknown_no_body/sandbox_timeout": 1,
+              "unknown_no_body/tls_error": 6
+            },
+            "http_403": {
+              "takedown": 108,
+              "other": 13,
+              "blocked": 1
+            }
+          },
+          "legit": {
+            "pages": 293,
+            "classified": 131,
+            "classes": {
+              "takedown": {
+                "k": 29,
+                "n": 131,
+                "rate": 0.22137404580152673,
+                "low": 0.15878843461309217,
+                "high": 0.2998350436135595
+              },
+              "challenge": {
+                "k": 9,
+                "n": 131,
+                "rate": 0.06870229007633588,
+                "low": 0.03656254547258662,
+                "high": 0.12541626328921665
+              },
+              "blocked": {
+                "k": 12,
+                "n": 131,
+                "rate": 0.0916030534351145,
+                "low": 0.05317812294535705,
+                "high": 0.15329738623617345
+              },
+              "empty_stub": {
+                "k": 9,
+                "n": 131,
+                "rate": 0.06870229007633588,
+                "low": 0.03656254547258662,
+                "high": 0.12541626328921665
+              },
+              "other": {
+                "k": 12,
+                "n": 131,
+                "rate": 0.0916030534351145,
+                "low": 0.05317812294535705,
+                "high": 0.15329738623617345
+              },
+              "unknown_no_body": {
+                "k": 60,
+                "n": 131,
+                "rate": 0.4580152671755725,
+                "low": 0.37510790999753896,
+                "high": 0.5433148058996277
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 21,
+              "n": 131,
+              "rate": 0.16030534351145037,
+              "low": 0.10730547191799822,
+              "high": 0.23266013852271406
+            },
+            "details": {
+              "blocked/cloudflare_block": 1,
+              "blocked/http_403": 9,
+              "blocked/http_403_no_body": 1,
+              "blocked/http_451": 1,
+              "challenge/title": 9,
+              "empty_stub/blank": 1,
+              "empty_stub/short_text": 8,
+              "other/http_400": 2,
+              "other/http_502": 1,
+              "other/http_503": 1,
+              "other/proxy_private_address": 3,
+              "other/short_with_form": 5,
+              "takedown/http_404": 29,
+              "unknown_no_body/connection_dropped": 1,
+              "unknown_no_body/other_error": 1,
+              "unknown_no_body/proxy_tunnel_failed": 42,
+              "unknown_no_body/sandbox_timeout": 4,
+              "unknown_no_body/tls_error": 12
+            },
+            "http_403": {
+              "blocked": 11,
+              "other": 3,
+              "challenge": 8
+            }
+          }
+        },
+        "test": {
+          "phish": {
+            "pages": 183,
+            "classified": 159,
+            "classes": {
+              "takedown": {
+                "k": 95,
+                "n": 159,
+                "rate": 0.5974842767295597,
+                "low": 0.5198277808201387,
+                "high": 0.6705414299015461
+              },
+              "challenge": {
+                "k": 2,
+                "n": 159,
+                "rate": 0.012578616352201259,
+                "low": 0.0034563154886584208,
+                "high": 0.044697630902917854
+              },
+              "blocked": {
+                "k": 2,
+                "n": 159,
+                "rate": 0.012578616352201259,
+                "low": 0.0034563154886584208,
+                "high": 0.044697630902917854
+              },
+              "empty_stub": {
+                "k": 9,
+                "n": 159,
+                "rate": 0.05660377358490566,
+                "low": 0.030061977972999303,
+                "high": 0.10406516035740235
+              },
+              "other": {
+                "k": 20,
+                "n": 159,
+                "rate": 0.12578616352201258,
+                "low": 0.08292254331967921,
+                "high": 0.1863053252003051
+              },
+              "unknown_no_body": {
+                "k": 31,
+                "n": 159,
+                "rate": 0.1949685534591195,
+                "low": 0.14089118701299563,
+                "high": 0.2634374116965714
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 4,
+              "n": 159,
+              "rate": 0.025157232704402517,
+              "low": 0.009825669455583524,
+              "high": 0.06289204606137143
+            },
+            "details": {
+              "blocked/cloudflare_block": 1,
+              "blocked/http_403": 1,
+              "challenge/text": 2,
+              "empty_stub/blank": 3,
+              "empty_stub/short_text": 6,
+              "other/http_500": 1,
+              "other/proxy_private_address": 9,
+              "other/short_with_form": 10,
+              "takedown/host_notice": 66,
+              "takedown/host_notice+form": 26,
+              "takedown/http_404": 2,
+              "takedown/proxy_dns": 1,
+              "unknown_no_body/proxy_tunnel_failed": 27,
+              "unknown_no_body/sandbox_timeout": 1,
+              "unknown_no_body/tls_error": 3
+            },
+            "http_403": {
+              "other": 9,
+              "takedown": 90,
+              "blocked": 2
+            }
+          },
+          "legit": {
+            "pages": 307,
+            "classified": 138,
+            "classes": {
+              "takedown": {
+                "k": 22,
+                "n": 138,
+                "rate": 0.15942028985507245,
+                "low": 0.10769892826890362,
+                "high": 0.22958933186760175
+              },
+              "challenge": {
+                "k": 8,
+                "n": 138,
+                "rate": 0.057971014492753624,
+                "low": 0.029664427280344755,
+                "high": 0.11022033587554524
+              },
+              "blocked": {
+                "k": 20,
+                "n": 138,
+                "rate": 0.14492753623188406,
+                "low": 0.09581853381205457,
+                "high": 0.21326922675579152
+              },
+              "empty_stub": {
+                "k": 10,
+                "n": 138,
+                "rate": 0.07246376811594203,
+                "low": 0.03983428675910547,
+                "high": 0.12825097596544385
+              },
+              "other": {
+                "k": 9,
+                "n": 138,
+                "rate": 0.06521739130434782,
+                "low": 0.03468731449538443,
+                "high": 0.11929769844483523
+              },
+              "unknown_no_body": {
+                "k": 69,
+                "n": 138,
+                "rate": 0.5,
+                "low": 0.417715789969684,
+                "high": 0.5822842100303159
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 28,
+              "n": 138,
+              "rate": 0.2028985507246377,
+              "low": 0.14427510584505543,
+              "high": 0.27761465299742805
+            },
+            "details": {
+              "blocked/cloudflare_block": 3,
+              "blocked/http_401": 1,
+              "blocked/http_403": 15,
+              "blocked/http_451": 1,
+              "challenge/title": 8,
+              "empty_stub/blank": 5,
+              "empty_stub/short_text": 5,
+              "other/http_500": 1,
+              "other/http_503": 2,
+              "other/http_520": 1,
+              "other/short_with_form": 5,
+              "takedown/host_notice+form": 1,
+              "takedown/http_404": 20,
+              "takedown/origin_down": 1,
+              "unknown_no_body/other_error": 2,
+              "unknown_no_body/partial_blank": 1,
+              "unknown_no_body/proxy_tunnel_failed": 50,
+              "unknown_no_body/sandbox_timeout": 7,
+              "unknown_no_body/tls_error": 9
+            },
+            "http_403": {
+              "blocked": 18,
+              "challenge": 8
+            }
+          }
+        },
+        "all": {
+          "phish": {
+            "pages": 400,
+            "classified": 339,
+            "classes": {
+              "takedown": {
+                "k": 213,
+                "n": 339,
+                "rate": 0.6283185840707964,
+                "low": 0.575706931563724,
+                "high": 0.6780546767431712
+              },
+              "challenge": {
+                "k": 2,
+                "n": 339,
+                "rate": 0.0058997050147492625,
+                "low": 0.001619405687281238,
+                "high": 0.021252562326397627
+              },
+              "blocked": {
+                "k": 3,
+                "n": 339,
+                "rate": 0.008849557522123894,
+                "low": 0.0030141227699001013,
+                "high": 0.025691445434741875
+              },
+              "empty_stub": {
+                "k": 17,
+                "n": 339,
+                "rate": 0.05014749262536873,
+                "low": 0.03154226394237356,
+                "high": 0.07883370693575198
+              },
+              "other": {
+                "k": 42,
+                "n": 339,
+                "rate": 0.12389380530973451,
+                "low": 0.09298006314703297,
+                "high": 0.1632359125051703
+              },
+              "unknown_no_body": {
+                "k": 62,
+                "n": 339,
+                "rate": 0.18289085545722714,
+                "low": 0.14536984580507087,
+                "high": 0.22751813366639465
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 5,
+              "n": 339,
+              "rate": 0.014749262536873156,
+              "low": 0.006316025287224587,
+              "high": 0.03405674329934361
+            },
+            "details": {
+              "blocked/cloudflare_block": 2,
+              "blocked/http_403": 1,
+              "challenge/text": 2,
+              "empty_stub/blank": 6,
+              "empty_stub/short_text": 11,
+              "other/http_500": 1,
+              "other/proxy_private_address": 22,
+              "other/short_with_form": 19,
+              "takedown/host_notice": 146,
+              "takedown/host_notice+form": 56,
+              "takedown/http_404": 9,
+              "takedown/proxy_dns": 2,
+              "unknown_no_body/connection_dropped": 1,
+              "unknown_no_body/proxy_tunnel_failed": 50,
+              "unknown_no_body/sandbox_timeout": 2,
+              "unknown_no_body/tls_error": 9
+            },
+            "http_403": {
+              "other": 22,
+              "takedown": 198,
+              "blocked": 3
+            }
+          },
+          "legit": {
+            "pages": 600,
+            "classified": 269,
+            "classes": {
+              "takedown": {
+                "k": 51,
+                "n": 269,
+                "rate": 0.1895910780669145,
+                "low": 0.14724576890259103,
+                "high": 0.2406771637604541
+              },
+              "challenge": {
+                "k": 17,
+                "n": 269,
+                "rate": 0.06319702602230483,
+                "low": 0.03982799537698756,
+                "high": 0.09886595178358498
+              },
+              "blocked": {
+                "k": 32,
+                "n": 269,
+                "rate": 0.11895910780669144,
+                "low": 0.08553711800902719,
+                "high": 0.16311079334381268
+              },
+              "empty_stub": {
+                "k": 19,
+                "n": 269,
+                "rate": 0.07063197026022305,
+                "low": 0.045681040928264985,
+                "high": 0.10767343479127654
+              },
+              "other": {
+                "k": 21,
+                "n": 269,
+                "rate": 0.07806691449814127,
+                "low": 0.05162504221499405,
+                "high": 0.11638996206351646
+              },
+              "unknown_no_body": {
+                "k": 129,
+                "n": 269,
+                "rate": 0.4795539033457249,
+                "low": 0.42056226027880955,
+                "high": 0.5391212861840255
+              }
+            },
+            "blocked_or_challenge": {
+              "k": 49,
+              "n": 269,
+              "rate": 0.1821561338289963,
+              "low": 0.14061471747809084,
+              "high": 0.23264768662598534
+            },
+            "details": {
+              "blocked/cloudflare_block": 4,
+              "blocked/http_401": 1,
+              "blocked/http_403": 24,
+              "blocked/http_403_no_body": 1,
+              "blocked/http_451": 2,
+              "challenge/title": 17,
+              "empty_stub/blank": 6,
+              "empty_stub/short_text": 13,
+              "other/http_400": 2,
+              "other/http_500": 1,
+              "other/http_502": 1,
+              "other/http_503": 3,
+              "other/http_520": 1,
+              "other/proxy_private_address": 3,
+              "other/short_with_form": 10,
+              "takedown/host_notice+form": 1,
+              "takedown/http_404": 49,
+              "takedown/origin_down": 1,
+              "unknown_no_body/connection_dropped": 1,
+              "unknown_no_body/other_error": 3,
+              "unknown_no_body/partial_blank": 1,
+              "unknown_no_body/proxy_tunnel_failed": 92,
+              "unknown_no_body/sandbox_timeout": 11,
+              "unknown_no_body/tls_error": 21
+            },
+            "http_403": {
+              "blocked": 29,
+              "other": 3,
+              "challenge": 16
+            }
+          }
+        }
+      },
+      "phone_view": {
+        "phish": {
+          "k": 0,
+          "n": 400,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.009512294482932589
+        },
+        "legit": {
+          "k": 2,
+          "n": 600,
+          "rate": 0.0033333333333333335,
+          "low": 0.0009145966785849228,
+          "high": 0.01207135976074841
+        }
+      },
+      "page_only": {
+        "dev": {
+          "catches": 4,
+          "pass": 1,
+          "fail": 3,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 1,
+            "n": 4,
+            "rate": 0.25,
+            "low": 0.04558726029536886,
+            "high": 0.6993581599030918
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 3
+          },
+          "cannot_tell_why": {}
+        },
+        "test": {
+          "catches": 4,
+          "pass": 1,
+          "fail": 3,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 1,
+            "n": 4,
+            "rate": 0.25,
+            "low": 0.04558726029536886,
+            "high": 0.6993581599030918
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 2,
+            "official or popular host": 1
+          },
+          "cannot_tell_why": {}
+        },
+        "all": {
+          "catches": 8,
+          "pass": 2,
+          "fail": 6,
+          "cannot_tell": 0,
+          "pass_rate": {
+            "k": 2,
+            "n": 8,
+            "rate": 0.25,
+            "low": 0.07147921209795555,
+            "high": 0.5907245720727483
+          },
+          "fail_why": {
+            "UNKNOWN with no sign": 5,
+            "official or popular host": 1
+          },
+          "cannot_tell_why": {}
+        }
+      }
+    }
+  }
+}
