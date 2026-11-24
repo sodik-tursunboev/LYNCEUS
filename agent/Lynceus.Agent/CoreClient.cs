@@ -35,7 +35,8 @@ public sealed record FileVerdict(
     string? Explanation = null,
     IReadOnlyList<string>? Reasons = null,
     Guid? ActionId = null,
-    bool AllowListed = false);
+    bool AllowListed = false,
+    int? DeeperSeconds = null);
 
 /// <summary>A response the core proposed or recorded for one file (no path: the core never has it).</summary>
 public sealed record ActionInfo(Guid Id, string State, string FileRef, string Sha256);
@@ -512,13 +513,23 @@ public sealed class CoreClient(HttpClient http, Func<string?> token, bool verify
                 Text(verdict, "explanation", 600),
                 reasons,
                 root.TryGetProperty("action_id", out var action) && action.ValueKind == JsonValueKind.String && Guid.TryParse(action.GetString(), out var actionId) ? actionId : null,
-                root.TryGetProperty("allow_listed", out var allowed) && allowed.ValueKind == JsonValueKind.True);
+                root.TryGetProperty("allow_listed", out var allowed) && allowed.ValueKind == JsonValueKind.True,
+                DeeperSecondsOf(root));
         }
         catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
         {
             return null;
         }
     }
+
+    /// <summary>DA5 1b: the core is opening this page in its sandbox; ask again in this many seconds (1 to 60, else ignored).</summary>
+    private static int? DeeperSecondsOf(JsonElement root) =>
+        root.TryGetProperty("deeper", out var deeper) && deeper.ValueKind == JsonValueKind.Object
+            && Text(deeper, "state", 16) == "running"
+            && deeper.TryGetProperty("retry_after_s", out var seconds) && seconds.ValueKind == JsonValueKind.Number
+            && seconds.TryGetInt32(out var n) && n is >= 1 and <= 60
+            ? n
+            : null;
 
     private static string? Text(JsonElement parent, string name, int max) =>
         parent.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is { } text && text.Length <= max

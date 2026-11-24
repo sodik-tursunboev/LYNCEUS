@@ -70,6 +70,14 @@ public sealed class RequestHandler(CoreClient core, Func<PipelineStats> stats, A
                 }
 
                 w.WriteEndArray();
+                if (v.DeeperSeconds is { } wait)
+                {
+                    // DA5 1b: the page is being opened in the sandbox; the extension asks once more after this long
+                    w.WriteStartObject("deeper");
+                    w.WriteString("state", "running");
+                    w.WriteNumber("retry_after_s", wait);
+                    w.WriteEndObject();
+                }
             },
             "verdict",
             request.Id);

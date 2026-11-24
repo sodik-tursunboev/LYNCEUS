@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 from urllib.parse import unquote
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
@@ -98,10 +98,19 @@ class UrlAnatomy(BaseModel):
     fragment: str
 
 
+class Deeper(BaseModel):
+    """DA5 1b: the page behind this browser check is being opened in the sandbox. Ask again after
+    `retry_after_s` seconds: the page's own verdict (if graver) is then given back."""
+
+    state: Literal["running"]
+    retry_after_s: int
+
+
 class AnalyzeResponse(UrlReport):
     persisted: bool  # False when storage is off or failed; the verdict still stands
     intel_skipped: list[Skipped]  # providers that were enabled but not asked, and why
     anatomy: UrlAnatomy | None = None  # None when the input could not be parsed as a URL
+    deeper: Deeper | None = None  # only for a browser check whose page is being opened now
 
 
 class PageSummary(BaseModel):
@@ -524,14 +533,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         persisted = False
         # the browser extension says so; anything else is recorded as a plain API call
         source = EventSource.BROWSER if x_lynceus_source == "BROWSER" else EventSource.API
+        wait: int | None = None
         if opener is not None and source is EventSource.BROWSER:
             # DA1 P3: an address whose page was opened recently gets that graver verdict back;
-            # otherwise a risky one is queued to be opened (this answer does not wait for it)
+            # otherwise a risky one is queued to be opened (this answer does not wait for it).
+            # DA5 1b: while that opening runs the answer says when to ask again
             deeper = opener.deeper(analysis)
             if deeper is not None:
                 analysis = deeper
             else:
                 opener.consider(request.url, analysis, "browser")
+                wait = opener.eta(analysis)
         if db is not None:
             try:
                 await run_in_threadpool(save_analysis, db, analysis, source)
@@ -542,8 +554,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         report = analysis.report().model_dump()
         anatomy = anatomy_of(analysis.url)
         return AnalyzeResponse(
-            **report, persisted=persisted, intel_skipped=skipped, anatomy=anatomy
-        )
+            **report, persisted=persisted, intel_skipped=skipped, anatomy=anatomy,
+            deeper=None if wait is None else Deeper(state="running", retry_after_s=wait),
+        )  # fmt: skip
 
     detonate_limiter = RateLimit(settings.detonation_per_minute)
 

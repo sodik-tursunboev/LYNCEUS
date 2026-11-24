@@ -273,6 +273,42 @@ public class PipeServerTests
         var seen = Assert.Single(fake.To("/v1/urls/analyze"));
         Assert.Contains("SECRET", Encoding.UTF8.GetString(seen.Body), StringComparison.Ordinal);
         Assert.Equal("Bearer t0k", seen.Auth);
+        Assert.False(answer.TryGetProperty("deeper", out _)); // nothing is opened, so nothing is said
+    }
+
+    [Fact]
+    public async Task A_deeper_look_running_in_the_core_is_passed_to_the_browser_with_the_verdict_unchanged()
+    {
+        var fake = new FakeCore { Respond = _ => FakeCore.Json("""{"verdict":{"state":"UNKNOWN","risk_score":null,"signals":[{"rule_id":"url.login_path","description":"a login path"}],"recommended_response":"NONE","explanation":"one weak sign"},"persisted":false,"deeper":{"state":"running","retry_after_s":12}}""") };
+        using var rig = new AgentRig(fake);
+        await using var pipe = (await rig.ConnectAsync(CancellationToken.None))!;
+        var answer = await Ask(pipe, """{"v":1,"type":"check_url","id":"c1","url":"https://account-review.test/login"}""");
+        Assert.Equal(("verdict", "UNKNOWN", "a login path"), (answer.GetProperty("type").GetString(), answer.GetProperty("state").GetString(), answer.GetProperty("reasons")[0].GetString()));
+        var deeper = answer.GetProperty("deeper");
+        Assert.Equal(("running", 12), (deeper.GetProperty("state").GetString(), deeper.GetProperty("retry_after_s").GetInt32()));
+        Assert.Equal(2, deeper.EnumerateObject().Count()); // exactly these two fields, whatever else the core adds
+    }
+
+    [Theory]
+    [InlineData("""{"state":"done","retry_after_s":12}""")]
+    [InlineData("""{"state":"running"}""")]
+    [InlineData("""{"state":"running","retry_after_s":0}""")]
+    [InlineData("""{"state":"running","retry_after_s":61}""")]
+    [InlineData("""{"state":"running","retry_after_s":-5}""")]
+    [InlineData("""{"state":"running","retry_after_s":"12"}""")]
+    [InlineData("""{"state":"running","retry_after_s":1.5}""")]
+    [InlineData("""{"state":"running","retry_after_s":99999999999}""")]
+    [InlineData("\"running\"")]
+    [InlineData("null")]
+    [InlineData("[12]")]
+    public async Task A_deeper_note_the_agent_does_not_fully_understand_is_dropped_and_the_verdict_still_arrives(string note)
+    {
+        var fake = new FakeCore { Respond = _ => FakeCore.Json("{\"verdict\":{\"state\":\"SUSPICIOUS\",\"risk_score\":55,\"signals\":[]},\"persisted\":false,\"deeper\":" + note + "}") };
+        using var rig = new AgentRig(fake);
+        await using var pipe = (await rig.ConnectAsync(CancellationToken.None))!;
+        var answer = await Ask(pipe, """{"v":1,"type":"check_url","id":"c1","url":"https://x.test/"}""");
+        Assert.Equal(("verdict", "SUSPICIOUS"), (answer.GetProperty("type").GetString(), answer.GetProperty("state").GetString()));
+        Assert.False(answer.TryGetProperty("deeper", out _));
     }
 
     [Theory]

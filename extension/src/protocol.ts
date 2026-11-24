@@ -13,6 +13,8 @@ export interface VerdictReply {
   recommended: string | null;
   explanation: string | null;
   reasons: string[];
+  /** DA5 1b: the page is being opened in the agent's sandbox; ask once more after this many seconds. */
+  deeperAfterS?: number;
 }
 export interface ErrorReply {
   type: "error";
@@ -48,6 +50,13 @@ const str = (v: unknown, max: number): string | null => (typeof v === "string" &
 const nullableStr = (v: unknown, max: number): string | null | undefined =>
   v === null || v === undefined ? null : str(v, max) ?? undefined;
 
+/** `{"state":"running","retry_after_s":12}`: whole seconds, 1 to 60; anything else is no hint at all. */
+function deeperAfter(v: unknown): number | null {
+  if (!isObj(v) || v.state !== "running") return null;
+  const s = v.retry_after_s;
+  return typeof s === "number" && Number.isInteger(s) && s >= 1 && s <= 60 ? s : null;
+}
+
 export function parseReply(raw: unknown): Reply | null {
   if (!isObj(raw) || raw.v !== 1 || typeof raw.type !== "string") return null;
   const id = raw.id === undefined || raw.id === null ? null : str(raw.id, 64);
@@ -64,7 +73,8 @@ export function parseReply(raw: unknown): Reply | null {
       ) {
         return null;
       }
-      return { type: "verdict", id, state, score, recommended, explanation, reasons: reasons as string[] };
+      const after = deeperAfter(raw.deeper); // a hint, never part of the verdict: one that is not exactly right is dropped
+      return { type: "verdict", id, state, score, recommended, explanation, reasons: reasons as string[], ...(after === null ? {} : { deeperAfterS: after }) };
     }
     case "error": {
       const error = str(raw.error, 64);
@@ -85,3 +95,6 @@ export function parseReply(raw: unknown): Reply | null {
 }
 
 export const isBad = (state: State): boolean => state === "MALICIOUS" || state === "SUSPICIOUS";
+
+/** How grave a state is, as the core ranks it (core/detonate/auto.py): UNKNOWN (and ERROR) < SUSPICIOUS < MALICIOUS. */
+export const gravity = (state: State): number => (state === "MALICIOUS" ? 3 : state === "SUSPICIOUS" ? 2 : state === "BENIGN" ? 0 : 1);

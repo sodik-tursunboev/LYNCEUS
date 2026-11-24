@@ -1,5 +1,5 @@
 import type { LinkState, NativeLink } from "./native";
-import { AGENT_DOWN, AGENT_SLOW, isBad, type State } from "./protocol";
+import { AGENT_DOWN, AGENT_SLOW, gravity, isBad, type State } from "./protocol";
 import { isCheckable, keyOf, Overrides, RuleBook, VerdictCache, type Entry } from "./store";
 
 export const MAX_RULES = 500;
@@ -18,6 +18,10 @@ export interface NavigationDetails {
   url: string;
 }
 
+/** Runs `run` once after `ms`. Tests give it a fake clock. */
+export type Later = (run: () => Promise<void>, ms: number) => void;
+const inTime: Later = (run, ms) => void setTimeout(() => void run(), ms);
+
 /**
  * Decides what to do with each top-level navigation. It never holds a navigation: the check
  * runs beside it, and a bad verdict replaces the tab with the warning page. A URL already judged
@@ -27,6 +31,7 @@ export interface NavigationDetails {
  */
 export class Guard {
   private readonly tabUrl = new Map<number, string>();
+  private readonly reasking = new Map<number, string>(); // tab -> the address whose one re-ask is waiting
 
   constructor(
     private readonly link: NativeLink,
@@ -35,6 +40,7 @@ export class Guard {
     private readonly rules: RuleBook,
     private readonly browser: Browser,
     private readonly now: () => number = Date.now,
+    private readonly later: Later = inTime,
   ) {}
 
   /** The warning page for a URL, with the verdict carried by key and state only. */
@@ -57,11 +63,44 @@ export class Guard {
       }
       this.badge("ok");
       entry = await this.cache.put(key, { state: reply.state, score: reply.score, reasons: reply.reasons, explanation: reply.explanation });
+      if (reply.deeperAfterS !== undefined) this.askAgainLater(d.tabId, d.url, key, entry.state, reply.deeperAfterS);
     }
     if (!isBad(entry.state)) return;
-    await this.installRule(d.url, key, entry.state);
-    if (this.tabUrl.get(d.tabId) === d.url && !(await this.overrides.active(key))) {
-      await this.browser.updateTab(d.tabId, this.warningUrl(d.url, key, entry.state)).catch(() => undefined);
+    await this.warn(d.tabId, d.url, key, entry.state);
+  }
+
+  /**
+   * DA5 1b: the agent is opening this page in its sandbox, which takes longer than the first answer,
+   * and a cached UNKNOWN is otherwise not asked about again for minutes. So ask ONCE more when that
+   * look is due. The new answer can only make the tab's warning graver (UNKNOWN < SUSPICIOUS <
+   * MALICIOUS): an equal, lower or failed answer changes nothing, and nothing is ever asked a third
+   * time. A tab that has moved on is left alone. If the browser stops the worker before the timer
+   * fires, the re-ask is lost and the verdict arrives with the next check, as before.
+   */
+  private askAgainLater(tabId: number, url: string, key: string, had: State, seconds: number): void {
+    if (this.reasking.get(tabId) === url) return; // the same navigation reported twice (before and after commit)
+    this.reasking.set(tabId, url);
+    this.later(async () => {
+      if (this.reasking.get(tabId) !== url) return; // the tab was closed
+      this.reasking.delete(tabId);
+      if (this.tabUrl.get(tabId) !== url || (await this.overrides.active(key))) return;
+      const reply = await this.link.request({ type: "check_url", url });
+      if (reply.type !== "verdict") {
+        this.afterFailure(reply.type === "error" ? reply.error : "unexpected");
+        return;
+      }
+      if (gravity(reply.state) <= gravity(had)) return;
+      const entry = await this.cache.put(key, { state: reply.state, score: reply.score, reasons: reply.reasons, explanation: reply.explanation });
+      await this.removeRule(key); // an older rule would still name the lower state
+      await this.warn(tabId, url, key, entry.state);
+    }, seconds * 1000);
+  }
+
+  /** A redirect rule for the next visit, and the warning page in the tab if it is still on this page and the user has not chosen to continue. */
+  private async warn(tabId: number, url: string, key: string, state: State): Promise<void> {
+    await this.installRule(url, key, state);
+    if (this.tabUrl.get(tabId) === url && !(await this.overrides.active(key))) {
+      await this.browser.updateTab(tabId, this.warningUrl(url, key, state)).catch(() => undefined);
     }
   }
 
@@ -101,6 +140,7 @@ export class Guard {
 
   forgetTab(tabId: number): void {
     this.tabUrl.delete(tabId);
+    this.reasking.delete(tabId);
   }
 
   badge(state: "ok" | "down" | "core"): void {

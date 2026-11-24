@@ -37,6 +37,7 @@ _GRAVITY = {
     VerdictState.MALICIOUS: 3,
 }
 SOURCES = frozenset({"browser", "mail"})
+DEEPER_SECONDS = 12.0  # the sandbox takes 5 to 10 s (DA5 1b): when the browser should ask again
 
 
 def worth_opening(analysis: UrlAnalysis) -> bool:
@@ -74,6 +75,7 @@ class AutoOpener:
         self._lock = threading.Lock()
         self._pending = 0
         self._opened: dict[str, float] = {}  # url sha256 -> when it was queued
+        self._running: dict[str, float] = {}  # queued or being opened now (a failure leaves it)
         self._deeper: dict[str, tuple[float, UrlAnalysis]] = {}
         self.dropped = 0  # links not opened because the queue was full
 
@@ -89,7 +91,7 @@ class AutoOpener:
             if self._pending >= self._max_pending:
                 self.dropped += 1
                 return False
-            self._opened[key] = now
+            self._opened[key] = self._running[key] = now
             self._pending += 1
         self._pool.submit(self._run, raw, analysis, source, key)
         return True
@@ -110,6 +112,15 @@ class AutoOpener:
             return None
         deeper = found[1]
         return deeper if _GRAVITY[deeper.verdict.state] > _GRAVITY[analysis.verdict.state] else None
+
+    def eta(self, analysis: UrlAnalysis) -> int | None:
+        """Seconds until the page being opened for this address should be judged, or None when no
+        opening is queued or running for it (not opened, finished, or failed)."""
+        if analysis.url is None:
+            return None
+        with self._lock:
+            queued = self._running.get(analysis.url.url_sha256)
+        return None if queued is None else max(2, round(DEEPER_SECONDS - (self._clock() - queued)))
 
     def wait_idle(self, timeout: float = 30.0) -> bool:
         """For tests and shutdown: True once nothing is queued or running."""
@@ -135,6 +146,7 @@ class AutoOpener:
         finally:
             with self._lock:
                 self._pending -= 1
+                self._running.pop(key, None)
 
     def _forget(self, now: float) -> None:
         """Drop what is older than the window (called with the lock held)."""

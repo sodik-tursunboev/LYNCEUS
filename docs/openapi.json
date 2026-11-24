@@ -241,6 +241,16 @@
               }
             ]
           },
+          "deeper": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Deeper"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "evidence": {
             "items": {
               "$ref": "#/components/schemas/Evidence"
@@ -374,6 +384,26 @@
         "title": "Confidence",
         "type": "string"
       },
+      "Deeper": {
+        "description": "DA5 1b: the page behind this browser check is being opened in the sandbox. Ask again after\n`retry_after_s` seconds: the page's own verdict (if graver) is then given back.",
+        "properties": {
+          "retry_after_s": {
+            "title": "Retry After S",
+            "type": "integer"
+          },
+          "state": {
+            "const": "running",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "retry_after_s"
+        ],
+        "title": "Deeper",
+        "type": "object"
+      },
       "DetonateResponse": {
         "additionalProperties": false,
         "properties": {
@@ -381,6 +411,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/UrlAnatomy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deeper": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Deeper"
               },
               {
                 "type": "null"
