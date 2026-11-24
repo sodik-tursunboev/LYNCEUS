@@ -18,6 +18,7 @@ from core.contracts import (
     Verdict,
     VerdictState,
 )
+from core.explain.composer import compose
 from core.risk.scoring import Scored, score
 from core.urls.parse import HostKind, ParsedUrl, ParseFailure, UrlFlag, parse_url
 from rules.url import RULES
@@ -93,14 +94,16 @@ def _verdict(
 def _explain(
     scored: Scored, signals: list[Signal], allowlisted: bool, not_safe: str = _NOT_SAFE
 ) -> str:
-    if scored.state is VerdictState.UNKNOWN:
-        if signals:
-            return f"{len(signals)} weak signal(s), not enough to call it. {not_safe}"
-        return f"No rule fired. {not_safe}"
-    if scored.state is VerdictState.BENIGN:
-        return "Official domain of a known brand." if allowlisted else "No risk found."
-    names = ", ".join(s.rule_id for s in signals)
-    return f"Score {scored.risk_score} from: {names}."
+    """What was found, why, how sure and what next, in plain words (core/explain, DA5)."""
+    return compose(
+        scored.state,
+        scored.risk_score,
+        scored.confidence,
+        scored.recommended_response,
+        signals,
+        allowlisted=allowlisted,
+        caveat=not_safe,
+    ).text
 
 
 def _unscored(
