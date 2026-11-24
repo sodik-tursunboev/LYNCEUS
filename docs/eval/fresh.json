@@ -1,0 +1,120 @@
+{
+ "generated_at": "2026-11-22 15:35Z",
+ "fresh_files": [
+  {
+   "file": "openphish.txt",
+   "source": "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt",
+   "downloaded": "2026-11-22T15:33:00Z",
+   "bytes": 15768
+  },
+  {
+   "file": "phishtank.json.bz2",
+   "source": "https://data.phishtank.com/data/online-valid.json.bz2",
+   "downloaded": "2026-11-22T15:33:06Z",
+   "bytes": 1722170
+  }
+ ],
+ "fresh_addresses": 43227,
+ "fresh_new_domains": 1529,
+ "engine": {
+  "E1 test split (feeds of 2026-11-10), PhishTank": {
+   "k": 3720,
+   "n": 14075,
+   "rate": 0.2643,
+   "ci": [
+    0.2571,
+    0.2716
+   ]
+  },
+  "E1 test split, OpenPhish": {
+   "k": 65,
+   "n": 92,
+   "rate": 0.7065,
+   "ci": [
+    0.6067,
+    0.7898
+   ]
+  },
+  "fresh feeds (2026-11-22), new domains, PhishTank": {
+   "k": 723,
+   "n": 1247,
+   "rate": 0.5798,
+   "ci": [
+    0.5522,
+    0.6069
+   ]
+  },
+  "fresh feeds, new domains, OpenPhish": {
+   "k": 249,
+   "n": 282,
+   "rate": 0.883,
+   "ci": [
+    0.8402,
+    0.9154
+   ]
+  }
+ },
+ "models": {
+  "fitted on E1 train only": {
+   "threshold": 0.9863,
+   "fresh test domains": {
+    "k": 226,
+    "n": 369,
+    "rate": 0.6125,
+    "ci": [
+     0.5618,
+     0.6608
+    ]
+   },
+   "E1 test phishing": {
+    "k": 10620,
+    "n": 21504,
+    "rate": 0.4939,
+    "ci": [
+     0.4872,
+     0.5005
+    ]
+   },
+   "E1 test legitimate": {
+    "k": 182,
+    "n": 47307,
+    "rate": 0.0038,
+    "ci": [
+     0.0033,
+     0.0044
+    ]
+   }
+  },
+  "fitted on E1 train and the fresh train part": {
+   "threshold": 0.9908,
+   "fresh test domains": {
+    "k": 234,
+    "n": 369,
+    "rate": 0.6341,
+    "ci": [
+     0.5839,
+     0.6817
+    ]
+   },
+   "E1 test phishing": {
+    "k": 10639,
+    "n": 21504,
+    "rate": 0.4947,
+    "ci": [
+     0.4881,
+     0.5014
+    ]
+   },
+   "E1 test legitimate": {
+    "k": 209,
+    "n": 47307,
+    "rate": 0.0044,
+    "ci": [
+     0.0039,
+     0.0051
+    ]
+   }
+  }
+ },
+ "fresh_train_domains": 770
+}
